@@ -1,4 +1,4 @@
-import Image from "next/image"
+﻿import Image from "next/image"
 import {
   CheckmarkCircle02Icon,
 } from "@hugeicons/core-free-icons"
@@ -14,16 +14,16 @@ const limeButtonClass =
 
 const trustNumbers = [
   { value: "200+", label: "Barbearias ativas" },
-  { value: "15mil+", label: "Agendamentos/mês" },
+  { value: "15mil+", label: "Agendamentos/mÃªs" },
   { value: "R$ 2mi+", label: "Em planos processados" },
-  { value: "98%", label: "Satisfação" },
+  { value: "98%", label: "SatisfaÃ§Ã£o" },
 ]
 
 const highlights = [
   "Agenda online",
   "Planos de assinatura",
   "Caixa e comandas",
-  "Portal do cliente",
+  "Gestao de clientes",
 ]
 
 export function HeroSection() {
@@ -41,16 +41,16 @@ export function HeroSection() {
           >
             Sua barbearia mais organizada.
             <br />
-            <span className="text-[var(--landing-primary)]">Seus clientes voltando todo mês.</span>
+            <span className="text-[var(--landing-primary)]">Seus clientes voltando todo mÃªs.</span>
           </h1>
           <p className="mt-4 max-w-[480px] text-[15px] leading-6 text-[var(--landing-muted)] md:mt-5 md:text-base md:leading-7">
-            Agenda online, caixa, planos de assinatura e portal do cliente em um
+            Agenda, caixa, clientes e planos de assinatura em um
             painel simples. Menos improviso, mais resultado.
           </p>
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row md:mt-8">
             <LandingLinkButton href="#demonstracao" className={cn(limeButtonClass, "hero-cta-glow")}>
-              Agendar demonstração
+              Agendar demonstraÃ§Ã£o
             </LandingLinkButton>
           </div>
 

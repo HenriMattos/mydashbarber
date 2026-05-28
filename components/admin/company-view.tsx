@@ -1,40 +1,40 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
-import Link from "next/link"
-import { useEffect, useState, type ChangeEvent, type ReactNode } from "react"
-import {
-  Building02Icon,
-  CheckmarkCircle01Icon,
-  File01Icon,
-  GlobeIcon,
-  Link01Icon,
-  Wallet02Icon,
-} from "@hugeicons/core-free-icons"
+import { useState, type ChangeEvent, type ReactNode } from "react"
+import { CheckmarkCircle01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import { Camera, Info, X } from "lucide-react"
 
-import { database } from "@/components/admin/database"
 import {
-  COMPANY_ICON_STORAGE_KEY,
-  COMPANY_LOGO_STORAGE_KEY,
-  COMPANY_PORTAL_BANNER_STORAGE_KEY,
-  COMPANY_PORTAL_DESCRIPTION_STORAGE_KEY,
-  COMPANY_PORTAL_ENABLED_STORAGE_KEY,
-  COMPANY_PORTAL_OPENING_HOURS_STORAGE_KEY,
-  COMPANY_PORTAL_SLOGAN_STORAGE_KEY,
-  COMPANY_PORTAL_SLUG_STORAGE_KEY,
-  COMPANY_PORTAL_SYNC_EVENT,
-} from "@/components/company/company-assets"
-import { MetricCard } from "@/components/admin/metric-card"
+  formatCnpjInput,
+  formatNumberInput,
+  onlyDigits,
+} from "@/components/admin/client-input-formatters"
 import {
   FormField,
   FormGrid,
   ResponsiveActions,
 } from "@/components/admin/responsive-form"
 import { SectionCard } from "@/components/admin/section-card"
-import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import {
+  defaultPortalSettings,
+  getPortalUrl,
+  normalizePortalSlug,
+  readPortalSettings,
+  writePortalSettings,
+} from "@/lib/client-portal/settings"
 import {
   Select,
   SelectContent,
@@ -42,6 +42,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import type { PortalImagePlacement } from "@/types/client-portal"
+
+type PortalImageEditorState = {
+  key: "bannerUrl" | "logoUrl"
+  placementKey: "bannerPlacement" | "logoPlacement"
+  label: "Banner" | "Logo"
+  src: string
+  placement: PortalImagePlacement
+  aspectClassName: string
+  imageClassName: string
+}
 
 const timezones = [
   "America/Manaus",
@@ -50,216 +61,33 @@ const timezones = [
   "America/Rio_Branco",
 ]
 
-const toleranceOptions = [
-  "15 minutos",
-  "30 minutos",
-  "1 hora",
-  "2 horas",
-  "24 horas",
-]
-
+const toleranceOptions = ["15 minutos", "30 minutos", "1 hora", "2 horas", "24 horas"]
 const penaltyOptions = ["24 horas", "3 dias", "7 dias", "15 dias", "30 dias"]
 
-const voucherDiscountOptions = [
-  "Comissão do profissional",
-  "Receita da empresa",
-  "Não descontar",
-]
-
-const portalOpeningFallback = {
-  days: "Seg a Sab",
-  start: "09:00",
-  end: "19:00",
-}
-
-const portalDayRangeOptions = [
-  "Seg a Sex",
-  "Seg a Sab",
-  "Ter a Sab",
-  "Todos os dias",
-]
-
-const portalTimeOptions = Array.from({ length: 31 }, (_, index) => {
-  const totalMinutes = 7 * 60 + index * 30
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
-})
-
 const initialCompanyForm = {
-  corporateName: database.company.corporateName,
-  tradeName: database.company.tradeName,
-  cnpj: database.company.cnpj,
-  email: database.company.email,
-  timezone: database.company.timezone,
-  phone: database.company.phone,
-  logoUrl: database.company.logoUrl,
-  iconUrl: database.company.iconUrl,
-  slug: database.company.slug,
-  portalBannerUrl: "",
-  portalDescription:
-    "Experiencia premium para agendar, acompanhar planos e cuidar do visual sem mensagens soltas.",
-  portalEnabled: true,
-  portalOpeningDays: portalOpeningFallback.days,
-  portalOpeningEnd: portalOpeningFallback.end,
-  portalOpeningHours: "Seg a Sab, 09:00 as 19:00",
-  portalOpeningStart: portalOpeningFallback.start,
-  portalSlug: database.company.slug,
-  portalSlogan: "Cabelo, barba e cuidado no seu tempo.",
-  pixWithdrawal: "",
-  fixedTransactionFee: "R$ 0,00",
-  variableTransactionFee: "0,00%",
-  cashbackFee: "R$ 0,00",
-  advancePayments: false,
-  street: database.company.address.street,
-  number: database.company.address.number,
-  neighborhood: database.company.address.neighborhood,
-  city: database.company.address.city,
-  state: database.company.address.state,
-  zip: database.company.address.zip,
-  mapsUrl: database.company.address.mapsUrl,
-  instagram: database.company.social.instagram,
-  whatsapp: database.company.social.whatsapp,
-  facebook: database.company.social.facebook,
-  cancellationTolerance: toleranceOptions[0],
-  penaltyDuration: penaltyOptions[0],
-  beardClubName: "",
-  dpoteCommission: "0",
-  voucherDiscountFrom: voucherDiscountOptions[0],
-}
-
-function normalizePortalSlug(value: string) {
-  return (
-    value
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9-]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .replace(/-{2,}/g, "-") || "bigood"
-  )
-}
-
-function buildPortalOpeningHours(days: string, start: string, end: string) {
-  return `${days}, ${start} as ${end}`
-}
-
-function parsePortalOpeningHours(value: string) {
-  const match = value.match(/^(.+),\s*(\d{2}:\d{2})\s+as\s+(\d{2}:\d{2})$/)
-
-  if (!match) {
-    return portalOpeningFallback
-  }
-
-  return {
-    days: portalDayRangeOptions.includes(match[1])
-      ? match[1]
-      : portalOpeningFallback.days,
-    start: portalTimeOptions.includes(match[2])
-      ? match[2]
-      : portalOpeningFallback.start,
-    end: portalTimeOptions.includes(match[3])
-      ? match[3]
-      : portalOpeningFallback.end,
-  }
-}
-
-function notifyClientPortalSync() {
-  window.dispatchEvent(new Event(COMPANY_PORTAL_SYNC_EVENT))
-}
-
-function createImagePreview(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader()
-
-    reader.onerror = () => reject(reader.error)
-    reader.onload = () => {
-      const rawPreview = String(reader.result)
-      const image = new Image()
-
-      image.onerror = () => resolve(rawPreview)
-      image.onload = () => {
-        const maxSize = 1400
-        const scale = Math.min(1, maxSize / Math.max(image.width, image.height))
-
-        if (scale === 1 && rawPreview.length < 1_500_000) {
-          resolve(rawPreview)
-          return
-        }
-
-        const canvas = document.createElement("canvas")
-        canvas.width = Math.max(1, Math.round(image.width * scale))
-        canvas.height = Math.max(1, Math.round(image.height * scale))
-
-        const context = canvas.getContext("2d")
-
-        if (!context) {
-          resolve(rawPreview)
-          return
-        }
-
-        context.drawImage(image, 0, 0, canvas.width, canvas.height)
-        resolve(canvas.toDataURL("image/jpeg", 0.84))
-      }
-      image.src = rawPreview
-    }
-    reader.readAsDataURL(file)
-  })
+  corporateName: "Paulo Jean Barros Ferreira Junior",
+  tradeName: "Studio Simetria",
+  cnpj: "55.540.659/0001-22",
+  email: "paulojeanbarbeiro@gmail.com",
+  timezone: "America/Manaus",
+  phone: "5592994592664",
+  cancellationTolerance: toleranceOptions[1],
+  penaltyDuration: penaltyOptions[2],
+  dpoteCommission: "40",
 }
 
 export function EmpresaView() {
-  const [mounted, setMounted] = useState(false)
-  const [uploadResetToken, setUploadResetToken] = useState(0)
-  const [form, setForm] = useState({
-    ...initialCompanyForm,
-    tradeName: database.company.tradeName,
-    logoUrl: database.company.logoUrl,
-    iconUrl: database.company.iconUrl,
-  })
+  const [form, setForm] = useState(initialCompanyForm)
   const [feedback, setFeedback] = useState(
-    "Preencha todos os campos obrigatórios."
+    "Preencha todos os campos obrigatorios."
   )
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      const storedOpeningHours =
-        window.localStorage.getItem(COMPANY_PORTAL_OPENING_HOURS_STORAGE_KEY) ||
-        buildPortalOpeningHours(
-          portalOpeningFallback.days,
-          portalOpeningFallback.start,
-          portalOpeningFallback.end
-        )
-      const parsedOpeningHours = parsePortalOpeningHours(storedOpeningHours)
-
-      setForm((current) => ({
-        ...current,
-        portalBannerUrl:
-          window.localStorage.getItem(COMPANY_PORTAL_BANNER_STORAGE_KEY) || "",
-        portalDescription:
-          window.localStorage.getItem(COMPANY_PORTAL_DESCRIPTION_STORAGE_KEY) ||
-          current.portalDescription,
-        portalEnabled:
-          window.localStorage.getItem(COMPANY_PORTAL_ENABLED_STORAGE_KEY) !==
-          "false",
-        portalOpeningDays: parsedOpeningHours.days,
-        portalOpeningEnd: parsedOpeningHours.end,
-        portalOpeningHours: storedOpeningHours,
-        portalOpeningStart: parsedOpeningHours.start,
-        portalSlug:
-          window.localStorage.getItem(COMPANY_PORTAL_SLUG_STORAGE_KEY) ||
-          current.portalSlug,
-        portalSlogan:
-          window.localStorage.getItem(COMPANY_PORTAL_SLOGAN_STORAGE_KEY) ||
-          current.portalSlogan,
-      }))
-      setMounted(true)
-    })
-
-    return () => window.cancelAnimationFrame(frame)
-  }, [])
-
-  if (!mounted) return null
+  const [portalForm, setPortalForm] = useState(() => readPortalSettings())
+  const [portalFeedback, setPortalFeedback] = useState(
+    "Personalize os dados exibidos no portal do cliente."
+  )
+  const [imageEditor, setImageEditor] = useState<PortalImageEditorState | null>(
+    null
+  )
 
   const requiredFilled =
     form.corporateName.trim().length > 0 &&
@@ -268,15 +96,6 @@ export function EmpresaView() {
     form.email.trim().length > 0 &&
     form.timezone.trim().length > 0 &&
     form.phone.trim().length > 0
-  const portalSlug = normalizePortalSlug(
-    form.portalSlug || database.company.slug
-  )
-  const portalUrl = `/barbearia/${portalSlug}`
-  const portalOpeningHours = buildPortalOpeningHours(
-    form.portalOpeningDays,
-    form.portalOpeningStart,
-    form.portalOpeningEnd
-  )
 
   function update<Key extends keyof typeof form>(
     key: Key,
@@ -287,117 +106,141 @@ export function EmpresaView() {
 
   function saveCompany() {
     if (!requiredFilled) {
-      setFeedback("Revise os campos obrigatórios antes de salvar.")
+      setFeedback("Revise os campos obrigatorios antes de salvar.")
       return
     }
 
-    window.localStorage.setItem(
-      COMPANY_PORTAL_ENABLED_STORAGE_KEY,
-      String(form.portalEnabled)
-    )
-    window.localStorage.setItem(COMPANY_PORTAL_SLUG_STORAGE_KEY, portalSlug)
-    window.localStorage.setItem(
-      COMPANY_PORTAL_SLOGAN_STORAGE_KEY,
-      form.portalSlogan.trim()
-    )
-    window.localStorage.setItem(
-      COMPANY_PORTAL_DESCRIPTION_STORAGE_KEY,
-      form.portalDescription.trim()
-    )
-    window.localStorage.setItem(
-      COMPANY_PORTAL_OPENING_HOURS_STORAGE_KEY,
-      portalOpeningHours
-    )
-
-    setForm((current) => ({
-      ...current,
-      portalOpeningHours,
-      portalSlug,
-    }))
-    notifyClientPortalSync()
     setFeedback("Dados da empresa salvos.")
   }
 
-  function restoreDefaults() {
-    window.localStorage.removeItem(COMPANY_LOGO_STORAGE_KEY)
-    window.localStorage.removeItem(COMPANY_ICON_STORAGE_KEY)
-    window.localStorage.removeItem(COMPANY_PORTAL_BANNER_STORAGE_KEY)
-    window.localStorage.removeItem(COMPANY_PORTAL_DESCRIPTION_STORAGE_KEY)
-    window.localStorage.removeItem(COMPANY_PORTAL_ENABLED_STORAGE_KEY)
-    window.localStorage.removeItem(COMPANY_PORTAL_OPENING_HOURS_STORAGE_KEY)
-    window.localStorage.removeItem(COMPANY_PORTAL_SLOGAN_STORAGE_KEY)
-    window.localStorage.removeItem(COMPANY_PORTAL_SLUG_STORAGE_KEY)
-
-    setUploadResetToken((current) => current + 1)
-
-    setForm((current) => ({
-      ...current,
-      corporateName: database.company.corporateName,
-      tradeName: database.company.tradeName,
-      cnpj: database.company.cnpj,
-      email: database.company.email,
-      timezone: database.company.timezone,
-      phone: database.company.phone,
-      logoUrl: database.company.logoUrl ?? "",
-      iconUrl: database.company.iconUrl ?? "",
-      slug: database.company.slug,
-      portalBannerUrl: "",
-      portalDescription:
-        "Experiencia premium para agendar, acompanhar planos e cuidar do visual sem mensagens soltas.",
-      portalEnabled: true,
-      portalOpeningDays: portalOpeningFallback.days,
-      portalOpeningEnd: portalOpeningFallback.end,
-      portalOpeningHours: "Seg a Sab, 09:00 as 19:00",
-      portalOpeningStart: portalOpeningFallback.start,
-      portalSlug: database.company.slug,
-      portalSlogan: "Cabelo, barba e cuidado no seu tempo.",
-      street: database.company.address.street,
-      number: database.company.address.number,
-      neighborhood: database.company.address.neighborhood,
-      city: database.company.address.city,
-      state: database.company.address.state,
-      zip: database.company.address.zip,
-      mapsUrl: database.company.address.mapsUrl,
-      instagram: database.company.social.instagram,
-      whatsapp: database.company.social.whatsapp,
-      facebook: database.company.social.facebook,
-    }))
-
-    setFeedback("Dados restaurados ao padrao. Uploads removidos.")
-    notifyClientPortalSync()
+  function updatePortal<Key extends keyof typeof portalForm>(
+    key: Key,
+    value: (typeof portalForm)[Key]
+  ) {
+    setPortalForm((current) => ({ ...current, [key]: value }))
   }
+
+  function getPreparedPortalSettings() {
+    const normalizedSlug =
+      normalizePortalSlug(portalForm.slug) || defaultPortalSettings.slug
+    const validColor = /^#[0-9a-fA-F]{6}$/.test(portalForm.primaryColor)
+
+    return {
+      ...portalForm,
+      slug: normalizedSlug,
+      name: portalForm.name.trim() || defaultPortalSettings.name,
+      slogan: portalForm.slogan.trim() || defaultPortalSettings.slogan,
+      description:
+        portalForm.description.trim() || defaultPortalSettings.description,
+      bannerUrl: portalForm.bannerUrl.trim() || defaultPortalSettings.bannerUrl,
+      logoUrl: portalForm.logoUrl.trim() || defaultPortalSettings.logoUrl,
+      primaryColor: validColor
+        ? portalForm.primaryColor
+        : defaultPortalSettings.primaryColor,
+    }
+  }
+
+  function savePortalSettings() {
+    const nextSettings = getPreparedPortalSettings()
+    setPortalForm(nextSettings)
+    writePortalSettings(nextSettings)
+    setPortalFeedback("Personalizacao do portal salva.")
+  }
+
+  function openPortal() {
+    const nextSettings = getPreparedPortalSettings()
+    setPortalForm(nextSettings)
+    writePortalSettings(nextSettings)
+    setPortalFeedback("Personalizacao do portal salva.")
+    window.open(getPortalUrl(nextSettings.slug), "_blank", "noopener,noreferrer")
+  }
+
+  function handlePortalImageUpload(
+    event: ChangeEvent<HTMLInputElement>,
+    key: "bannerUrl" | "logoUrl",
+    label: "Banner" | "Logo"
+  ) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return
+      openImageEditor(key, label, reader.result)
+      event.target.value = ""
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function openImageEditor(
+    key: "bannerUrl" | "logoUrl",
+    label: "Banner" | "Logo",
+    src = portalForm[key]
+  ) {
+    const isBanner = key === "bannerUrl"
+    setImageEditor({
+      key,
+      placementKey: isBanner ? "bannerPlacement" : "logoPlacement",
+      label,
+      src,
+      placement: isBanner
+        ? { ...portalForm.bannerPlacement }
+        : { ...portalForm.logoPlacement },
+      aspectClassName: isBanner
+        ? "aspect-[16/5] w-full"
+        : "aspect-square w-full max-w-56",
+      imageClassName: isBanner ? "rounded-2xl" : "rounded-[2rem]",
+    })
+  }
+
+  function applyImageEditor() {
+    if (!imageEditor) return
+
+    setPortalForm((current) => ({
+      ...current,
+      [imageEditor.key]: imageEditor.src,
+      [imageEditor.placementKey]: imageEditor.placement,
+    }))
+    setPortalFeedback(`${imageEditor.label} ajustado. Salve para atualizar o portal.`)
+    setImageEditor(null)
+  }
+
+  function removePortalImage(key: "bannerUrl" | "logoUrl") {
+    const isBanner = key === "bannerUrl"
+    setPortalForm((current) => ({
+      ...current,
+      [key]: isBanner
+        ? defaultPortalSettings.bannerUrl
+        : defaultPortalSettings.logoUrl,
+      [isBanner ? "bannerPlacement" : "logoPlacement"]: isBanner
+        ? defaultPortalSettings.bannerPlacement
+        : defaultPortalSettings.logoPlacement,
+    }))
+    setPortalFeedback(
+      `${isBanner ? "Banner" : "Logo"} removido. Salve para atualizar o portal.`
+    )
+  }
+
+  const safePortalPrimaryColor = /^#[0-9a-fA-F]{6}$/.test(
+    portalForm.primaryColor
+  )
+    ? portalForm.primaryColor
+    : defaultPortalSettings.primaryColor
 
   return (
     <>
-      <div className="admin-metric-grid">
-        <MetricCard
-          title="Empresa"
-          value={form.tradeName}
-          change="Cadastro principal ativo"
-          icon={Building02Icon}
-          tone="green"
-        />
-        <MetricCard
-          title="Pagamentos"
-          value={form.advancePayments ? "Adianta" : "Sem adiantamento"}
-          change="Gateway e taxas configurados"
-          icon={Wallet02Icon}
-          tone="amber"
-        />
-      </div>
-
       <SectionCard
-        title="Editar empresa"
-        description="Dados. Preencha todos os campos obrigatórios."
+        title="Dados"
+        description="Preencha todos os campos obrigatorios."
         action={
           <Button size="sm" onClick={saveCompany}>
             <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} />
-            Salvar alterações
+            Salvar alteracoes
           </Button>
         }
       >
         <FormGrid>
-          <FormField label="Razão social *">
+          <FormField label="Razao social *">
             <Input
               value={form.corporateName}
               onChange={(event) => update("corporateName", event.target.value)}
@@ -413,7 +256,9 @@ export function EmpresaView() {
             <Input
               value={form.cnpj}
               inputMode="numeric"
-              onChange={(event) => update("cnpj", event.target.value)}
+              onChange={(event) =>
+                update("cnpj", formatCnpjInput(event.target.value))
+              }
             />
           </FormField>
           <FormField label="Email *">
@@ -423,7 +268,7 @@ export function EmpresaView() {
               onChange={(event) => update("email", event.target.value)}
             />
           </FormField>
-          <FormField label="Fuso horário *">
+          <FormField label="Fuso horario *">
             <Select
               value={form.timezone}
               onValueChange={(value) => update("timezone", value)}
@@ -443,8 +288,10 @@ export function EmpresaView() {
           <FormField label="Telefone *">
             <Input
               value={form.phone}
-              inputMode="tel"
-              onChange={(event) => update("phone", event.target.value)}
+              inputMode="numeric"
+              onChange={(event) =>
+                update("phone", onlyDigits(event.target.value, 13))
+              }
             />
           </FormField>
         </FormGrid>
@@ -453,290 +300,117 @@ export function EmpresaView() {
       </SectionCard>
 
       <SectionCard
-        title="Portal do cliente"
-        description="Personalize a pagina publica mobile usada pelos clientes."
+        title="Personalizacao do portal"
+        description="Configure o que o cliente ve ao acessar o portal de agendamento."
         action={
-          <Button size="sm" asChild>
-            <Link href={portalUrl} target="_blank">
-              <HugeiconsIcon icon={GlobeIcon} size={16} />
-              Acessar portal
-            </Link>
+          <Button type="button" size="sm" variant="outline" onClick={openPortal}>
+            Acessar portal
           </Button>
         }
       >
         <FormGrid>
-          <FormField label="Portal ativo">
-            <label className="flex min-h-10 items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium">
-              <Checkbox
-                checked={form.portalEnabled}
-                onCheckedChange={(checked) =>
-                  update("portalEnabled", Boolean(checked))
-                }
-              />
-              <span>Permitir acesso publico ao portal do cliente</span>
-            </label>
-          </FormField>
-          <FormField label="URL publica">
-            <div className="flex min-w-0 gap-2">
-              <Input
-                value={form.portalSlug}
-                placeholder="bigood"
-                onChange={(event) =>
-                  update("portalSlug", normalizePortalSlug(event.target.value))
-                }
-              />
-              <Button size="icon" variant="outline" asChild>
-                <Link
-                  href={portalUrl}
-                  target="_blank"
-                  aria-label="Abrir portal"
-                >
-                  <HugeiconsIcon icon={Link01Icon} size={16} />
-                </Link>
-              </Button>
-            </div>
-            <p className="mt-2 text-xs break-all text-muted-foreground">
-              {portalUrl}
-            </p>
-          </FormField>
-          <FormField label="Slogan do portal">
+          <FormField label="Nome da barbearia *">
             <Input
-              value={form.portalSlogan}
-              onChange={(event) => update("portalSlogan", event.target.value)}
+              value={portalForm.name}
+              onChange={(event) => updatePortal("name", event.target.value)}
             />
           </FormField>
-          <FormField label="Dias de funcionamento">
-            <Select
-              value={form.portalOpeningDays}
-              onValueChange={(value) => update("portalOpeningDays", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {portalDayRangeOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <FormField label="Slug da URL *">
+            <Input
+              value={portalForm.slug}
+              onChange={(event) =>
+                updatePortal("slug", normalizePortalSlug(event.target.value))
+              }
+            />
           </FormField>
-          <FormField label="Abre as">
-            <Select
-              value={form.portalOpeningStart}
-              onValueChange={(value) => update("portalOpeningStart", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {portalTimeOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <FormField label="Slogan *">
+            <Input
+              value={portalForm.slogan}
+              onChange={(event) => updatePortal("slogan", event.target.value)}
+            />
           </FormField>
-          <FormField label="Fecha as">
-            <Select
-              value={form.portalOpeningEnd}
-              onValueChange={(value) => update("portalOpeningEnd", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {portalTimeOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <FormField label="Descricao *" className="sm:col-span-2">
+            <Input
+              value={portalForm.description}
+              onChange={(event) =>
+                updatePortal("description", event.target.value)
+              }
+            />
           </FormField>
-          <FormField label="Horario exibido no portal">
-            <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium text-foreground">
-              {portalOpeningHours}
-            </div>
-          </FormField>
-          <div className="col-span-full">
-            <FormField label="Descricao curta">
+          <FormField label="Cor primaria *" className="sm:col-span-2">
+            <div className="grid gap-2 sm:grid-cols-[5rem_minmax(0,1fr)]">
               <Input
-                value={form.portalDescription}
+                type="color"
+                value={safePortalPrimaryColor}
                 onChange={(event) =>
-                  update("portalDescription", event.target.value)
+                  updatePortal("primaryColor", event.target.value)
+                }
+                className="h-10 w-full p-1"
+              />
+              <Input
+                value={portalForm.primaryColor}
+                onChange={(event) =>
+                  updatePortal("primaryColor", event.target.value)
                 }
               />
-            </FormField>
-          </div>
+            </div>
+          </FormField>
         </FormGrid>
-        <div className="mt-4">
-          <UploadField
-            label="Banner do portal"
-            description="Imagem horizontal do topo do portal mobile. Se ficar vazio, o Bigood usa o fundo verde padrao."
-            previewUrl={form.portalBannerUrl}
-            storageKey={COMPANY_PORTAL_BANNER_STORAGE_KEY}
-            resetToken={uploadResetToken}
+
+        <div className="mt-5 grid gap-5">
+          <PortalImageUploadSection
+            title="Banner"
+            description="O banner deve possuir boa resolucao para ocupar o topo do portal."
+            buttonLabel="Adicionar banner"
+            imageUrl={portalForm.bannerUrl}
+            placement={portalForm.bannerPlacement}
+            imageClassName="aspect-[16/5] w-full max-w-2xl rounded-t-lg"
+            actionsClassName="w-full max-w-2xl rounded-b-lg"
+            onUpload={(event) =>
+              handlePortalImageUpload(event, "bannerUrl", "Banner")
+            }
+            onEdit={() => openImageEditor("bannerUrl", "Banner")}
+            onRemove={() => removePortalImage("bannerUrl")}
+          />
+          <PortalImageUploadSection
+            title="Logo"
+            description="A logo deve possuir as dimensoes de 1024 x 1024 pixels."
+            buttonLabel="Adicionar logo"
+            imageUrl={portalForm.logoUrl}
+            placement={portalForm.logoPlacement}
+            imageClassName="aspect-square w-full max-w-sm rounded-t-lg"
+            actionsClassName="w-full max-w-sm rounded-b-lg"
+            onUpload={(event) =>
+              handlePortalImageUpload(event, "logoUrl", "Logo")
+            }
+            onEdit={() => openImageEditor("logoUrl", "Logo")}
+            onRemove={() => removePortalImage("logoUrl")}
           />
         </div>
+
         <ResponsiveActions className="mt-5 border-t pt-5">
-          <Button variant="outline" asChild>
-            <Link href={portalUrl} target="_blank">
-              <HugeiconsIcon icon={GlobeIcon} size={16} />
-              Ver portal do cliente
-            </Link>
-          </Button>
-          <Button onClick={saveCompany}>
+          <Button type="button" onClick={savePortalSettings}>
             <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} />
-            Salvar portal
+            Salvar personalizacao
           </Button>
         </ResponsiveActions>
+
+        <FeedbackMessage>{portalFeedback}</FeedbackMessage>
       </SectionCard>
 
-      <SectionCard
-        title="Dados de pagamento"
-        description="Informações importantes sobre a plataforma de pagamentos"
-      >
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <ReadonlyInfo label="Pix Saque" value={form.pixWithdrawal} />
-          <ReadonlyInfo
-            label="Taxa Fixa Transação (Empresa)"
-            value={form.fixedTransactionFee}
-          />
-          <ReadonlyInfo
-            label="Taxa Variável Transação (Empresa)"
-            value={form.variableTransactionFee}
-          />
-          <ReadonlyInfo
-            label="Taxa Cashback (Empresa)"
-            value={form.cashbackFee}
-          />
-        </div>
-        <label className="mt-4 flex min-w-0 items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium">
-          <Checkbox
-            checked={form.advancePayments}
-            onCheckedChange={(checked) =>
-              update("advancePayments", Boolean(checked))
-            }
-          />
-          <span>Adianta pagamentos?</span>
-        </label>
-      </SectionCard>
+      <PortalImageEditorDialog
+        editor={imageEditor}
+        onEditorChange={setImageEditor}
+        onCancel={() => setImageEditor(null)}
+        onApply={applyImageEditor}
+      />
 
       <SectionCard
-        title="Imagens da empresa"
-        action={
-          <Button size="sm" variant="outline" onClick={restoreDefaults}>
-            Restaurar padrao
-          </Button>
-        }
-      >
-        <div className="grid gap-3 md:grid-cols-2">
-          <UploadField
-            label="Logo"
-            description="A logo deve possuir as dimensões de 1024 x 1024 pixels."
-            previewUrl={form.logoUrl}
-            storageKey={COMPANY_LOGO_STORAGE_KEY}
-            resetToken={uploadResetToken}
-          />
-          <UploadField
-            label="Ícone"
-            description="O ícone deve possuir as dimensões de 512x512 pixels."
-            previewUrl={form.iconUrl}
-            storageKey={COMPANY_ICON_STORAGE_KEY}
-            resetToken={uploadResetToken}
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Localização"
-        description="Onde seus clientes podem te encontrar"
+        title="Regras de tolerancia e penalidade"
+        description="Preencha todos os campos obrigatorios"
       >
         <FormGrid>
-          <FormField label="Rua / Logradouro">
-            <Input
-              value={form.street}
-              onChange={(event) => update("street", event.target.value)}
-            />
-          </FormField>
-          <FormField label="Número">
-            <Input
-              value={form.number}
-              onChange={(event) => update("number", event.target.value)}
-            />
-          </FormField>
-          <FormField label="Bairro">
-            <Input
-              value={form.neighborhood}
-              onChange={(event) => update("neighborhood", event.target.value)}
-            />
-          </FormField>
-          <FormField label="Cidade">
-            <Input
-              value={form.city}
-              onChange={(event) => update("city", event.target.value)}
-            />
-          </FormField>
-          <FormField label="Estado (UF)">
-            <Input
-              value={form.state}
-              placeholder="Ex: SP"
-              onChange={(event) => update("state", event.target.value)}
-            />
-          </FormField>
-          <FormField label="CEP">
-            <Input
-              value={form.zip}
-              onChange={(event) => update("zip", event.target.value)}
-            />
-          </FormField>
-          <div className="col-span-full">
-            <FormField label="Link do Google Maps">
-              <Input
-                value={form.mapsUrl}
-                placeholder="https://maps.google.com/..."
-                onChange={(event) => update("mapsUrl", event.target.value)}
-              />
-            </FormField>
-          </div>
-        </FormGrid>
-      </SectionCard>
-
-      <SectionCard title="Redes Sociais">
-        <FormGrid>
-          <FormField label="Instagram (usuário)">
-            <Input
-              value={form.instagram}
-              placeholder="@seu.perfil"
-              onChange={(event) => update("instagram", event.target.value)}
-            />
-          </FormField>
-          <FormField label="WhatsApp (número)">
-            <Input
-              value={form.whatsapp}
-              placeholder="11987654321"
-              onChange={(event) => update("whatsapp", event.target.value)}
-            />
-          </FormField>
-          <FormField label="Facebook (slug)">
-            <Input
-              value={form.facebook}
-              placeholder="sua.pagina"
-              onChange={(event) => update("facebook", event.target.value)}
-            />
-          </FormField>
-        </FormGrid>
-      </SectionCard>
-
-      <SectionCard
-        title="Regras de tolerância e penalidade"
-        description="Preencha todos os campos obrigatórios"
-      >
-        <FormGrid>
-          <FormField label="Tolerância de cancelamento *">
+          <FormField label="Tolerancia de cancelamento *">
             <Select
               value={form.cancellationTolerance}
               onValueChange={(value) => update("cancellationTolerance", value)}
@@ -753,7 +427,7 @@ export function EmpresaView() {
               </SelectContent>
             </Select>
           </FormField>
-          <FormField label="Duração da penalidade *">
+          <FormField label="Duracao da penalidade *">
             <Select
               value={form.penaltyDuration}
               onValueChange={(value) => update("penaltyDuration", value)}
@@ -773,178 +447,239 @@ export function EmpresaView() {
         </FormGrid>
       </SectionCard>
 
-      <SectionCard title="Clube da Barba">
-        <FormGrid>
-          <FormField label="Nome Clube da Barba">
-            <Input
-              value={form.beardClubName}
-              onChange={(event) => update("beardClubName", event.target.value)}
-            />
-          </FormField>
-        </FormGrid>
-      </SectionCard>
-
       <SectionCard
-        title="Configurações módulo Dpote"
+        title="Configuracoes modulo Dpote"
         description="Apenas para assinantes Dpote"
       >
         <FormGrid>
-          <FormField label="Comissão (%) *">
+          <FormField label="Comissao (%) *">
             <Input
               value={form.dpoteCommission}
               inputMode="numeric"
-              type="number"
-              min={0}
-              max={100}
               onChange={(event) =>
-                update("dpoteCommission", event.target.value)
+                update("dpoteCommission", formatNumberInput(event.target.value))
               }
             />
           </FormField>
         </FormGrid>
       </SectionCard>
-
-      <SectionCard title="Financeiro">
-        <FormGrid>
-          <FormField label="Descontar vale de">
-            <Select
-              value={form.voucherDiscountFrom}
-              onValueChange={(value) => update("voucherDiscountFrom", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {voucherDiscountOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormField>
-        </FormGrid>
-        <ResponsiveActions className="mt-5 border-t pt-5">
-          <Button variant="outline" onClick={restoreDefaults}>
-            Restaurar dados
-          </Button>
-          <Button onClick={saveCompany}>
-            <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} />
-            Salvar alterações
-          </Button>
-        </ResponsiveActions>
-      </SectionCard>
     </>
   )
 }
 
-function ReadonlyInfo({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0 rounded-md border bg-muted/30 p-3">
-      <p className="text-xs font-medium text-muted-foreground uppercase">
-        {label}
-      </p>
-      <p className="mt-2 font-semibold break-words">{value}</p>
-    </div>
-  )
-}
-
-function UploadField({
-  label,
-  description,
-  multiple,
-  previewUrl,
-  storageKey,
-  resetToken,
+function PortalImageEditorDialog({
+  editor,
+  onEditorChange,
+  onCancel,
+  onApply,
 }: {
-  label: string
-  description: string
-  multiple?: boolean
-  previewUrl?: string
-  storageKey?: string
-  resetToken?: number
+  editor: PortalImageEditorState | null
+  onEditorChange: (editor: PortalImageEditorState | null) => void
+  onCancel: () => void
+  onApply: () => void
 }) {
-  const [preview, setPreview] = useState(() => {
-    if (typeof window === "undefined" || !storageKey) return previewUrl
+  function updatePlacement(key: keyof PortalImagePlacement, value: number) {
+    if (!editor) return
 
-    return window.localStorage.getItem(storageKey) || previewUrl
-  })
-  const [message, setMessage] = useState("")
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      if (!storageKey) {
-        setPreview(previewUrl)
-        return
-      }
-
-      setPreview(window.localStorage.getItem(storageKey) || previewUrl)
+    onEditorChange({
+      ...editor,
+      placement: {
+        ...editor.placement,
+        [key]: value,
+      },
     })
-
-    return () => window.cancelAnimationFrame(frame)
-  }, [previewUrl, resetToken, storageKey])
-
-  async function updatePreview(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    if (!file || !storageKey) return
-
-    setMessage("Preparando imagem...")
-
-    try {
-      const nextPreview = await createImagePreview(file)
-      setPreview(nextPreview)
-      window.localStorage.setItem(storageKey, nextPreview)
-      setMessage("Imagem salva.")
-      notifyClientPortalSync()
-    } catch {
-      setMessage("Nao foi possivel salvar a imagem. Tente uma imagem menor.")
-    }
   }
 
   return (
-    <label className="grid min-w-0 gap-3 rounded-md border bg-muted/30 p-3">
-      <span className="flex min-w-0 items-start gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
-          <HugeiconsIcon icon={File01Icon} size={18} />
-        </span>
-        <span className="min-w-0">
-          <span className="block font-semibold">{label}</span>
-          <span className="mt-1 block text-sm leading-snug text-muted-foreground">
-            {description}
-          </span>
+    <Dialog open={Boolean(editor)} onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            Ajustar {editor?.label.toLowerCase() ?? "imagem"}
+          </DialogTitle>
+          <DialogDescription>
+            Posicione e aproxime a imagem antes de aplicar no portal.
+          </DialogDescription>
+        </DialogHeader>
+
+        {editor ? (
+          <DialogBody className="space-y-5">
+            <div
+              className={`mx-auto overflow-hidden border bg-muted shadow-sm ${editor.aspectClassName} ${editor.imageClassName}`}
+            >
+              <img
+                src={editor.src}
+                alt={`Edicao de ${editor.label.toLowerCase()}`}
+                className="size-full object-cover"
+                style={{
+                  objectPosition: `${editor.placement.x}% ${editor.placement.y}%`,
+                  transform: `scale(${editor.placement.zoom})`,
+                }}
+              />
+            </div>
+
+            <div className="grid gap-4">
+              <RangeField
+                label="Horizontal"
+                value={editor.placement.x}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(value) => updatePlacement("x", value)}
+              />
+              <RangeField
+                label="Vertical"
+                value={editor.placement.y}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(value) => updatePlacement("y", value)}
+              />
+              <RangeField
+                label="Zoom"
+                value={editor.placement.zoom}
+                min={1}
+                max={2}
+                step={0.05}
+                onChange={(value) => updatePlacement("zoom", value)}
+              />
+            </div>
+          </DialogBody>
+        ) : null}
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button type="button" onClick={onApply}>
+            Aplicar imagem
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function PortalImageUploadSection({
+  title,
+  description,
+  buttonLabel,
+  imageUrl,
+  placement,
+  imageClassName,
+  actionsClassName,
+  onUpload,
+  onEdit,
+  onRemove,
+}: {
+  title: string
+  description: string
+  buttonLabel: string
+  imageUrl: string
+  placement: PortalImagePlacement
+  imageClassName: string
+  actionsClassName: string
+  onUpload: (event: ChangeEvent<HTMLInputElement>) => void
+  onEdit: () => void
+  onRemove: () => void
+}) {
+  return (
+    <section className="overflow-hidden rounded-lg border bg-background">
+      <div className="flex flex-wrap items-center gap-1.5 border-b px-4 py-3">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <p className="text-sm text-muted-foreground">{description}</p>
+        <Info className="size-4 text-muted-foreground" aria-hidden="true" />
+      </div>
+      <div className="space-y-6 p-4">
+        <div>
+          <Button type="button" asChild>
+            <label>
+              <Camera className="size-4" />
+              {buttonLabel}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={onUpload}
+              />
+            </label>
+          </Button>
+        </div>
+
+        <div className="mx-auto">
+          <div className={`mx-auto overflow-hidden ${imageClassName}`}>
+            <img
+              src={imageUrl}
+              alt={title}
+              className="size-full object-cover"
+              style={{
+                objectPosition: `${placement.x}% ${placement.y}%`,
+                transform: `scale(${placement.zoom})`,
+              }}
+            />
+          </div>
+          <div className={`mx-auto grid ${actionsClassName}`}>
+            <button
+              type="button"
+              onClick={onRemove}
+              className="flex min-h-10 items-center justify-center gap-2 bg-pink-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-pink-600"
+            >
+              <X className="size-4" />
+              Remover
+            </button>
+          </div>
+        </div>
+
+        <ResponsiveActions>
+          <Button type="button" variant="outline" onClick={onEdit}>
+            Editar enquadramento
+          </Button>
+        </ResponsiveActions>
+      </div>
+    </section>
+  )
+}
+
+function RangeField({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <label className="grid gap-1.5 text-sm">
+      <span className="flex items-center justify-between gap-3">
+        <span className="font-medium">{label}</span>
+        <span className="text-xs text-muted-foreground">
+          {label === "Zoom" ? `${value.toFixed(2)}x` : `${Math.round(value)}%`}
         </span>
       </span>
-      {preview && (
-        <span className="grid aspect-square max-h-32 place-items-center rounded-md border bg-background p-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={preview}
-            alt={`Prévia de ${label}`}
-            className="h-full w-full object-contain"
-          />
-        </span>
-      )}
-      <Input
-        type="file"
-        accept="image/*"
-        multiple={multiple}
-        onChange={updatePreview}
-        className="h-auto py-2 file:mr-3 file:rounded-full file:border-0 file:bg-primary/15 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-primary"
+      <input
+        type="range"
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="h-2 w-full cursor-pointer accent-primary"
       />
-      {message && (
-        <span className="text-xs font-semibold text-muted-foreground">
-          {message}
-        </span>
-      )}
     </label>
   )
 }
 
 function FeedbackMessage({ children }: { children: ReactNode }) {
   return (
-    <div className="mt-5 flex min-w-0 items-center justify-between gap-3 rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-      <span className="break-words">{children}</span>
-      <StatusBadge tone="green">Editável</StatusBadge>
+    <div className="mt-5 rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+      {children}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-export function JsonLd() {
+﻿export function JsonLd() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -6,7 +6,7 @@ export function JsonLd() {
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     description:
-      "Sistema de gestão para barbearias com agenda online, caixa, planos de assinatura e portal do cliente.",
+      "Sistema de gestao para barbearias com agenda, caixa, clientes e planos de assinatura.",
     author: {
       "@type": "Organization",
       name: "Bigood",

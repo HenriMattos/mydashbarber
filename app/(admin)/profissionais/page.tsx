@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation"
+import { ProfessionalsView } from "@/components/admin/professionals-view"
 
 export default function ProfissionaisPage() {
-  redirect("/profissionais/gerenciar")
+  return <ProfessionalsView />
 }

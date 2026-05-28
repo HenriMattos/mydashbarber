@@ -1,4 +1,4 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 import {
   Calendar03Icon,
   CashierIcon,
@@ -19,7 +19,7 @@ const footerBadges = [
   { icon: Calendar03Icon, label: "Agenda" },
   { icon: CashierIcon, label: "Caixa" },
   { icon: CreditCardIcon, label: "Planos" },
-  { icon: SmartPhone01Icon, label: "Portal" },
+  { icon: SmartPhone01Icon, label: "Clientes" },
 ]
 
 const footerColumns = [
@@ -29,36 +29,36 @@ const footerColumns = [
         { label: "Como funciona", href: "#como-funciona" },
         { label: "Dashboard", href: "#dashboard" },
         { label: "Recursos", href: "#recursos" },
-        { label: "Dúvidas", href: "#duvidas" },
+        { label: "DÃºvidas", href: "#duvidas" },
       ],
     },
     {
-      title: "Gestão",
+      title: "GestÃ£o",
       links: [
         { label: "Agenda online", href: "#recursos" },
         { label: "Caixa e comandas", href: "#recursos" },
         { label: "Assinaturas", href: "#recursos" },
-        { label: "Portal do cliente", href: "#portal-cliente" },
+        { label: "Clientes", href: "#recursos" },
       ],
     },
     {
       title: "Acesso",
       links: [
         { label: "Entrar", href: "/login" },
-        { label: "Dúvidas", href: "#duvidas" },
+        { label: "DÃºvidas", href: "#duvidas" },
       ],
     },
 ]
 
 export function LandingFooter() {
   return (
-    <footer className="bg-[var(--landing-primary-dark)] text-white" aria-label="Rodapé">
+    <footer className="bg-[var(--landing-primary-dark)] text-white" aria-label="RodapÃ©">
       <Container className="py-12">
         <div className="grid gap-8 border-b border-white/10 pb-8 lg:grid-cols-[1.1fr_1.4fr_0.9fr]">
           <div>
             <BrandMark inverse />
             <p className="mt-5 max-w-[360px] text-sm leading-6 text-white/64">
-              Sistema de gestão para barbearias que querem agenda, caixa,
+              Sistema de gestÃ£o para barbearias que querem agenda, caixa,
               clientes e planos de assinatura no mesmo lugar.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
@@ -105,13 +105,13 @@ export function LandingFooter() {
               href="#demonstracao"
               className={cn(limeButtonClass, "mt-6")}
             >
-              Agendar demonstração
+              Agendar demonstraÃ§Ã£o
             </LandingLinkButton>
           </div>
         </div>
 
         <div className="flex flex-col gap-4 pt-7 text-xs font-semibold text-white/44 md:flex-row md:items-center md:justify-between">
-          <p>&copy; 2026 Bigood. Gestão simples para barbearias.</p>
+          <p>&copy; 2026 Bigood. GestÃ£o simples para barbearias.</p>
           <p>Feito para agenda, caixa, clientes e assinaturas.</p>
         </div>
       </Container>

@@ -799,7 +799,7 @@ function buildSearchItems(): SearchItem[] {
       id: `client:${client.id}`,
       title: client.name,
       subtitle: `Cliente | ${client.phone}`,
-      href: "/clientes/listagem",
+      href: "/clientes",
       searchBlob: `${client.name} ${client.phone} ${client.email ?? ""}`,
       kind: "dado",
     }))
@@ -822,7 +822,7 @@ function buildSearchItems(): SearchItem[] {
       id: `pro:${pro.id}`,
       title: pro.name,
       subtitle: "Profissional",
-      href: "/profissionais/gerenciar",
+      href: "/profissionais",
       searchBlob: `${pro.name} ${pro.role} ${pro.commission}`,
       kind: "dado",
     }))

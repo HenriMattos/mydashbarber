@@ -55,6 +55,12 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { database } from "@/components/admin/database"
+import {
+  getComandaPaidTotal,
+  getComandaPendingTotal,
+} from "@/components/admin/caixa-data"
+import { getFinancialInsights } from "@/components/admin/financial-insights"
+import { COMMAND_STATUS, SUBSCRIPTION_STATUS } from "@/types"
 
 type Tone = "green" | "amber" | "red" | "blue" | "neutral"
 type FinancialType = "Receita" | "Despesa"
@@ -181,6 +187,53 @@ export function FinanceiroOverview() {
       ),
     [movements]
   )
+  const financialInsights = getFinancialInsights()
+  const withdrawalHistory = [
+    {
+      id: "SW-1021",
+      requestedAt: "22/05/2026 10:30",
+      amount: 780,
+      status: "Concluido",
+      expectedAt: "22/05/2026",
+    },
+    {
+      id: "SW-1022",
+      requestedAt: "23/05/2026 15:10",
+      amount: 460,
+      status: "Pendente",
+      expectedAt: "24/05/2026",
+    },
+  ] as const
+  const commandPendingTotal = database.comandas.reduce(
+    (sum, comanda) => sum + getComandaPendingTotal(comanda),
+    0
+  )
+  const commandPaidTotal = database.comandas.reduce(
+    (sum, comanda) => sum + getComandaPaidTotal(comanda),
+    0
+  )
+  const openCommands = database.comandas.filter(
+    (comanda) => comanda.status === COMMAND_STATUS.OPEN
+  ).length
+  const pendingStatusCommands = database.comandas.filter(
+    (comanda) => comanda.status === COMMAND_STATUS.PENDING
+  ).length
+  const pendingCommands = openCommands + pendingStatusCommands
+  const activeSubscriptions = database.subscriptions.filter(
+    (subscription) => subscription.status === SUBSCRIPTION_STATUS.ACTIVE
+  ).length
+  const delinquentSubscriptions = database.subscriptions.filter(
+    (subscription) => subscription.status === SUBSCRIPTION_STATUS.DELINQUENT
+  ).length
+  const mrrEstimated = database.subscriptions
+    .filter((subscription) => subscription.status === SUBSCRIPTION_STATUS.ACTIVE)
+    .reduce((sum, subscription) => sum + subscription.value, 0)
+  const clientsWithoutReturn = database.clients.filter(
+    (client) => (client.noReturnDays ?? 0) >= 60 || client.status === "sem_retorno"
+  ).length
+  const clientsWithPendingCommand = database.clients.filter(
+    (client) => (client.pendingCommandTotal ?? 0) > 0
+  ).length
   const additionalFeeRate =
     database.analytics.monthlyGrossRevenue > 0
       ? database.analytics.paymentFeesEstimated /
@@ -257,6 +310,68 @@ export function FinanceiroOverview() {
 
   return (
     <>
+      <div className="admin-metric-grid" data-columns="6">
+        <MetricCard
+          title="Total vendido no periodo"
+          value={formatCurrency(financialInsights.totalSold)}
+          change="Servicos e produtos em comandas"
+          icon={ChartBarLineIcon}
+          tone="blue"
+        />
+        <MetricCard
+          title="Total recebido diretamente"
+          value={formatCurrency(financialInsights.directReceivedTotal)}
+          change="Pix, dinheiro, maquininha e meios externos"
+          icon={MoneyReceiveCircleIcon}
+          tone="amber"
+        />
+        <MetricCard
+          title="Total processado pela plataforma"
+          value={formatCurrency(financialInsights.platformProcessedTotal)}
+          change="Gateway e pagamentos internos"
+          icon={ShieldCheck}
+          tone="green"
+        />
+        <MetricCard
+          title="Total vindo de assinaturas"
+          value={formatCurrency(financialInsights.subscriptionRevenueTotal)}
+          change="Receita recorrente dentro da plataforma"
+          icon={Wallet02Icon}
+          tone="blue"
+        />
+        <MetricCard
+          title="Saldo disponivel para saque"
+          value={formatCurrency(financialInsights.platformAvailableToWithdraw)}
+          change="Somente valores repassaveis"
+          icon={DollarCircleIcon}
+          tone="green"
+        />
+        <MetricCard
+          title="Saldo pendente de liberacao"
+          value={formatCurrency(financialInsights.platformPendingRelease)}
+          change="Aguardando liberacao do processamento"
+          icon={InformationCircleIcon}
+          tone="amber"
+        />
+      </div>
+
+      <SectionCard
+        title="Historico de saques solicitados"
+        description="Solicitacoes de saque do saldo processado pela plataforma"
+      >
+        <ResponsiveFinancialRows
+          columns={["Solicitacao", "Valor", "Status"]}
+          rows={withdrawalHistory.map((item) => [
+            `${item.id} - ${item.requestedAt}`,
+            formatCurrency(item.amount),
+            `${item.status} (previsto ${item.expectedAt})`,
+          ])}
+          primaryLabel="Solicitacao"
+          secondaryLabel="Valor"
+          tertiaryLabel="Status"
+        />
+      </SectionCard>
+
       <div className="admin-metric-grid" data-columns="4">
         <MetricCard
           title="Receita Bruta"
@@ -346,6 +461,50 @@ export function FinanceiroOverview() {
             {feedback}
           </p>
         </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Leitura gerencial"
+        description="Recebido, pendente, assinatura e clientes em um unico bloco"
+      >
+        <ResponsiveFinancialRows
+          columns={["Indicador", "Valor", "Leitura"]}
+          rows={[
+            [
+              "Receita recebida",
+              formatCurrency(commandPaidTotal + totals.income),
+              "Comandas pagas e entradas manuais",
+            ],
+            [
+              "Pendente",
+              formatCurrency(commandPendingTotal),
+              "Comandas abertas e pendentes",
+            ],
+            [
+              "Assinantes ativos",
+              String(activeSubscriptions),
+              `${delinquentSubscriptions} inadimplentes e MRR estimado de ${formatCurrency(mrrEstimated)}`,
+            ],
+            [
+              "Clientes sem retorno",
+              String(clientsWithoutReturn),
+              `${clientsWithPendingCommand} clientes com pendencia aberta`,
+            ],
+            [
+              "Ocupacao da agenda",
+              `${financialInsights.agendaOccupancy}%`,
+              `${financialInsights.todayAppointments} agendamentos e ${financialInsights.completedAppointments} concluidos hoje`,
+            ],
+            [
+              "Comandas pendentes",
+              String(pendingCommands),
+              `${openCommands} abertas e ${pendingStatusCommands} pendentes`,
+            ],
+          ]}
+          primaryLabel="Indicador"
+          secondaryLabel="Valor"
+          tertiaryLabel="Leitura"
+        />
       </SectionCard>
 
       <SectionCard
@@ -2028,3 +2187,4 @@ function parseIntegerInput(value: string, maxValue: number) {
 function clampNumber(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
 }
+

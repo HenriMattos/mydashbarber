@@ -1,6 +1,7 @@
 "use client"
 
 import { type ReactNode, useMemo, useState } from "react"
+import Link from "next/link"
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import {
   Add01Icon,
@@ -13,7 +14,6 @@ import {
   Clock01Icon,
   Delete02Icon,
   InformationCircleIcon,
-  Store01Icon,
   UserAdd01Icon,
   UserSearch01Icon,
 } from "@hugeicons/core-free-icons"
@@ -21,6 +21,7 @@ import {
 import { serviceNames } from "@/components/admin/catalog-data"
 import { database } from "@/components/admin/database"
 import { EmptyState } from "@/components/admin/empty-state"
+import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import {
@@ -39,6 +40,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Select,
@@ -47,22 +49,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import {
+  APPOINTMENT_STATUS,
+  APPOINTMENT_STATUS_LABELS,
+  ATTENDANCE_STATUS,
+  ATTENDANCE_STATUS_LABELS,
+  COMMAND_STATUS,
+  COMMAND_STATUS_LABELS,
+  SUBSCRIPTION_STATUS,
+  SUBSCRIPTION_STATUS_LABELS,
+  type AgendaEvent as AdminAgendaEvent,
+  type AppointmentStatus,
+  type AttendanceStatus,
+  type CommandStatus,
+  type SubscriptionStatus,
+} from "@/types"
 
 type Barber = string
-type EventType = "appointment" | "blocked" | "break" | "unavailable"
-type RepeatMode = "today" | "automatic"
-
-type AgendaEvent = {
-  id: number
-  barber: Barber
-  date: string
-  start: string
-  end: string
-  title: string
-  detail: string
-  type: EventType
-}
+type AgendaEvent = AdminAgendaEvent
+type AgendaFilter =
+  | "all"
+  | "subscribers"
+  | "walk_in"
+  | "delinquent"
+  | "attendance"
+  | "pending_command"
+  | "needs_attention"
+  | "no_show"
+  | "cancelled"
 
 type AgendaClient = {
   id: string
@@ -83,14 +100,17 @@ type NewAgendaClient = {
 const barbers: Barber[] = database.professionals
   .filter((professional) => professional.status === "Ativo")
   .map((professional) => professional.name)
-const appointmentTypes = [
-  "Agendamento",
-  "Retorno",
-  "Encaixe",
-  "Intervalo",
-  "Bloqueio",
+const agendaFilterOptions: { value: AgendaFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "subscribers", label: "Assinantes" },
+  { value: "walk_in", label: "Avulsos" },
+  { value: "delinquent", label: "Inadimplentes" },
+  { value: "needs_attention", label: "Atenção" },
+  { value: "attendance", label: "Em atendimento" },
+  { value: "pending_command", label: "Comanda pendente" },
+  { value: "no_show", label: "Faltas" },
+  { value: "cancelled", label: "Cancelados" },
 ]
-const branches: string[] = []
 const initialClients: AgendaClient[] = database.clients.map((client) => ({
   id: String(client.id),
   name: client.name,
@@ -112,29 +132,6 @@ const repurchaseItems = database.services.map((service) => ({
   label: service.name,
   days: service.repurchaseDays,
 }))
-const weekdays = [
-  { value: 0, label: "Dom" },
-  { value: 1, label: "Seg" },
-  { value: 2, label: "Ter" },
-  { value: 3, label: "Qua" },
-  { value: 4, label: "Qui" },
-  { value: 5, label: "Sex" },
-  { value: 6, label: "Sab" },
-]
-const months = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
-]
 const timeSlots = buildTimeSlots("09:00", "18:00", 10)
 const slotHeight = 38
 
@@ -150,24 +147,34 @@ export function AgendaView() {
   const [appointmentClients, setAppointmentClients] = useState(initialClients)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [formAppointmentType, setFormAppointmentType] = useState("Agendamento")
   const [formStart, setFormStart] = useState("09:00")
   const [formEnd, setFormEnd] = useState("09:30")
   const [formClient, setFormClient] = useState("")
   const [formService, setFormService] = useState(serviceNames[0] ?? "")
   const [formAddedServices, setFormAddedServices] = useState<string[]>([])
-  const [formBranch, setFormBranch] = useState((branches[0] ?? ""))
   const [formNoPreference, setFormNoPreference] = useState(false)
-  const [blockReason, setBlockReason] = useState("")
-  const [formRepeatMode, setFormRepeatMode] = useState<RepeatMode>("today")
-  const [formRepeatDays, setFormRepeatDays] = useState<number[]>([
-    1, 2, 3, 4, 5,
-  ])
-  const [formRepurchaseItem, setFormRepurchaseItem] = useState("none")
+  const [agendaFilter, setAgendaFilter] = useState<AgendaFilter>("all")
 
   const selectedDate = `${selectedYear}-${selectedMonth}-${selectedDay.padStart(2, "0")}`
 
-  const dayEvents = useMemo(
+  const selectedDateObj = useMemo(
+    () =>
+      new Date(
+        Number(selectedYear),
+        Number(selectedMonth) - 1,
+        Number(selectedDay)
+      ),
+    [selectedYear, selectedMonth, selectedDay]
+  )
+
+  function handleDateSelect(date: Date | undefined) {
+    if (!date) return
+    setSelectedDay(String(date.getDate()).padStart(2, "0"))
+    setSelectedMonth(String(date.getMonth() + 1).padStart(2, "0"))
+    setSelectedYear(String(date.getFullYear()))
+  }
+
+  const selectedDateEvents = useMemo(
     () =>
       events
         .filter(
@@ -177,22 +184,31 @@ export function AgendaView() {
         .sort((a, b) => a.start.localeCompare(b.start)),
     [events, selectedBarber, selectedDate]
   )
+  const dayEvents = useMemo(
+    () =>
+      selectedDateEvents.filter((event) =>
+        matchesAgendaFilter(event, agendaFilter)
+      ),
+    [agendaFilter, selectedDateEvents]
+  )
+  const agendaSummary = useMemo(
+    () => buildAgendaSummary(selectedDateEvents),
+    [selectedDateEvents]
+  )
+  const editingEvent = useMemo(
+    () => events.find((event) => event.id === editingId) ?? null,
+    [editingId, events]
+  )
 
   function openNewAppointment(slot = "09:00", barber = selectedBarber) {
     setSelectedBarber(barber)
     setEditingId(null)
-    setFormAppointmentType("Agendamento")
     setFormStart(slot)
     setFormEnd(nextSlot(slot))
     setFormClient("")
     setFormService(serviceNames[0] ?? "")
     setFormAddedServices([])
-    setFormBranch((branches[0] ?? ""))
     setFormNoPreference(false)
-    setBlockReason("")
-    setFormRepeatMode("today")
-    setFormRepeatDays([1, 2, 3, 4, 5])
-    setFormRepurchaseItem("none")
     setModalOpen(true)
   }
 
@@ -209,26 +225,11 @@ export function AgendaView() {
 
     if (event) {
       setEditingId(event.id)
-      setFormAppointmentType(
-        event.type === "appointment"
-          ? "Agendamento"
-          : event.type === "break"
-            ? "Intervalo"
-            : "Bloqueio"
-      )
       setFormStart(event.start)
       setFormEnd(event.end)
-      setFormClient(event.type === "appointment" ? event.title : "")
-      setFormService(
-        event.type === "appointment" ? event.detail : (serviceNames[0] ?? "")
-      )
-      setFormAddedServices(event.type === "appointment" ? [event.detail] : [])
-      setBlockReason(
-        event.type !== "appointment" ? event.title : "Horario bloqueado"
-      )
-      setFormRepeatMode("today")
-      setFormRepeatDays([1, 2, 3, 4, 5])
-      setFormRepurchaseItem("none")
+      setFormClient(event.title)
+      setFormService(event.detail || (serviceNames[0] ?? ""))
+      setFormAddedServices([event.detail])
       setModalOpen(true)
       return
     }
@@ -250,59 +251,65 @@ export function AgendaView() {
       end: formEnd,
       title,
       detail: eventServices,
+      status: APPOINTMENT_STATUS.CONFIRMED,
+      origin: "manual",
+      reservedBenefitServiceId: getReservableServiceId(title, eventServices),
       type: "appointment",
     }
-    const repurchase = repurchaseItems.find(
-      (item) => item.id === formRepurchaseItem
-    )
-    const repurchaseEvent: AgendaEvent | null = repurchase
-      ? {
-          ...nextEvent,
-          id: baseId + 1,
-          date: toDateInputValue(
-            addDays(parseLocalDate(selectedDate), repurchase.days)
-          ),
-          detail: `${repurchase.label} (recompra)`,
-        }
-      : null
 
-    setEvents((current) =>
-      editingId
-        ? current.map((event) => (event.id === editingId ? nextEvent : event))
-        : repurchaseEvent
-          ? [...current, nextEvent, repurchaseEvent]
-          : [...current, nextEvent]
-    )
-    setModalOpen(false)
-  }
+    setEvents((current) => {
+      if (!editingId) {
+        return [...current, nextEvent]
+      }
 
-  function blockSelectedSlot() {
-    const isInterval = formAppointmentType === "Intervalo"
-    const title = isInterval
-      ? "Intervalo"
-      : blockReason.trim() || "Horario bloqueado"
-    const type: EventType = isInterval ? "break" : "blocked"
-    const detail = formRepeatMode === "automatic" ? "Automatico" : "Hoje"
-    const baseEvent: AgendaEvent = {
-      id: editingId ?? Date.now(),
-      barber: selectedBarber,
-      date: selectedDate,
-      start: formStart,
-      end: formEnd,
-      title,
-      detail,
-      type,
-    }
-    const nextEvents =
-      formRepeatMode === "automatic"
-        ? buildRecurringEvents(baseEvent, formRepeatDays)
-        : [baseEvent]
+      const original = current.find((event) => event.id === editingId)
+      const wasRescheduled =
+        original &&
+        (original.date !== nextEvent.date ||
+          original.start !== nextEvent.start ||
+          original.end !== nextEvent.end ||
+          original.barber !== nextEvent.barber)
 
-    setEvents((current) =>
-      editingId
-        ? current.map((event) => (event.id === editingId ? baseEvent : event))
-        : [...current, ...nextEvents]
-    )
+      if (!wasRescheduled) {
+        return current.map((event) =>
+          event.id === editingId
+            ? {
+                ...event,
+                ...nextEvent,
+                status: event.status ?? APPOINTMENT_STATUS.CONFIRMED,
+                attendanceStatus: event.attendanceStatus,
+                commandId: event.commandId,
+                notes: event.notes,
+              }
+            : event
+        )
+      }
+
+      return current.flatMap((event) =>
+        event.id === editingId
+          ? [
+              {
+                ...event,
+                status: APPOINTMENT_STATUS.CANCELLED,
+                cancelReason: "rescheduled",
+                notes: appendEventNote(
+                  event.notes,
+                  `Remarcado para ${formatShortDate(nextEvent.date)} as ${nextEvent.start}.`
+                ),
+              },
+              {
+                ...nextEvent,
+                id: Date.now(),
+                rescheduledFromId: event.id,
+                notes: appendEventNote(
+                  nextEvent.notes,
+                  "Novo horario criado por remarcacao."
+                ),
+              },
+            ]
+          : [event]
+      )
+    })
     setModalOpen(false)
   }
 
@@ -311,6 +318,73 @@ export function AgendaView() {
 
     setEvents((current) => current.filter((event) => event.id !== editingId))
     setModalOpen(false)
+  }
+
+  function updateEditingEvent(patch: Partial<AgendaEvent>) {
+    if (!editingId) return
+
+    setEvents((current) =>
+      current.map((event) =>
+        event.id === editingId ? { ...event, ...patch } : event
+      )
+    )
+  }
+
+  function confirmSelectedEvent() {
+    updateEditingEvent({
+      status: APPOINTMENT_STATUS.CONFIRMED,
+      reservedBenefitServiceId:
+        editingEvent?.reservedBenefitServiceId ??
+        getReservableServiceId(formClient, formAddedServices.join(", ") || formService),
+      notes: appendEventNote(
+        editingEvent?.notes,
+        "Agendamento confirmado pela equipe."
+      ),
+    })
+  }
+
+  function markClientArrived() {
+    updateEditingEvent({
+      attendanceStatus: ATTENDANCE_STATUS.CLIENT_ARRIVED,
+      notes: appendEventNote(editingEvent?.notes, "Cliente chegou."),
+    })
+  }
+
+  function startSelectedAttendance() {
+    updateEditingEvent({
+      attendanceStatus: ATTENDANCE_STATUS.IN_PROGRESS,
+      notes: appendEventNote(editingEvent?.notes, "Atendimento iniciado."),
+    })
+  }
+
+  function completeSelectedAttendance() {
+    updateEditingEvent({
+      attendanceStatus: ATTENDANCE_STATUS.COMPLETED,
+      notes: appendEventNote(editingEvent?.notes, "Atendimento concluido."),
+    })
+  }
+
+  function markSelectedNoShow() {
+    if (!window.confirm("Marcar este cliente como falta?")) return
+
+    updateEditingEvent({
+      status: APPOINTMENT_STATUS.NO_SHOW,
+      attendanceStatus: undefined,
+      notes: appendEventNote(
+        editingEvent?.notes,
+        "Cliente marcado como falta. Politica de beneficio permanece decisao aberta."
+      ),
+    })
+  }
+
+  function cancelSelectedAppointment() {
+    if (!window.confirm("Cancelar este agendamento?")) return
+
+    updateEditingEvent({
+      status: APPOINTMENT_STATUS.CANCELLED,
+      cancelReason: "client_cancelled",
+      notes: appendEventNote(editingEvent?.notes, "Agendamento cancelado."),
+    })
   }
 
   function addSelectedService() {
@@ -339,20 +413,6 @@ export function AgendaView() {
     setFormClient(nextClient.name)
   }
 
-  function handleAppointmentTypeChange(type: string) {
-    setFormAppointmentType(type)
-    if (type === "Intervalo") {
-      setBlockReason("Intervalo")
-      setFormRepeatMode("automatic")
-      return
-    }
-
-    if (type === "Bloqueio") {
-      setBlockReason("Horario bloqueado")
-      setFormRepeatMode("today")
-    }
-  }
-
   const router = useRouter()
 
   if (barbers.length === 0) {
@@ -371,23 +431,13 @@ export function AgendaView() {
     <>
       <AgendaDayScreen
         selectedBarber={selectedBarber}
-        selectedDay={selectedDay}
-        selectedMonth={selectedMonth}
-        selectedYear={selectedYear}
-        selectedDate={selectedDate}
+        selectedDateObj={selectedDateObj}
         events={dayEvents}
+        agendaFilter={agendaFilter}
+        agendaSummary={agendaSummary}
         onBarberChange={setSelectedBarber}
-        onDayChange={setSelectedDay}
-        onMonthChange={setSelectedMonth}
-        onYearChange={setSelectedYear}
-        onToday={() =>
-          setDateFromObject(
-            new Date(2026, 3, 29),
-            setSelectedDay,
-            setSelectedMonth,
-            setSelectedYear
-          )
-        }
+        onDateSelect={handleDateSelect}
+        onAgendaFilterChange={setAgendaFilter}
         onPreviousDay={() =>
           shiftDate(
             -1,
@@ -414,13 +464,18 @@ export function AgendaView() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         editing={Boolean(editingId)}
+        event={editingEvent}
         barber={selectedBarber}
         start={formStart}
         end={formEnd}
         client={formClient}
         clients={appointmentClients}
         service={formService}
-        blockReason={blockReason}
+        addedServices={formAddedServices}
+        noPreference={formNoPreference}
+        selectedDate={selectedDate}
+        events={selectedDateEvents}
+        onBarberChange={setSelectedBarber}
         onStartChange={(slot) => {
           setFormStart(slot)
           setFormEnd(nextSlot(slot))
@@ -429,20 +484,6 @@ export function AgendaView() {
         onClientChange={setFormClient}
         onCreateClient={createClient}
         onServiceChange={setFormService}
-        onBlockReasonChange={setBlockReason}
-        onSaveAppointment={saveAppointment}
-        onBlock={blockSelectedSlot}
-        onRemove={removeSelectedEvent}
-        appointmentType={formAppointmentType}
-        selectedDate={selectedDate}
-        branch={formBranch}
-        noPreference={formNoPreference}
-        addedServices={formAddedServices}
-        onBarberChange={setSelectedBarber}
-        repeatMode={formRepeatMode}
-        repeatDays={formRepeatDays}
-        repurchaseItem={formRepurchaseItem}
-        onAppointmentTypeChange={handleAppointmentTypeChange}
         onDateChange={(value) =>
           setDateFromObject(
             parseLocalDate(value),
@@ -451,13 +492,17 @@ export function AgendaView() {
             setSelectedYear
           )
         }
-        onBranchChange={setFormBranch}
         onNoPreferenceChange={setFormNoPreference}
-        onRepeatModeChange={setFormRepeatMode}
-        onRepeatDaysChange={setFormRepeatDays}
-        onRepurchaseItemChange={setFormRepurchaseItem}
         onAddService={addSelectedService}
         onRemoveService={removeAddedService}
+        onSaveAppointment={saveAppointment}
+        onRemove={removeSelectedEvent}
+        onConfirmAppointment={confirmSelectedEvent}
+        onClientArrived={markClientArrived}
+        onStartAttendance={startSelectedAttendance}
+        onCompleteAttendance={completeSelectedAttendance}
+        onMarkNoShow={markSelectedNoShow}
+        onCancelAppointment={cancelSelectedAppointment}
       />
     </>
   )
@@ -465,32 +510,26 @@ export function AgendaView() {
 
 function AgendaDayScreen({
   selectedBarber,
-  selectedDay,
-  selectedMonth,
-  selectedYear,
-  selectedDate,
+  selectedDateObj,
   events,
+  agendaFilter,
+  agendaSummary,
   onBarberChange,
-  onDayChange,
-  onMonthChange,
-  onYearChange,
-  onToday,
+  onDateSelect,
+  onAgendaFilterChange,
   onPreviousDay,
   onNextDay,
   onNewAppointment,
   onOpenSlot,
 }: {
   selectedBarber: Barber
-  selectedDay: string
-  selectedMonth: string
-  selectedYear: string
-  selectedDate: string
+  selectedDateObj: Date
   events: AgendaEvent[]
+  agendaFilter: AgendaFilter
+  agendaSummary: AgendaSummary
   onBarberChange: (barber: Barber) => void
-  onDayChange: (day: string) => void
-  onMonthChange: (month: string) => void
-  onYearChange: (year: string) => void
-  onToday: () => void
+  onDateSelect: (date: Date | undefined) => void
+  onAgendaFilterChange: (filter: AgendaFilter) => void
   onPreviousDay: () => void
   onNextDay: () => void
   onNewAppointment: () => void
@@ -500,37 +539,36 @@ function AgendaDayScreen({
     <section className="min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm">
       <div className="border-b p-3 sm:p-4">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-muted-foreground uppercase sm:hidden">
-              Agenda do dia
-            </p>
-            <h2 className="hidden text-lg font-semibold tracking-normal sm:block sm:text-xl">
-              {formatDateLabel(selectedDate)}
-            </h2>
-            <h2 className="mt-1 flex items-center gap-2 text-xl font-semibold tracking-normal sm:hidden">
-              <span>{formatMobileDateLabel(selectedDate)}</span>
-              <span className="rounded-full border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                {selectedYear}
-              </span>
-            </h2>
-            <p className="mt-1 text-xs leading-snug text-muted-foreground sm:text-sm">
-              Horarios de 10 em 10 minutos para o barbeiro selecionado.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-[1fr_2.5rem_2.5rem] gap-2 sm:flex sm:flex-wrap sm:items-center">
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={onToday}
-            >
-              Hoje
-            </Button>
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between gap-2 text-left font-normal sm:w-[240px]"
+                >
+                  <span className="flex items-center gap-2">
+                    <HugeiconsIcon icon={Calendar03Icon} size={16} />
+                    <span>{format(selectedDateObj, "PPP", { locale: ptBR })}</span>
+                  </span>
+                  <HugeiconsIcon
+                    icon={ArrowDown01Icon}
+                    size={16}
+                    className="opacity-50"
+                  />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDateObj}
+                  onSelect={onDateSelect}
+                />
+              </PopoverContent>
+            </Popover>
             <Button
               size="icon-sm"
               variant="outline"
-              className="rounded-full text-[0px] text-foreground"
+              className="rounded-full text-[0px] text-foreground shrink-0"
               aria-label="Dia anterior"
               onClick={onPreviousDay}
             >
@@ -539,30 +577,14 @@ function AgendaDayScreen({
             <Button
               size="icon-sm"
               variant="outline"
-              className="rounded-full text-[0px] text-foreground"
+              className="rounded-full text-[0px] text-foreground shrink-0"
               aria-label="Proximo dia"
               onClick={onNextDay}
             >
               <HugeiconsIcon icon={ArrowRight01Icon} size={16} />›
             </Button>
-            <Button
-              size="sm"
-              className="col-span-3 w-full sm:col-span-1 sm:w-auto"
-              onClick={onNewAppointment}
-            >
-              <HugeiconsIcon icon={Add01Icon} size={16} />
-              Novo agendamento
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-3 grid gap-2 rounded-lg border bg-muted/20 p-2 sm:mt-4 sm:gap-3 sm:border-0 sm:bg-transparent sm:p-0 lg:grid-cols-[1fr_1fr]">
-          <div className="grid gap-1">
-            <span className="px-1 text-[11px] font-semibold text-muted-foreground uppercase sm:hidden">
-              Barbeiro
-            </span>
             <Select value={selectedBarber} onValueChange={onBarberChange}>
-              <SelectTrigger className="h-11 bg-background sm:h-10">
+              <SelectTrigger className="h-11 w-full bg-background sm:h-10 sm:w-40">
                 <SelectValue placeholder="Barbeiro" />
               </SelectTrigger>
               <SelectContent>
@@ -575,16 +597,41 @@ function AgendaDayScreen({
             </Select>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <DateSelects
-              selectedDay={selectedDay}
-              selectedMonth={selectedMonth}
-              selectedYear={selectedYear}
-              onDayChange={onDayChange}
-              onMonthChange={onMonthChange}
-              onYearChange={onYearChange}
-            />
-          </div>
+          <Button
+            size="sm"
+            className="w-full sm:w-auto"
+            onClick={onNewAppointment}
+          >
+            <HugeiconsIcon icon={Add01Icon} size={16} />
+            Novo agendamento
+          </Button>
+        </div>
+
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {agendaFilterOptions.map((option) => (
+            <Button
+              key={option.value}
+              type="button"
+              size="sm"
+              variant={agendaFilter === option.value ? "default" : "outline"}
+              className="h-8 shrink-0 text-xs"
+              onClick={() => onAgendaFilterChange(option.value)}
+            >
+              {option.label}
+              {option.value === "all" ? ` (${agendaSummary.total})` : null}
+              {option.value === "attendance" && agendaSummary.inAttendance
+                ? ` (${agendaSummary.inAttendance})`
+                : null}
+              {option.value === "pending_command" &&
+              agendaSummary.pendingCommands
+                ? ` (${agendaSummary.pendingCommands})`
+                : null}
+              {option.value === "needs_attention" &&
+              agendaSummary.needsAttention
+                ? ` (${agendaSummary.needsAttention})`
+                : null}
+            </Button>
+          ))}
         </div>
       </div>
 
@@ -594,69 +641,6 @@ function AgendaDayScreen({
         onOpenSlot={onOpenSlot}
       />
     </section>
-  )
-}
-
-function DateSelects({
-  selectedDay,
-  selectedMonth,
-  selectedYear,
-  onDayChange,
-  onMonthChange,
-  onYearChange,
-}: {
-  selectedDay: string
-  selectedMonth: string
-  selectedYear: string
-  onDayChange: (day: string) => void
-  onMonthChange: (month: string) => void
-  onYearChange: (year: string) => void
-}) {
-  return (
-    <>
-      <Select value={selectedDay} onValueChange={onDayChange}>
-        <SelectTrigger className="h-11 bg-background text-center sm:h-10">
-          <SelectValue placeholder="Dia" />
-        </SelectTrigger>
-        <SelectContent>
-          {Array.from({ length: 31 }, (_, index) => {
-            const day = String(index + 1).padStart(2, "0")
-            return (
-              <SelectItem key={day} value={day}>
-                Dia {day}
-              </SelectItem>
-            )
-          })}
-        </SelectContent>
-      </Select>
-      <Select value={selectedMonth} onValueChange={onMonthChange}>
-        <SelectTrigger className="h-11 bg-background text-center sm:h-10">
-          <SelectValue placeholder="Mes" />
-        </SelectTrigger>
-        <SelectContent>
-          {months.map((month, index) => {
-            const value = String(index + 1).padStart(2, "0")
-            return (
-              <SelectItem key={month} value={value}>
-                {month}
-              </SelectItem>
-            )
-          })}
-        </SelectContent>
-      </Select>
-      <Select value={selectedYear} onValueChange={onYearChange}>
-        <SelectTrigger className="h-11 bg-background text-center sm:h-10">
-          <SelectValue placeholder="Ano" />
-        </SelectTrigger>
-        <SelectContent>
-          {["2026", "2027", "2028"].map((year) => (
-            <SelectItem key={year} value={year}>
-              {year}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </>
   )
 }
 
@@ -671,6 +655,11 @@ function ScheduleBoard({
 }) {
   return (
     <div className="min-w-0 overflow-hidden bg-background">
+      {events.length === 0 ? (
+        <div className="border-b bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+          Nenhum horário agendado para este filtro.
+        </div>
+      ) : null}
       <div className="md:hidden">
         <MobileScheduleList
           barber={barber}
@@ -817,6 +806,7 @@ function BarberScheduleColumn({
 }
 
 function AgendaEventCard({ event }: { event: AgendaEvent }) {
+  const info = getAgendaOperationalInfo(event)
   const tone = {
     appointment: "border-primary/40 bg-primary/15 text-foreground",
     blocked: "border-red-500/35 bg-red-500/15 text-red-950",
@@ -837,7 +827,7 @@ function AgendaEventCard({ event }: { event: AgendaEvent }) {
         tone
       )}
     >
-      <span className="flex flex-col gap-1">
+      <span className="flex h-full flex-col gap-1.5">
         <span className="min-w-0">
           <span className="flex items-center gap-1.5 text-sm font-medium">
             <HugeiconsIcon icon={icon} size={14} />
@@ -856,9 +846,39 @@ function AgendaEventCard({ event }: { event: AgendaEvent }) {
             {event.detail}
           </span>
         </span>
-        <span className="inline-flex rounded-full border bg-background/70 px-2 py-1 text-xs font-medium">
-          {event.start} - {event.end}
+        <span className="flex flex-wrap items-center gap-1">
+          <StatusBadge tone="neutral">
+            {event.start} - {event.end}
+          </StatusBadge>
+          {event.type === "appointment" ? (
+            <>
+              <StatusBadge tone={info.appointmentTone}>
+                {info.appointmentLabel}
+              </StatusBadge>
+              <StatusBadge tone={info.clientTone}>{info.clientLabel}</StatusBadge>
+              {info.coverageLabel ? (
+                <StatusBadge tone={info.coverageTone}>
+                  {info.coverageLabel}
+                </StatusBadge>
+              ) : null}
+              {info.attendanceLabel ? (
+                <StatusBadge tone={info.attendanceTone}>
+                  {info.attendanceLabel}
+                </StatusBadge>
+              ) : null}
+              {info.commandLabel ? (
+                <StatusBadge tone={info.commandTone}>
+                  {info.commandLabel}
+                </StatusBadge>
+              ) : null}
+            </>
+          ) : null}
         </span>
+        {event.type === "appointment" && info.microcopy ? (
+          <span className="truncate text-[11px] text-muted-foreground">
+            {info.microcopy}
+          </span>
+        ) : null}
       </span>
     </span>
   )
@@ -868,98 +888,82 @@ function ScheduleModal({
   open,
   onOpenChange,
   editing,
+  event,
   barber,
-  appointmentType,
   selectedDate,
   start,
   end,
   client,
   clients,
   service,
-  branch,
   noPreference,
-  blockReason,
   addedServices,
-  repeatMode,
-  repeatDays,
-  repurchaseItem,
+  events,
   onBarberChange,
-  onAppointmentTypeChange,
   onDateChange,
   onStartChange,
   onEndChange,
   onClientChange,
   onCreateClient,
   onServiceChange,
-  onBranchChange,
   onNoPreferenceChange,
-  onBlockReasonChange,
-  onRepeatModeChange,
-  onRepeatDaysChange,
-  onRepurchaseItemChange,
   onAddService,
   onRemoveService,
   onSaveAppointment,
-  onBlock,
   onRemove,
+  onConfirmAppointment,
+  onClientArrived,
+  onStartAttendance,
+  onCompleteAttendance,
+  onMarkNoShow,
+  onCancelAppointment,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   editing: boolean
+  event: AgendaEvent | null
   barber: Barber
-  appointmentType: string
   selectedDate: string
   start: string
   end: string
   client: string
   clients: AgendaClient[]
   service: string
-  branch: string
   noPreference: boolean
-  blockReason: string
   addedServices: string[]
-  repeatMode: RepeatMode
-  repeatDays: number[]
-  repurchaseItem: string
+  events: AgendaEvent[]
   onBarberChange: (barber: Barber) => void
-  onAppointmentTypeChange: (type: string) => void
   onDateChange: (date: string) => void
   onStartChange: (slot: string) => void
   onEndChange: (slot: string) => void
   onClientChange: (value: string) => void
   onCreateClient: (client: NewAgendaClient) => void
   onServiceChange: (value: string) => void
-  onBranchChange: (branch: string) => void
   onNoPreferenceChange: (checked: boolean) => void
-  onBlockReasonChange: (value: string) => void
-  onRepeatModeChange: (mode: RepeatMode) => void
-  onRepeatDaysChange: (days: number[]) => void
-  onRepurchaseItemChange: (item: string) => void
   onAddService: () => void
   onRemoveService: (service: string) => void
   onSaveAppointment: () => void
-  onBlock: () => void
   onRemove: () => void
+  onConfirmAppointment: () => void
+  onClientArrived: () => void
+  onStartAttendance: () => void
+  onCompleteAttendance: () => void
+  onMarkNoShow: () => void
+  onCancelAppointment: () => void
 }) {
-  const isIntervalType = appointmentType === "Intervalo"
-  const isBlockType = appointmentType === "Bloqueio"
-  const isRestrictionType = isBlockType || isIntervalType
   const [step, setStep] = useState(0)
   const [newClientOpen, setNewClientOpen] = useState(false)
   const [newClientName, setNewClientName] = useState("")
   const [newClientPhone, setNewClientPhone] = useState("")
   const [newClientEmail, setNewClientEmail] = useState("")
   const [newClientNotes, setNewClientNotes] = useState("")
-  const steps = isRestrictionType
-    ? [
-        "Dados",
-        "Periodo",
-        isIntervalType ? "Intervalo" : "Bloqueio",
-        "Confirmar",
-      ]
-    : ["Dados", "Cliente", "Servicos", "Confirmar"]
+  const steps = ["Dados", "Cliente", "Servicos", "Confirmar"]
   const lastStep = steps.length - 1
   const selectedClient = clients.find((item) => item.name === client)
+  const operationalInfo =
+    event && event.type === "appointment"
+      ? getAgendaOperationalInfo(event)
+      : null
 
   function goNext() {
     setStep((current) => Math.min(current + 1, lastStep))
@@ -971,11 +975,6 @@ function ScheduleModal({
 
   function finishSchedule() {
     setStep(0)
-    if (isRestrictionType) {
-      onBlock()
-      return
-    }
-
     onSaveAppointment()
   }
 
@@ -1048,158 +1047,73 @@ function ScheduleModal({
             <ModalStepper steps={steps} currentStep={step} />
           </div>
 
+          {event && operationalInfo ? (
+            <OperationalAgendaPanel
+              event={event}
+              info={operationalInfo}
+              onConfirmAppointment={onConfirmAppointment}
+              onClientArrived={onClientArrived}
+              onStartAttendance={onStartAttendance}
+              onCompleteAttendance={onCompleteAttendance}
+              onMarkNoShow={onMarkNoShow}
+              onCancelAppointment={onCancelAppointment}
+            />
+          ) : null}
+
           <ScrollArea className="h-full min-h-0">
             <div className="min-h-0 space-y-3 px-3 pt-1 pb-3 sm:space-y-4 sm:p-4">
               {step === 0 ? (
                 <>
                   <div className="grid gap-2.5 sm:gap-3">
-                    <div className="grid gap-1 sm:gap-1.5">
-                      <FieldLabel required icon={Calendar03Icon}>
-                        Tipo de agendamento
-                      </FieldLabel>
-                      <Select
-                        value={appointmentType}
-                        onValueChange={onAppointmentTypeChange}
-                      >
-                        <SelectTrigger className="h-9 text-sm sm:h-10">
-                          <SelectValue placeholder="Tipo de agendamento" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {appointmentTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {!isRestrictionType ? (
-                      <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-                        <div className="grid gap-1 sm:gap-1.5">
-                          <FieldLabel required icon={UserSearch01Icon}>
-                            Cliente
-                          </FieldLabel>
-                          <Select value={client} onValueChange={onClientChange}>
-                            <SelectTrigger className="h-12 scroll-mt-28 items-center text-left text-sm sm:h-10 [&>span]:min-w-0 [&>span]:flex-1">
-                              {selectedClient ? (
-                                <span className="flex min-w-0 flex-col leading-tight sm:block">
-                                  <span className="truncate font-medium">
-                                    {selectedClient.name}
-                                  </span>
-                                  <span className="truncate text-[11px] text-muted-foreground sm:hidden">
-                                    {selectedClient.phone} - ultima visita:{" "}
-                                    {selectedClient.lastVisit}
-                                  </span>
+                    <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                      <div className="grid gap-1 sm:gap-1.5">
+                        <FieldLabel required icon={UserSearch01Icon}>
+                          Cliente
+                        </FieldLabel>
+                        <Select value={client} onValueChange={onClientChange}>
+                          <SelectTrigger className="h-12 scroll-mt-28 items-center text-left text-sm sm:h-10 [&>span]:min-w-0 [&>span]:flex-1">
+                            {selectedClient ? (
+                              <span className="flex min-w-0 flex-col leading-tight sm:block">
+                                <span className="truncate font-medium">
+                                  {selectedClient.name}
                                 </span>
-                              ) : (
-                                <SelectValue placeholder="Selecionar cliente" />
-                              )}
-                            </SelectTrigger>
-                            <SelectContent>
-                              {clients.map((item) => (
-                                <SelectItem key={item.id} value={item.name}>
-                                  <span className="flex min-w-0 flex-col gap-0.5">
-                                    <span className="truncate font-medium">
-                                      {item.name}
-                                    </span>
-                                    <span className="truncate text-xs text-muted-foreground">
-                                      {item.phone} - ultima visita:{" "}
-                                      {item.lastVisit}
-                                    </span>
-                                  </span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="mt-5 size-9 sm:mt-0 sm:h-9 sm:w-auto sm:px-3"
-                          aria-label="Novo cliente"
-                          onClick={openNewClientRegistration}
-                        >
-                          <HugeiconsIcon icon={UserAdd01Icon} size={16} />
-                          <span className="hidden sm:inline">Novo cliente</span>
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
-                        Defina data, horario e profissional para aplicar esta
-                        regra na agenda.
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
-                    <div className="col-span-2 grid gap-1 sm:col-span-1 sm:gap-1.5">
-                      <FieldLabel required icon={Calendar03Icon}>
-                        Data
-                      </FieldLabel>
-                      <CalendarDatePicker
-                        value={selectedDate}
-                        onChange={onDateChange}
-                      />
-                    </div>
-                    <div className="grid gap-1 sm:gap-1.5">
-                      <FieldLabel required icon={Clock01Icon}>
-                        Inicio
-                      </FieldLabel>
-                      <Select value={start} onValueChange={onStartChange}>
-                        <SelectTrigger className="h-9 text-sm sm:h-10">
-                          <SelectValue placeholder="Inicio" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeSlots.map((slot) => (
-                            <SelectItem key={slot} value={slot}>
-                              {slot}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-1 sm:gap-1.5">
-                      <FieldLabel required icon={Clock01Icon}>
-                        Fim
-                      </FieldLabel>
-                      <Select value={end} onValueChange={onEndChange}>
-                        <SelectTrigger className="h-9 text-sm sm:h-10">
-                          <SelectValue placeholder="Fim" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeSlots.map((slot) => (
-                            <SelectItem key={slot} value={slot}>
-                              {slot}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="19:10">19:10</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-<div className="col-span-2 grid gap-1 sm:col-span-1 sm:gap-1.5">
-                      <FieldLabel required icon={Store01Icon}>
-                        Filial
-                      </FieldLabel>
-                      {branches.length === 0 ? (
-                        <div className="flex h-9 items-center rounded-md border bg-muted/30 px-3 text-sm text-muted-foreground sm:h-10">
-                          Nenhuma filial cadastrada
-                        </div>
-                      ) : (
-                        <Select value={branch} onValueChange={onBranchChange}>
-                          <SelectTrigger className="h-9 text-sm sm:h-10">
-                            <SelectValue placeholder="Filial" />
+                                <span className="truncate text-[11px] text-muted-foreground sm:hidden">
+                                  {selectedClient.phone} - ultima visita:{" "}
+                                  {selectedClient.lastVisit}
+                                </span>
+                              </span>
+                            ) : (
+                              <SelectValue placeholder="Selecionar cliente" />
+                            )}
                           </SelectTrigger>
                           <SelectContent>
-                            {branches.map((item) => (
-                              <SelectItem key={item} value={item}>
-                                {item}
+                            {clients.map((item) => (
+                              <SelectItem key={item.id} value={item.name}>
+                                <span className="flex min-w-0 flex-col gap-0.5">
+                                  <span className="truncate font-medium">
+                                    {item.name}
+                                  </span>
+                                  <span className="truncate text-xs text-muted-foreground">
+                                    {item.phone} - ultima visita:{" "}
+                                    {item.lastVisit}
+                                  </span>
+                                </span>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="mt-5 size-9 sm:mt-0 sm:h-9 sm:w-auto sm:px-3"
+                        aria-label="Novo cliente"
+                        onClick={openNewClientRegistration}
+                      >
+                        <HugeiconsIcon icon={UserAdd01Icon} size={16} />
+                        <span className="hidden sm:inline">Novo cliente</span>
+                      </Button>
                     </div>
                   </div>
 
@@ -1240,188 +1154,184 @@ function ScheduleModal({
                       Sem preferencia por profissional
                     </label>
                   </div>
-                </>
-              ) : null}
 
-              {step === 2 && isRestrictionType ? (
-                <div className="grid gap-3">
-                  {isBlockType ? (
+                  {(noPreference || barber.trim()) ? (
                     <div className="grid gap-1 sm:gap-1.5">
-                      <FieldLabel required icon={AlertCircleIcon}>
-                        Motivo do bloqueio
-                      </FieldLabel>
-                      <Input
-                        className="h-9 scroll-mt-28 text-sm sm:h-10"
-                        value={blockReason}
-                        onChange={(event) =>
-                          onBlockReasonChange(event.target.value)
-                        }
-                        placeholder="Compromisso, manutencao, fechamento..."
-                        inputMode="text"
-                        enterKeyHint="done"
-                      />
-                    </div>
-                  ) : (
-                    <div className="rounded-md border bg-sky-500/10 p-3 text-sm text-sky-950">
-                      O intervalo sera exibido como <strong>Intervalo</strong>{" "}
-                      na agenda.
-                    </div>
-                  )}
-
-                  <div className="grid gap-1.5">
-                    <FieldLabel required icon={Clock01Icon}>
-                      Aplicacao
-                    </FieldLabel>
-                    <Select
-                      value={repeatMode}
-                      onValueChange={(value) =>
-                        onRepeatModeChange(value as RepeatMode)
-                      }
-                      disabled={isIntervalType}
-                    >
-                      <SelectTrigger className="h-9 text-sm sm:h-10">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="today">Somente neste dia</SelectItem>
-                        <SelectItem value="automatic">
-                          Automatico por dias da semana
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {repeatMode === "automatic" ? (
-                    <div className="grid gap-1.5">
                       <FieldLabel required icon={Calendar03Icon}>
-                        Dias da semana
+                        Data
                       </FieldLabel>
-                      <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                        {weekdays.map((day) => {
-                          const selected = repeatDays.includes(day.value)
-
-                          return (
-                            <button
-                              key={day.value}
-                              type="button"
-                              onClick={() =>
-                                onRepeatDaysChange(
-                                  selected
-                                    ? repeatDays.filter(
-                                        (value) => value !== day.value
-                                      )
-                                    : [...repeatDays, day.value].sort()
-                                )
-                              }
-                              className={cn(
-                                "h-9 rounded-md border text-xs font-medium transition-colors",
-                                selected
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "bg-background text-muted-foreground hover:bg-muted"
-                              )}
-                            >
-                              {day.label}
-                            </button>
-                          )
-                        })}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        O sistema cria a recorrencia para as proximas 8 semanas.
-                      </p>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-9 w-full justify-between text-left font-normal sm:h-10"
+                          >
+                            <span className="flex min-w-0 items-center gap-2">
+                              <HugeiconsIcon
+                                icon={Calendar03Icon}
+                                size={16}
+                                className="text-muted-foreground"
+                              />
+                              <span className="truncate">
+                                {format(parseLocalDate(selectedDate), "PPP", {
+                                  locale: ptBR,
+                                })}
+                              </span>
+                            </span>
+                            <HugeiconsIcon
+                              icon={ArrowDown01Icon}
+                              size={16}
+                              className="opacity-50"
+                            />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={parseLocalDate(selectedDate)}
+                            onSelect={(date) => {
+                              if (!date) return
+                              onDateChange(toDateInputValue(date))
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   ) : null}
-                </div>
+
+                  {selectedDate ? (
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3">
+                      <div className="grid gap-1 sm:gap-1.5">
+                        <FieldLabel required icon={Clock01Icon}>
+                          Inicio
+                        </FieldLabel>
+                        <Select value={start} onValueChange={onStartChange}>
+                          <SelectTrigger className="h-9 text-sm sm:h-10">
+                            <SelectValue placeholder="Inicio" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeSlots
+                              .filter((slot) => {
+                                const activeBarber = noPreference ? null : barber
+                                return activeBarber
+                                  ? !events.some(
+                                      (ev) =>
+                                        ev.date === selectedDate &&
+                                        ev.barber === activeBarber &&
+                                        isSlotInsideEvent(slot, ev)
+                                    )
+                                  : true
+                              })
+                              .map((slot) => (
+                                <SelectItem key={slot} value={slot}>
+                                  {slot}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-1 sm:gap-1.5">
+                        <FieldLabel required icon={Clock01Icon}>
+                          Fim
+                        </FieldLabel>
+                        <Select value={end} onValueChange={onEndChange}>
+                          <SelectTrigger className="h-9 text-sm sm:h-10">
+                            <SelectValue placeholder="Fim" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeSlots
+                              .filter((slot) => {
+                                const activeBarber = noPreference ? null : barber
+                                return activeBarber
+                                  ? !events.some(
+                                      (ev) =>
+                                        ev.date === selectedDate &&
+                                        ev.barber === activeBarber &&
+                                        isSlotInsideEvent(slot, ev)
+                                    )
+                                  : true
+                              })
+                              .map((slot) => (
+                                <SelectItem key={slot} value={slot}>
+                                  {slot}
+                                </SelectItem>
+                              ))}
+                            <SelectItem value="19:10">19:10</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
               ) : null}
 
               {step === 1 ? (
                 <>
-                  {isRestrictionType ? (
-                    <div className="grid gap-3">
-                      <div className="rounded-md border bg-muted/30 p-3">
-                        <p className="text-sm font-semibold">
-                          {isIntervalType
-                            ? "Intervalo automatico"
-                            : "Bloqueio de horario"}
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {formatShortDate(selectedDate)} das {start} ate {end},
-                          com {noPreference ? "qualquer profissional" : barber}.
-                        </p>
-                      </div>
-                      <div className="rounded-md border bg-background p-3 text-sm text-muted-foreground">
-                        No proximo passo voce escolhe se a regra vale so neste
-                        dia ou se repete por dias da semana.
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <InfoBlock
-                        title="Ultimos 3 agendamentos"
-                        icon={InformationCircleIcon}
-                      >
-                        {client.trim() ? (
-                          <div className="grid gap-2">
-                            {recentAppointments.map((item) => (
-                              <div
-                                key={`${item.date}-${item.service}`}
-                                className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2 text-xs"
-                              >
-                                <span className="min-w-0">
-                                  <span className="block font-medium">
-                                    {item.service}
-                                  </span>
-                                  <span className="text-muted-foreground">
-                                    {item.date} com {item.professional}
-                                  </span>
-                                </span>
-                                <HugeiconsIcon
-                                  icon={Calendar03Icon}
-                                  size={16}
-                                  className="shrink-0 text-muted-foreground"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <EmptyState
-                            icon={InformationCircleIcon}
-                            title="Nenhum cliente selecionado"
-                            description="Selecione ou digite um cliente para ver os registros."
-                            className="min-h-40"
-                          />
-                        )}
-                      </InfoBlock>
-
-                      <InfoBlock
-                        title="Itens para recompra"
-                        icon={InformationCircleIcon}
-                      >
-                        {client.trim() ? (
-                          <div className="flex flex-wrap gap-2">
-                            {repurchaseItems.map((item) => (
-                              <span
-                                key={item.id}
-                                className="rounded-full border bg-background px-3 py-1 text-xs font-medium"
-                              >
-                                {item.label} em {item.days} dias
+                  <InfoBlock
+                    title="Ultimos 3 agendamentos"
+                    icon={InformationCircleIcon}
+                  >
+                    {client.trim() ? (
+                      <div className="grid gap-2">
+                        {recentAppointments.map((item) => (
+                          <div
+                            key={`${item.date}-${item.service}`}
+                            className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2 text-xs"
+                          >
+                            <span className="min-w-0">
+                              <span className="block font-medium">
+                                {item.service}
                               </span>
-                            ))}
+                              <span className="text-muted-foreground">
+                                {item.date} com {item.professional}
+                              </span>
+                            </span>
+                            <HugeiconsIcon
+                              icon={Calendar03Icon}
+                              size={16}
+                              className="shrink-0 text-muted-foreground"
+                            />
                           </div>
-                        ) : (
-                          <EmptyState
-                            icon={InformationCircleIcon}
-                            title="Sem recompras"
-                            description="Cliente nao possui itens para recompra."
-                            className="min-h-40"
-                          />
-                        )}
-                      </InfoBlock>
-                    </>
-                  )}
+                        ))}
+                      </div>
+                    ) : (
+                      <EmptyState
+                        icon={InformationCircleIcon}
+                        title="Nenhum cliente selecionado"
+                        description="Selecione ou digite um cliente para ver os registros."
+                        className="min-h-40"
+                      />
+                    )}
+                  </InfoBlock>
+
+                  <InfoBlock
+                    title="Itens para recompra"
+                    icon={InformationCircleIcon}
+                  >
+                    {client.trim() ? (
+                      <div className="flex flex-wrap gap-2">
+                        {repurchaseItems.map((item) => (
+                          <span
+                            key={item.id}
+                            className="rounded-full border bg-background px-3 py-1 text-xs font-medium"
+                          >
+                            {item.label} em {item.days} dias
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <EmptyState
+                        icon={InformationCircleIcon}
+                        title="Sem recompras"
+                        description="Cliente nao possui itens para recompra."
+                        className="min-h-40"
+                      />
+                    )}
+                  </InfoBlock>
                 </>
               ) : null}
 
-              {step === 2 && !isRestrictionType ? (
+              {step === 2 ? (
                 <div className="border-t pt-4">
                   <h3 className="text-sm font-semibold">Servicos</h3>
                   <div className="mt-3 grid grid-cols-[minmax(0,1fr)_2.25rem] gap-2 sm:grid-cols-[minmax(0,1fr)_2.5rem]">
@@ -1483,31 +1393,6 @@ function ScheduleModal({
                     )}
                   </div>
 
-                  <div className="mt-3 grid gap-1.5 rounded-md border bg-muted/25 p-3">
-                    <FieldLabel icon={Calendar03Icon}>
-                      Recompra/retorno automatico
-                    </FieldLabel>
-                    <Select
-                      value={repurchaseItem}
-                      onValueChange={onRepurchaseItemChange}
-                    >
-                      <SelectTrigger className="h-9 text-sm sm:h-10">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Nao gerar retorno</SelectItem>
-                        {repurchaseItems.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.label} - voltar em {item.days} dias
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Ao concluir, a agenda recebe um proximo atendimento na
-                      data sugerida.
-                    </p>
-                  </div>
                 </div>
               ) : null}
 
@@ -1521,7 +1406,6 @@ function ScheduleModal({
                       Resumo
                     </h3>
                     <div className="mt-2 grid gap-1.5 text-sm sm:mt-3 sm:gap-2">
-                      <SummaryRow label="Tipo" value={appointmentType} />
                       <SummaryRow
                         label="Cliente"
                         value={client || "Cliente nao selecionado"}
@@ -1531,33 +1415,18 @@ function ScheduleModal({
                         value={formatShortDate(selectedDate)}
                       />
                       <SummaryRow label="Horario" value={`${start} - ${end}`} />
-                      <SummaryRow label="Filial" value={branch} />
                       <SummaryRow
                         label="Profissional"
                         value={noPreference ? "Sem preferencia" : barber}
                       />
                       <SummaryRow
-                        label={isBlockType ? "Motivo" : "Servicos"}
+                        label="Servicos"
                         value={
-                          isBlockType
-                            ? blockReason
-                            : isIntervalType
-                              ? "Intervalo automatico"
-                              : addedServices.length
-                                ? addedServices.join(", ")
-                                : service
+                          addedServices.length
+                            ? addedServices.join(", ")
+                            : service
                         }
                       />
-                      {repurchaseItem !== "none" && !isRestrictionType ? (
-                        <SummaryRow
-                          label="Retorno"
-                          value={
-                            repurchaseItems.find(
-                              (item) => item.id === repurchaseItem
-                            )?.label ?? "Recompra"
-                          }
-                        />
-                      ) : null}
                     </div>
                   </div>
                   <div className="rounded-lg border border-primary/30 bg-primary/10 p-2.5 text-xs leading-snug text-foreground sm:rounded-md sm:p-3">
@@ -1618,17 +1487,8 @@ function ScheduleModal({
                   className="h-10 w-full sm:w-auto"
                   onClick={finishSchedule}
                 >
-                  <HugeiconsIcon
-                    icon={isRestrictionType ? AlertCircleIcon : Calendar03Icon}
-                    size={16}
-                  />
-                  {isRestrictionType
-                    ? isIntervalType
-                      ? "Concluir intervalo"
-                      : "Concluir bloqueio"
-                    : editing
-                      ? "Salvar agendamento"
-                      : "Concluir agendamento"}
+                  <HugeiconsIcon icon={Calendar03Icon} size={16} />
+                  {editing ? "Salvar agendamento" : "Concluir agendamento"}
                 </Button>
               )}
             </div>
@@ -1748,6 +1608,110 @@ function ScheduleModal({
   )
 }
 
+function OperationalAgendaPanel({
+  event,
+  info,
+  onConfirmAppointment,
+  onClientArrived,
+  onStartAttendance,
+  onCompleteAttendance,
+  onMarkNoShow,
+  onCancelAppointment,
+}: {
+  event: AgendaEvent
+  info: AgendaOperationalInfo
+  onConfirmAppointment: () => void
+  onClientArrived: () => void
+  onStartAttendance: () => void
+  onCompleteAttendance: () => void
+  onMarkNoShow: () => void
+  onCancelAppointment: () => void
+}) {
+  const canConfirm = event.status === APPOINTMENT_STATUS.PENDING
+  const canArrive =
+    event.status === APPOINTMENT_STATUS.CONFIRMED && !event.attendanceStatus
+  const canStart = event.attendanceStatus === ATTENDANCE_STATUS.CLIENT_ARRIVED
+  const canComplete = event.attendanceStatus === ATTENDANCE_STATUS.IN_PROGRESS
+  const canMarkNoShow =
+    event.status !== APPOINTMENT_STATUS.NO_SHOW &&
+    event.status !== APPOINTMENT_STATUS.CANCELLED &&
+    !event.attendanceStatus
+  const canCancel =
+    event.status !== APPOINTMENT_STATUS.CANCELLED &&
+    event.attendanceStatus !== ATTENDANCE_STATUS.COMPLETED
+
+  return (
+    <div className="border-y bg-muted/20 px-3 py-2 sm:px-4">
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap gap-1.5">
+          <StatusBadge tone={info.appointmentTone}>
+            {info.appointmentLabel}
+          </StatusBadge>
+          <StatusBadge tone={info.clientTone}>{info.clientLabel}</StatusBadge>
+          {info.subscriptionLabel ? (
+            <StatusBadge tone={info.subscriptionTone}>
+              {info.subscriptionLabel}
+            </StatusBadge>
+          ) : null}
+          {info.coverageLabel ? (
+            <StatusBadge tone={info.coverageTone}>
+              {info.coverageLabel}
+            </StatusBadge>
+          ) : null}
+          {info.attendanceLabel ? (
+            <StatusBadge tone={info.attendanceTone}>
+              {info.attendanceLabel}
+            </StatusBadge>
+          ) : null}
+          {info.commandLabel ? (
+            <StatusBadge tone={info.commandTone}>{info.commandLabel}</StatusBadge>
+          ) : null}
+        </div>
+
+        <p className="text-xs leading-snug text-muted-foreground">
+          {info.detailsCopy}
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          {canConfirm ? (
+            <Button size="sm" variant="outline" onClick={onConfirmAppointment}>
+              Confirmar
+            </Button>
+          ) : null}
+          {canArrive ? (
+            <Button size="sm" variant="outline" onClick={onClientArrived}>
+              Cliente chegou
+            </Button>
+          ) : null}
+          {canStart ? (
+            <Button size="sm" variant="outline" onClick={onStartAttendance}>
+              Iniciar atendimento
+            </Button>
+          ) : null}
+          {canComplete ? (
+            <Button size="sm" variant="outline" onClick={onCompleteAttendance}>
+              Concluir atendimento
+            </Button>
+          ) : null}
+          <Button size="sm" variant="outline" asChild>
+            <Link href="/caixa/comandas">Abrir comanda</Link>
+          </Button>
+          {canMarkNoShow ? (
+            <Button size="sm" variant="outline" onClick={onMarkNoShow}>
+              Marcar falta
+            </Button>
+          ) : null}
+          {canCancel ? (
+            <Button size="sm" variant="outline" onClick={onCancelAppointment}>
+              Cancelar
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ModalStepper({
   steps,
   currentStep,
@@ -1840,120 +1804,6 @@ function InfoBlock({
       </h3>
       <div className="mt-3">{children}</div>
     </section>
-  )
-}
-
-function CalendarDatePicker({
-  value,
-  onChange,
-}: {
-  value: string
-  onChange: (value: string) => void
-}) {
-  const selectedDate = parseLocalDate(value)
-  const [open, setOpen] = useState(false)
-  const [viewDate, setViewDate] = useState(
-    () => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
-  )
-
-  const days = useMemo(() => getCalendarDays(viewDate), [viewDate])
-  const monthLabel = new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "numeric",
-  }).format(viewDate)
-
-  function shiftMonth(amount: number) {
-    setViewDate(
-      (current) =>
-        new Date(current.getFullYear(), current.getMonth() + amount, 1)
-    )
-  }
-
-  function selectDate(date: Date) {
-    onChange(toDateInputValue(date))
-    setViewDate(new Date(date.getFullYear(), date.getMonth(), 1))
-    setOpen(false)
-  }
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="h-9 w-full justify-between rounded-md px-2.5 text-sm font-normal sm:h-10 sm:px-3"
-        >
-          <span className="flex min-w-0 items-center gap-2">
-            <HugeiconsIcon
-              icon={Calendar03Icon}
-              size={16}
-              className="text-muted-foreground"
-            />
-            <span className="truncate">{formatShortDate(value)}</span>
-          </span>
-          <HugeiconsIcon
-            icon={ArrowDown01Icon}
-            size={16}
-            className="text-muted-foreground"
-          />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[min(19rem,calc(100vw-1.5rem))]">
-        <div className="flex items-center justify-between gap-2">
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            aria-label="Mes anterior"
-            onClick={() => shiftMonth(-1)}
-          >
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
-          </Button>
-          <div className="text-sm font-semibold capitalize">{monthLabel}</div>
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            aria-label="Proximo mes"
-            onClick={() => shiftMonth(1)}
-          >
-            <HugeiconsIcon icon={ArrowRight01Icon} size={16} />
-          </Button>
-        </div>
-
-        <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-muted-foreground">
-          {["D", "S", "T", "Q", "Q", "S", "S"].map((day, index) => (
-            <span key={`${day}-${index}`} className="py-1">
-              {day}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-1 grid grid-cols-7 gap-1">
-          {days.map((date) => {
-            const dateValue = toDateInputValue(date)
-            const isSelected = dateValue === value
-            const isOutside = date.getMonth() !== viewDate.getMonth()
-
-            return (
-              <button
-                key={dateValue}
-                type="button"
-                onClick={() => selectDate(date)}
-                className={cn(
-                  "flex aspect-square items-center justify-center rounded-md text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                  isOutside && "text-muted-foreground/50",
-                  isSelected &&
-                    "bg-primary font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-                )}
-              >
-                {date.getDate()}
-              </button>
-            )
-          })}
-        </div>
-      </PopoverContent>
-    </Popover>
   )
 }
 
@@ -2096,6 +1946,312 @@ function LegacyScheduleModal({
   )
 }
 
+type StatusTone = "green" | "amber" | "red" | "blue" | "neutral"
+
+type AgendaSummary = {
+  total: number
+  inAttendance: number
+  pendingCommands: number
+  needsAttention: number
+}
+
+type AgendaOperationalInfo = {
+  appointmentLabel: string
+  appointmentTone: StatusTone
+  clientLabel: string
+  clientTone: StatusTone
+  subscriptionLabel?: string
+  subscriptionTone: StatusTone
+  coverageLabel?: string
+  coverageTone: StatusTone
+  attendanceLabel?: string
+  attendanceTone: StatusTone
+  commandLabel?: string
+  commandTone: StatusTone
+  microcopy: string
+  detailsCopy: string
+  hasSubscription: boolean
+  isDelinquent: boolean
+  hasPendingCommand: boolean
+  needsAttention: boolean
+}
+
+function getAgendaOperationalInfo(event: AgendaEvent): AgendaOperationalInfo {
+  const client = getClientForEvent(event)
+  const subscription = client
+    ? database.subscriptions.find((item) => item.clientId === client.id)
+    : undefined
+  const command = getCommandForEvent(event)
+  const primaryService = getPrimaryService(event)
+  const balance = subscription?.benefitBalances.find((item) =>
+    primaryService
+      ? item.serviceId === String(primaryService.id) ||
+        item.serviceName === primaryService.name
+      : event.reservedBenefitServiceId
+        ? item.serviceId === event.reservedBenefitServiceId
+        : event.detail.includes(item.serviceName)
+  )
+  const appointmentStatus = event.status ?? APPOINTMENT_STATUS.CONFIRMED
+  const isDelinquent = subscription?.status === SUBSCRIPTION_STATUS.DELINQUENT
+  const hasIncludedCommandItem = command?.items.some(
+    (item) => item.coverage === "included_in_plan"
+  )
+  const hasExtraCommandItem = command?.items.some(
+    (item) => item.coverage === "extra_paid" || item.coverage === "regular"
+  )
+  const hasPendingCommand =
+    command?.status === COMMAND_STATUS.OPEN ||
+    command?.status === COMMAND_STATUS.PENDING
+  const hasReservedBenefit = Boolean(event.reservedBenefitServiceId)
+  const clientLabel = getClientLabel(subscription?.status, event.origin)
+  const coverage = getCoverageInfo({
+    subscriptionStatus: subscription?.status,
+    balanceAvailable: balance?.available ?? 0,
+    hasReservedBenefit,
+    hasIncludedCommandItem: Boolean(hasIncludedCommandItem),
+    hasExtraCommandItem: Boolean(hasExtraCommandItem),
+    hasSubscription: Boolean(subscription),
+  })
+  const attendanceLabel = event.attendanceStatus
+    ? ATTENDANCE_STATUS_LABELS[event.attendanceStatus]
+    : undefined
+  const commandLabel = command ? COMMAND_STATUS_LABELS[command.status] : undefined
+  const microcopy = [
+    event.origin ? getOriginLabel(event.origin) : null,
+    event.notes,
+  ]
+    .filter(Boolean)
+    .join(" - ")
+  const detailsCopy = [
+    `${event.title} - ${event.detail} - ${event.start} as ${event.end}`,
+    clientLabel.label,
+    subscription
+      ? `${subscription.plan}: ${SUBSCRIPTION_STATUS_LABELS[subscription.status]}`
+      : "Sem assinatura ativa",
+    coverage.label,
+    command ? `Comanda ${command.id}: ${COMMAND_STATUS_LABELS[command.status]}` : null,
+  ]
+    .filter(Boolean)
+    .join(" | ")
+
+  return {
+    appointmentLabel: APPOINTMENT_STATUS_LABELS[appointmentStatus],
+    appointmentTone: getAppointmentTone(appointmentStatus),
+    clientLabel: clientLabel.label,
+    clientTone: clientLabel.tone,
+    subscriptionLabel: subscription
+      ? SUBSCRIPTION_STATUS_LABELS[subscription.status]
+      : undefined,
+    subscriptionTone: getSubscriptionTone(subscription?.status),
+    coverageLabel: coverage.label,
+    coverageTone: coverage.tone,
+    attendanceLabel,
+    attendanceTone: getAttendanceTone(event.attendanceStatus),
+    commandLabel,
+    commandTone: getCommandTone(command?.status),
+    microcopy,
+    detailsCopy,
+    hasSubscription: Boolean(subscription),
+    isDelinquent,
+    hasPendingCommand,
+    needsAttention:
+      appointmentStatus === APPOINTMENT_STATUS.PENDING ||
+      appointmentStatus === APPOINTMENT_STATUS.NO_SHOW ||
+      isDelinquent ||
+      hasPendingCommand,
+  }
+}
+
+function getClientForEvent(event: AgendaEvent) {
+  return database.clients.find(
+    (client) => client.name.toLowerCase() === event.title.toLowerCase()
+  )
+}
+
+function getCommandForEvent(event: AgendaEvent) {
+  return event.commandId
+    ? database.comandas.find((command) => command.id === event.commandId)
+    : undefined
+}
+
+function getPrimaryService(event: AgendaEvent) {
+  return database.services.find((service) => event.detail.includes(service.name))
+}
+
+function getReservableServiceId(clientName: string, detail: string) {
+  const client = database.clients.find(
+    (item) => item.name.toLowerCase() === clientName.trim().toLowerCase()
+  )
+  const subscription = client
+    ? database.subscriptions.find(
+        (item) =>
+          item.clientId === client.id && item.status === SUBSCRIPTION_STATUS.ACTIVE
+      )
+    : undefined
+
+  if (!subscription) return undefined
+
+  const balance = subscription.benefitBalances.find(
+    (item) =>
+      detail.includes(item.serviceName) &&
+      item.available > 0 &&
+      item.reserved >= 0
+  )
+
+  return balance?.serviceId
+}
+
+function matchesAgendaFilter(event: AgendaEvent, filter: AgendaFilter) {
+  if (filter === "all") return true
+
+  const info = getAgendaOperationalInfo(event)
+
+  if (filter === "subscribers") return info.hasSubscription
+  if (filter === "walk_in") return !info.hasSubscription || event.origin === "walk_in"
+  if (filter === "delinquent") return info.isDelinquent
+  if (filter === "attendance") {
+    return (
+      event.attendanceStatus === ATTENDANCE_STATUS.CLIENT_ARRIVED ||
+      event.attendanceStatus === ATTENDANCE_STATUS.IN_PROGRESS
+    )
+  }
+  if (filter === "pending_command") return info.hasPendingCommand
+  if (filter === "needs_attention") return info.needsAttention
+  if (filter === "no_show") return event.status === APPOINTMENT_STATUS.NO_SHOW
+  if (filter === "cancelled") return event.status === APPOINTMENT_STATUS.CANCELLED
+
+  return true
+}
+
+function buildAgendaSummary(events: AgendaEvent[]): AgendaSummary {
+  return events.reduce(
+    (summary, event) => {
+      const info = getAgendaOperationalInfo(event)
+
+      return {
+        total: summary.total + 1,
+        inAttendance:
+          summary.inAttendance +
+          (event.attendanceStatus === ATTENDANCE_STATUS.CLIENT_ARRIVED ||
+          event.attendanceStatus === ATTENDANCE_STATUS.IN_PROGRESS
+            ? 1
+            : 0),
+        pendingCommands:
+          summary.pendingCommands + (info.hasPendingCommand ? 1 : 0),
+        needsAttention: summary.needsAttention + (info.needsAttention ? 1 : 0),
+      }
+    },
+    { total: 0, inAttendance: 0, pendingCommands: 0, needsAttention: 0 }
+  )
+}
+
+function getClientLabel(
+  status: SubscriptionStatus | undefined,
+  origin: AgendaEvent["origin"]
+) {
+  if (status === SUBSCRIPTION_STATUS.ACTIVE) {
+    return { label: "Assinante ativo", tone: "green" as const }
+  }
+
+  if (status === SUBSCRIPTION_STATUS.DELINQUENT) {
+    return { label: "Assinante inadimplente", tone: "red" as const }
+  }
+
+  if (status) {
+    return { label: `Assinante ${SUBSCRIPTION_STATUS_LABELS[status]}`, tone: "amber" as const }
+  }
+
+  if (origin === "walk_in") {
+    return { label: "Encaixe avulso", tone: "blue" as const }
+  }
+
+  return { label: "Cliente avulso", tone: "neutral" as const }
+}
+
+function getCoverageInfo({
+  subscriptionStatus,
+  balanceAvailable,
+  hasReservedBenefit,
+  hasIncludedCommandItem,
+  hasExtraCommandItem,
+  hasSubscription,
+}: {
+  subscriptionStatus?: SubscriptionStatus
+  balanceAvailable: number
+  hasReservedBenefit: boolean
+  hasIncludedCommandItem: boolean
+  hasExtraCommandItem: boolean
+  hasSubscription: boolean
+}) {
+  if (!hasSubscription) {
+    return { label: "Avulso", tone: "neutral" as const }
+  }
+
+  if (subscriptionStatus === SUBSCRIPTION_STATUS.DELINQUENT) {
+    return { label: "Beneficio bloqueado", tone: "red" as const }
+  }
+
+  if (hasIncludedCommandItem) {
+    return { label: "Incluso no plano", tone: "green" as const }
+  }
+
+  if (hasReservedBenefit) {
+    return { label: "Beneficio reservado", tone: "blue" as const }
+  }
+
+  if (hasExtraCommandItem || balanceAvailable <= 0) {
+    return { label: "Extra pago", tone: "amber" as const }
+  }
+
+  return { label: "Cobertura disponivel", tone: "green" as const }
+}
+
+function getAppointmentTone(status: AppointmentStatus): StatusTone {
+  if (status === APPOINTMENT_STATUS.CONFIRMED) return "green"
+  if (status === APPOINTMENT_STATUS.PENDING) return "amber"
+  if (status === APPOINTMENT_STATUS.NO_SHOW) return "red"
+  return "neutral"
+}
+
+function getAttendanceTone(status?: AttendanceStatus): StatusTone {
+  if (status === ATTENDANCE_STATUS.COMPLETED) return "green"
+  if (status === ATTENDANCE_STATUS.IN_PROGRESS) return "blue"
+  if (status === ATTENDANCE_STATUS.CLIENT_ARRIVED) return "amber"
+  if (status === ATTENDANCE_STATUS.CANCELLED) return "red"
+  return "neutral"
+}
+
+function getCommandTone(status?: CommandStatus): StatusTone {
+  if (status === COMMAND_STATUS.PAID) return "green"
+  if (status === COMMAND_STATUS.OPEN) return "blue"
+  if (status === COMMAND_STATUS.PENDING) {
+    return "amber"
+  }
+  return "neutral"
+}
+
+function getSubscriptionTone(status?: SubscriptionStatus): StatusTone {
+  if (status === SUBSCRIPTION_STATUS.ACTIVE) return "green"
+  if (status === SUBSCRIPTION_STATUS.DELINQUENT) return "red"
+  if (status === SUBSCRIPTION_STATUS.PAUSED) return "amber"
+  return "neutral"
+}
+
+function getOriginLabel(origin: NonNullable<AgendaEvent["origin"]>) {
+  const labels: Record<NonNullable<AgendaEvent["origin"]>, string> = {
+    portal: "Portal",
+    manual: "Manual",
+    walk_in: "Encaixe",
+    recurring: "Recorrente",
+  }
+
+  return labels[origin]
+}
+
+function appendEventNote(current: string | undefined, next: string) {
+  return current ? `${current} ${next}` : next
+}
+
 function eventPosition(event: AgendaEvent) {
   const dayStart = timeToMinutes(timeSlots[0])
   const start = timeToMinutes(event.start)
@@ -2118,29 +2274,6 @@ function isSlotInsideEvent(slot: string, event: AgendaEvent) {
   )
 }
 
-function formatDateLabel(dateValue: string) {
-  const date = parseLocalDate(dateValue)
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    weekday: "long",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date)
-}
-
-function formatMobileDateLabel(dateValue: string) {
-  const date = parseLocalDate(dateValue)
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  })
-    .format(date)
-    .replace(".", "")
-}
-
 function formatShortDate(dateValue: string) {
   const date = parseLocalDate(dateValue)
 
@@ -2157,50 +2290,6 @@ function toDateInputValue(date: Date) {
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("-")
-}
-
-function addDays(date: Date, days: number) {
-  const nextDate = new Date(date)
-  nextDate.setDate(nextDate.getDate() + days)
-  return nextDate
-}
-
-function buildRecurringEvents(
-  baseEvent: AgendaEvent,
-  selectedWeekdays: number[]
-) {
-  const startDate = parseLocalDate(baseEvent.date)
-  const recurrenceDays = selectedWeekdays.length
-    ? selectedWeekdays
-    : [startDate.getDay()]
-
-  return Array.from({ length: 56 }, (_, index) => addDays(startDate, index))
-    .filter((date) => recurrenceDays.includes(date.getDay()))
-    .map((date, index) => ({
-      ...baseEvent,
-      id: baseEvent.id + index,
-      date: toDateInputValue(date),
-    }))
-}
-
-function getCalendarDays(viewDate: Date) {
-  const start = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1)
-  const end = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0)
-  const firstDayOffset = start.getDay()
-  const totalDays = firstDayOffset + end.getDate()
-  const trailingDays = (7 - (totalDays % 7)) % 7
-  const calendarStart = new Date(start)
-  calendarStart.setDate(start.getDate() - firstDayOffset)
-
-  return Array.from(
-    { length: totalDays + trailingDays },
-    (_, index) =>
-      new Date(
-        calendarStart.getFullYear(),
-        calendarStart.getMonth(),
-        calendarStart.getDate() + index
-      )
-  )
 }
 
 function shiftDate(
@@ -2269,3 +2358,4 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "")
 }
+

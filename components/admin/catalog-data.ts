@@ -11,5 +11,12 @@ export const planCatalog = adminService.plans.map((plan) => ({
 export const paymentMethodOptions = adminService.paymentMethods.map(
   (method) => method.name
 )
-export const serviceNames = serviceCatalog.map((service) => service.name)
+export const serviceNames = serviceCatalog
+  .filter(
+    (service) =>
+      service.status === "Ativo" &&
+      !service.hidden &&
+      service.portalVisible !== false
+  )
+  .map((service) => service.name)
 export const planNames = planCatalog.map((plan) => plan.name)

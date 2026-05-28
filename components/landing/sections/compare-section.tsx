@@ -1,4 +1,4 @@
-import {
+﻿import {
   CancelCircleIcon,
   CheckmarkCircle02Icon,
   DashboardSquare03Icon,
@@ -11,7 +11,7 @@ import { SectionHeader, SectionPill } from "@/components/landing/ui/section-head
 
 const comparisons = [
   {
-    label: "Opção 1",
+    label: "OpÃ§Ã£o 1",
     title: "WhatsApp e planilha",
     icon: CancelCircleIcon,
     bad: [
@@ -22,7 +22,7 @@ const comparisons = [
     ],
   },
   {
-    label: "Opção 2",
+    label: "OpÃ§Ã£o 2",
     title: "Sistema complexo",
     icon: DashboardSquare03Icon,
     bad: [
@@ -44,7 +44,7 @@ export function CompareSection() {
         <SectionHeader
           eyebrow="Comparativo"
           title="WhatsApp e planilha vs. Bigood."
-          text="Você pode continuar do jeito antigo ou agendar uma demonstração e ver a diferença."
+          text="VocÃª pode continuar do jeito antigo ou agendar uma demonstraÃ§Ã£o e ver a diferenÃ§a."
         />
 
         <div className="stagger-grid mt-10 grid gap-3 lg:grid-cols-3">
@@ -93,7 +93,7 @@ export function CompareSection() {
               {[
                 "Agenda e caixa no mesmo lugar",
                 "Planos de assinatura para clientes",
-                "Portal do cliente pronto para vender",
+                "Gestao de clientes pronto para vender",
                 "Rotina pensada para barbearia",
               ].map((line) => (
                 <li key={line} className="flex gap-2">

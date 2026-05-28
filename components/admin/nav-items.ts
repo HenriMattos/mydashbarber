@@ -9,7 +9,6 @@ import {
   UserAdd01Icon,
   UserListIcon,
   UserMultipleIcon,
-  UserStar01Icon,
   Wallet02Icon,
   BankIcon,
   File01Icon,
@@ -18,6 +17,7 @@ import {
   PlusSignCircleIcon,
   CancelCircleIcon,
   CheckmarkCircle01Icon,
+  CashierIcon,
 } from "@hugeicons/core-free-icons"
 
 export const navItems = [
@@ -38,6 +38,13 @@ export const navItems = [
     href: "/caixa",
     icon: Wallet02Icon,
     description: "Entradas, saidas e fechamento",
+    children: [
+      {
+        title: "Comandas",
+        href: "/caixa/comandas",
+        icon: CashierIcon,
+      },
+    ],
   },
   {
     title: "Clientes",
@@ -49,16 +56,6 @@ export const navItems = [
         title: "Cadastrar cliente",
         href: "/clientes/cadastrar",
         icon: UserAdd01Icon,
-      },
-      {
-        title: "Listagem de clientes",
-        href: "/clientes/listagem",
-        icon: UserListIcon,
-      },
-      {
-        title: "Cliente recompras",
-        href: "/clientes/recompras",
-        icon: UserStar01Icon,
       },
     ],
   },
@@ -132,11 +129,6 @@ export const navItems = [
         href: "/profissionais/cadastrar",
         icon: UserAdd01Icon,
       },
-      {
-        title: "Gerenciar profissional",
-        href: "/profissionais/gerenciar",
-        icon: UserListIcon,
-      },
     ],
   },
   {
@@ -167,6 +159,13 @@ export const navItems = [
     href: "/empresa",
     icon: Building02Icon,
     description: "Dados comerciais e operacionais",
+    children: [
+      {
+        title: "Filiais",
+        href: "/empresa/filiais",
+        icon: Building02Icon,
+      },
+    ],
   },
 ] as const
 

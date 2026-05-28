@@ -1,4 +1,4 @@
-import Image from "next/image"
+﻿import Image from "next/image"
 import Link from "next/link"
 import type { ReactNode } from "react"
 import {
@@ -36,7 +36,7 @@ const textArrowIconClass =
 
 const heroSignals = [
   {
-    title: "Portal do cliente",
+    title: "Gestao de clientes",
     description: "Seu cliente agenda pelo celular.",
     icon: SmartPhone01Icon,
   },
@@ -50,13 +50,13 @@ const heroSignals = [
 const heroFloatingCards = [
   {
     title: "Agenda clara",
-    description: "Horários e equipe em ordem.",
+    description: "HorÃ¡rios e equipe em ordem.",
     icon: Calendar03Icon,
     className: "top-[18%] left-[2%]",
   },
   {
     title: "Painel ativo",
-    description: "Rotina visível para o barbeiro.",
+    description: "Rotina visÃ­vel para o barbeiro.",
     icon: DashboardSquare03Icon,
     className: "right-[4%] bottom-[22%]",
   },
@@ -65,7 +65,7 @@ const heroFloatingCards = [
 const featureCards = [
   {
     title: "Agenda sem improviso",
-    description: "Serviços, horários e confirmações em uma agenda clara.",
+    description: "ServiÃ§os, horÃ¡rios e confirmaÃ§Ãµes em uma agenda clara.",
     icon: Calendar03Icon,
   },
   {
@@ -75,11 +75,11 @@ const featureCards = [
   },
   {
     title: "Planos recorrentes",
-    description: "Assinantes, benefícios e renovações sem planilha.",
+    description: "Assinantes, benefÃ­cios e renovaÃ§Ãµes sem planilha.",
     icon: CreditCardIcon,
   },
   {
-    title: "Portal do cliente",
+    title: "Gestao de clientes",
     description: "Seu cliente agenda e acompanha tudo pelo celular.",
     icon: SmartPhone01Icon,
   },
@@ -93,18 +93,18 @@ const flowSteps = [
   },
   {
     title: "Configure a rotina",
-    description: "Agenda, equipe, serviços e portal no mesmo lugar.",
+    description: "Agenda, equipe, servicos e clientes no mesmo lugar.",
     icon: StoreManagement01Icon,
   },
   {
     title: "Acompanhe pelo painel",
-    description: "Veja caixa, clientes e atendimentos sem ruído.",
+    description: "Veja caixa, clientes e atendimentos sem ruÃ­do.",
     icon: DashboardSquare03Icon,
   },
 ]
 
 const dashboardMetrics = [
-  { label: "Agenda de hoje", value: "32 horários", icon: Calendar03Icon },
+  { label: "Agenda de hoje", value: "32 horÃ¡rios", icon: Calendar03Icon },
   { label: "Caixa do dia", value: "R$ 2.840", icon: CashierIcon },
   { label: "Clientes ativos", value: "486", icon: UserGroupIcon },
   { label: "Assinaturas", value: "86 ativas", icon: CreditCardIcon },
@@ -113,11 +113,11 @@ const dashboardMetrics = [
 const proofItems = [
   {
     title: "Agenda centralizada",
-    description: "Horários, profissionais e serviços organizados.",
+    description: "HorÃ¡rios, profissionais e serviÃ§os organizados.",
     icon: Calendar03Icon,
   },
   {
-    title: "Operação conectada",
+    title: "OperaÃ§Ã£o conectada",
     description: "Caixa, clientes e atendimentos no mesmo fluxo.",
     icon: StoreManagement01Icon,
   },
@@ -127,8 +127,8 @@ const proofItems = [
     icon: DashboardSquare03Icon,
   },
   {
-    title: "Planos e recorrência",
-    description: "Assinaturas e benefícios visíveis para a gestão.",
+    title: "Planos e recorrÃªncia",
+    description: "Assinaturas e benefÃ­cios visÃ­veis para a gestÃ£o.",
     icon: CreditCardIcon,
   },
 ]
@@ -137,22 +137,22 @@ const faqItems = [
   {
     question: "Posso criar uma conta sozinho?",
     answer:
-      "Sim. O barbeiro pode criar a conta pelo site e acessar o painel para configurar a operação.",
+      "Sim. O barbeiro pode criar a conta pelo site e acessar o painel para configurar a operaÃ§Ã£o.",
   },
   {
     question: "Onde vejo planos e assinatura?",
     answer:
-      "As informações de plano, assinatura e conta ficam dentro do dashboard, junto com as configurações pessoais.",
+      "As informaÃ§Ãµes de plano, assinatura e conta ficam dentro do dashboard, junto com as configuraÃ§Ãµes pessoais.",
   },
   {
-    question: "O cliente final também usa o Bigood?",
+    question: "O cliente final tambÃ©m usa o Bigood?",
     answer:
-      "Sim. A barbearia pode ter um portal para agendamentos, serviços, planos e relacionamento com clientes.",
+      "Sim. A barbearia gerencia agendamentos, servicos, planos e relacionamento com clientes pelo painel administrativo.",
   },
   {
     question: "Onde configuro login, senha e dados da conta?",
     answer:
-      "Essas opções ficam dentro do dashboard, na área de conta pessoal, junto com dados do plano assinado.",
+      "Essas opÃ§Ãµes ficam dentro do dashboard, na Ã¡rea de conta pessoal, junto com dados do plano assinado.",
   },
 ]
 
@@ -286,12 +286,12 @@ export function LandingPage() {
                   </span>
                 </span>
                 <span className="min-w-0 truncate text-xs font-extrabold text-[var(--landing-primary-dark)]">
-                  Gestão premium para barbearias modernas
+                  GestÃ£o premium para barbearias modernas
                 </span>
               </div>
 
               <h1 className="mt-5 max-w-[620px] text-[clamp(2.25rem,5.4vw,4.1rem)] leading-[0.98] font-black break-words text-[var(--landing-primary-dark)]">
-                Barba, cabelo e gestão para seu negócio{" "}
+                Barba, cabelo e gestÃ£o para seu negÃ³cio{" "}
                 <span className="landing-sketched-word text-[var(--landing-primary)]">
                   crescer.
                 </span>
@@ -434,7 +434,7 @@ export function LandingPage() {
                 Sistema completo para planos e agenda.
               </h2>
               <p className="mt-6 text-lg leading-8 font-medium text-[var(--landing-muted)]">
-                Para barbearias com assinantes, serviços avulsos ou os dois.
+                Para barbearias com assinantes, serviÃ§os avulsos ou os dois.
               </p>
               <Link
                 href="#dashboard"
@@ -460,11 +460,11 @@ export function LandingPage() {
               Painel Bigood
             </p>
             <h2 className="mt-4 text-[clamp(2rem,4vw,3.25rem)] leading-[1.04] font-black text-[var(--landing-primary-dark)]">
-              Uma visão de produto no primeiro contato.
+              Uma visÃ£o de produto no primeiro contato.
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 font-medium text-[var(--landing-muted)]">
-              O visitante entende que o Bigood não é uma promessa abstrata: a
-              operação aparece em telas, métricas e rotinas claras.
+              O visitante entende que o Bigood nÃ£o Ã© uma promessa abstrata: a
+              operaÃ§Ã£o aparece em telas, mÃ©tricas e rotinas claras.
             </p>
           </div>
 
@@ -537,82 +537,6 @@ export function LandingPage() {
         </div>
       </FrameSection>
 
-      <FrameSection id="portal-cliente" contentClassName="landing-dotted-panel">
-        <div className="px-5 py-16 sm:px-8 md:px-12 lg:px-16 lg:py-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-xs font-extrabold tracking-[0.16em] text-[var(--landing-muted)] uppercase">
-              Portal do cliente
-            </p>
-            <h2 className="mt-4 text-[clamp(2rem,4vw,3.25rem)] leading-[1.04] font-black text-[var(--landing-primary-dark)]">
-              Seu cliente agenda pelo celular.
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 font-medium text-[var(--landing-muted)]">
-              O portal deixa serviços, horários, profissionais e planos
-              organizados em uma experiência simples para o cliente final.
-            </p>
-          </div>
-
-          <div className="relative mx-auto mt-2 min-h-[380px] max-w-[920px] overflow-visible rounded-2xl bg-white sm:min-h-[580px] lg:min-h-[640px]">
-            <Image
-              src={LANDING_IMAGES.portal}
-              alt="Dois celulares com o portal do cliente Bigood aberto"
-              width={1400}
-              height={1400}
-              className="absolute top-[4%] left-1/2 h-[82%] w-auto max-w-none -translate-x-1/2 object-contain drop-shadow-[0_24px_55px_rgba(11,51,36,0.16)] sm:top-[-10%] sm:h-[110%]"
-            />
-
-            {[
-              {
-                title: "Agendamento",
-                text: "Serviço e horário em poucos toques.",
-                icon: Calendar03Icon,
-                className: "top-[16%] left-[4%]",
-              },
-              {
-                title: "Planos",
-                text: "Benefícios visíveis para o cliente.",
-                icon: CreditCardIcon,
-                className: "top-[18%] right-[4%]",
-              },
-              {
-                title: "Histórico",
-                text: "Relacionamento mais claro.",
-                icon: UserGroupIcon,
-                className: "bottom-[24%] left-[7%]",
-              },
-              {
-                title: "Mobile",
-                text: "Acesso direto pelo celular.",
-                icon: SmartPhone01Icon,
-                className: "right-[7%] bottom-[24%]",
-              },
-            ].map((card, index) => (
-              <article
-                key={card.title}
-                className={cn(
-                  "landing-float-card absolute z-10 hidden w-[170px] rounded-2xl border border-[var(--landing-border)] bg-white/94 p-4 shadow-[0_18px_45px_rgba(11,51,36,0.12)] backdrop-blur md:block",
-                  index % 2 === 1 && "landing-float-card-delay",
-                  card.className
-                )}
-              >
-                <HugeiconsIcon
-                  icon={card.icon}
-                  size={20}
-                  className="text-[var(--landing-primary-dark)]"
-                  aria-hidden="true"
-                />
-                <p className="mt-3 text-sm font-black text-[var(--landing-primary-dark)]">
-                  {card.title}
-                </p>
-                <p className="mt-1 text-xs leading-4 font-semibold text-[var(--landing-muted)]">
-                  {card.text}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </FrameSection>
-
       <FrameSection>
         <div className="px-5 py-16 sm:px-8 md:px-12 lg:px-16 lg:py-24">
           <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -621,7 +545,7 @@ export function LandingPage() {
                 Primeiro acesso
               </p>
               <h2 className="mt-4 max-w-2xl text-[clamp(2rem,4vw,3.25rem)] leading-[1.04] font-black text-[var(--landing-primary-dark)]">
-                A gestão começa com a estrutura certa.
+                A gestÃ£o comeÃ§a com a estrutura certa.
               </h2>
             </div>
             <Link href="#recursos" className={textArrowLinkClass}>
@@ -663,8 +587,8 @@ export function LandingPage() {
       <FrameSection id="duvidas">
         <div className="grid gap-10 px-5 py-16 sm:px-8 md:px-12 lg:grid-cols-[0.92fr_1.08fr] lg:px-16 lg:py-28">
           <SectionHeading
-            eyebrow="Dúvidas frequentes"
-            title="Tem dúvidas? Relaxa, nós temos as respostas."
+            eyebrow="DÃºvidas frequentes"
+            title="Tem dÃºvidas? Relaxa, nÃ³s temos as respostas."
             text="Selecionamos as perguntas que mais aparecem antes do primeiro acesso ao Bigood."
           />
 
@@ -696,11 +620,11 @@ export function LandingPage() {
           <div className="landing-end-cta relative grid min-h-[420px] overflow-hidden rounded-lg bg-[var(--landing-accent)] px-7 py-12 sm:px-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:px-20">
             <div className="relative z-10 mx-auto max-w-xl text-center lg:mx-0 lg:text-left">
               <h2 className="text-[clamp(2.25rem,4.8vw,4rem)] leading-[1.02] font-black text-[var(--landing-primary-dark)]">
-                Você chegou no fim da página.
+                VocÃª chegou no fim da pÃ¡gina.
               </h2>
               <p className="mx-auto mt-7 max-w-md text-base leading-7 font-semibold text-[var(--landing-primary-dark)]/78 lg:mx-0">
                 Se o Bigood faz sentido para sua barbearia, veja o produto em
-                ação.
+                aÃ§Ã£o.
               </p>
               <div className="mt-12 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
                 <Button size="lg" className={primaryButtonClass} asChild>
@@ -761,7 +685,7 @@ export function LandingPage() {
                 links: [
                   ["Agenda", "#recursos"],
                   ["Caixa", "#recursos"],
-                  ["Portal", "#portal-cliente"],
+                  
                   ["Assinaturas", "#dashboard"],
                 ],
               },
@@ -770,7 +694,7 @@ export function LandingPage() {
                 links: [
                   ["Como funciona", "#como-funciona"],
                   ["Recursos", "#recursos"],
-                  ["Dúvidas", "#duvidas"],
+                  ["DÃºvidas", "#duvidas"],
                   ["Privacidade", "#"],
                   ["Termos", "#"],
                 ],
@@ -779,7 +703,7 @@ export function LandingPage() {
                 title: "Sistema",
                 links: [
                   ["Painel do barbeiro", "#dashboard"],
-                  ["Portal do cliente", "#portal-cliente"],
+                  
                   ["Painel completo", "#dashboard"],
                 ],
               },
@@ -810,7 +734,7 @@ export function LandingPage() {
             </div>
             <div className="mt-8 flex flex-col gap-5 text-xs font-semibold text-[var(--landing-muted)] md:flex-row md:items-center md:justify-between">
               <p>
-                Copyright © 2026 Bigood Tecnologia. Sistema de gestão para
+                Copyright Â© 2026 Bigood Tecnologia. Sistema de gestÃ£o para
                 barbearias.
               </p>
               <div className="flex items-center gap-3">

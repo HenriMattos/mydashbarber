@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 export default function ListagemClientesPage() {
   return (
     <SectionCard
-      title="Listagem de clientes"
-      description="Clientes cadastrados com edicao rapida"
+      title="Registros Ativos"
+      description="Clientes do sistema."
       action={
         <Button size="sm" asChild>
           <Link href="/clientes/cadastrar">

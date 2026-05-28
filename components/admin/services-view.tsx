@@ -44,6 +44,7 @@ import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -54,19 +55,35 @@ import {
 
 const initialCreateForm = {
   name: "",
+  description: "",
+  internalDescription: "",
   durationMinutes: "",
   price: "",
   credits: "",
   repurchaseDays: "",
   category: "",
+  professionalIds: [] as number[],
+  portalVisible: true,
+  onlineBookable: true,
+  canBeInPlan: true,
+  requiresProfessionalSelection: false,
   startingFrom: false,
   hidden: false,
   fitIn: false,
+  notes: "",
+  popularityCount: "",
+  revenueGenerated: "",
 }
 
 export function ServicosOverview() {
   const activeServices = serviceCatalog.filter(
     (service) => service.status === "Ativo" && !service.hidden
+  )
+  const portalServices = activeServices.filter(
+    (service) => service.portalVisible !== false && service.onlineBookable !== false
+  )
+  const planEligibleServices = activeServices.filter(
+    (service) => service.canBeInPlan !== false
   )
   const featuredServices = serviceCatalog.filter((service) => service.featured)
   const averageDuration = activeServices.length
@@ -77,6 +94,10 @@ export function ServicosOverview() {
         ) / activeServices.length
       )
     : 0
+  const estimatedRevenue = activeServices.reduce(
+    (sum, service) => sum + (service.revenueGenerated ?? 0),
+    0
+  )
 
   return (
     <>
@@ -96,11 +117,32 @@ export function ServicosOverview() {
           tone="blue"
         />
         <MetricCard
+          title="Portal visivel"
+          value={String(portalServices.length)}
+          change="Servicos liberados para agendamento online"
+          icon={EyeIcon}
+          tone="green"
+        />
+        <MetricCard
+          title="Plano elegivel"
+          value={String(planEligibleServices.length)}
+          change="Servicos que entram em beneficios"
+          icon={PlusSignCircleIcon}
+          tone="amber"
+        />
+        <MetricCard
           title="Duracao media"
           value={`${averageDuration} min`}
-          change="Base dos registros ativos"
+          change="Base dos atendimentos ativos"
           icon={ScissorIcon}
-          tone="amber"
+          tone="blue"
+        />
+        <MetricCard
+          title="Receita estimada"
+          value={formatCurrency(estimatedRevenue)}
+          change="Somatorio mockado dos servicos ativos"
+          icon={ScissorIcon}
+          tone="blue"
         />
       </div>
 
@@ -132,7 +174,7 @@ export function ServicosOverview() {
 
       <SectionCard
         title="Catalogo de servicos"
-        description="Preco, duracao e profissionais habilitados"
+        description="Preco, duracao, portal, planos e profissionais habilitados"
         action={
           <Button size="sm" asChild>
             <Link href="/servicos/cadastrar">
@@ -143,16 +185,42 @@ export function ServicosOverview() {
         }
       >
         <SimpleTable
-          columns={["Servico", "Duracao", "Preco", "Profissionais", "Status"]}
+          columns={[
+            "Servico",
+            "Portal",
+            "Plano",
+            "Profissionais",
+            "Duracao",
+            "Status",
+          ]}
           rows={activeServices
             .slice(0, 8)
             .map((service) => [
-              service.name,
-              service.duration,
-              service.startingFrom
-                ? `A partir de ${formatCurrency(service.price)}`
-                : formatCurrency(service.price),
+              <div key={service.id} className="space-y-1">
+                <p className="font-semibold">{service.name}</p>
+                <p className="text-xs text-muted-foreground">{service.category}</p>
+              </div>,
+              <StatusBadge
+                key={`${service.id}-portal`}
+                tone={service.portalVisible === false || service.hidden ? "neutral" : "green"}
+              >
+                {service.portalVisible === false || service.hidden ? "Nao" : "Sim"}
+              </StatusBadge>,
+              <StatusBadge
+                key={`${service.id}-plan`}
+                tone={service.canBeInPlan === false ? "neutral" : "amber"}
+              >
+                {service.canBeInPlan === false ? "Nao" : "Sim"}
+              </StatusBadge>,
               service.professionals,
+              <div key={`${service.id}-duration`} className="space-y-1">
+                <p className="font-semibold">{service.duration}</p>
+                <p className="text-xs text-muted-foreground">
+                  {service.startingFrom
+                    ? `A partir de ${formatCurrency(service.price)}`
+                    : formatCurrency(service.price)}
+                </p>
+              </div>,
               <ServiceStatusBadge key={service.id} status={service.status} />,
             ])}
         />
@@ -199,11 +267,15 @@ export function CriarServicoView() {
 
   function createService() {
     if (!canSubmit) {
-      setFeedback("Nome, duracao, valor e categoria sao obrigatorios.")
+      setFeedback(
+        "Nome, duracao, valor e categoria sao obrigatorios. A listagem operacional aparece apos salvar."
+      )
       return
     }
 
-    setFeedback(`Servico "${form.name.trim()}" preparado para cadastro.`)
+    setFeedback(
+      `Servico "${form.name.trim()}" preparado: ${form.portalVisible ? "visivel no portal" : "apenas interno"}, ${form.canBeInPlan ? "pode entrar em plano" : "fora do plano"}.`
+    )
     setForm(initialCreateForm)
   }
 
@@ -302,9 +374,117 @@ export function CriarServicoView() {
             onChange={(event) => update("repurchaseDays", event.target.value)}
           />
         </FormField>
+        <div className="col-span-full">
+          <FormField label="Descricao para o cliente">
+            <Input
+              value={form.description}
+              placeholder="Ex.: corte tradicional com acabamento limpo"
+              onChange={(event) => update("description", event.target.value)}
+            />
+          </FormField>
+        </div>
+        <div className="col-span-full">
+          <FormField label="Descricao interna">
+            <Input
+              value={form.internalDescription}
+              placeholder="Uso no painel e no atendimento interno"
+              onChange={(event) =>
+                update("internalDescription", event.target.value)
+              }
+            />
+          </FormField>
+        </div>
+        <div className="col-span-full">
+          <FormField label="Profissionais que realizam">
+            <div className="grid gap-2 md:grid-cols-2">
+              {database.professionals
+                .filter((professional) => professional.status === "Ativo")
+                .map((professional) => {
+                  const checked = form.professionalIds.includes(professional.id)
+
+                  return (
+                    <label
+                      key={professional.id}
+                      className="flex min-w-0 items-center gap-2 rounded-md border bg-muted/20 px-3 py-2 text-sm"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={() =>
+                          setForm((current) => {
+                            const nextIds = checked
+                              ? current.professionalIds.filter(
+                                  (id) => id !== professional.id
+                                )
+                              : [...current.professionalIds, professional.id]
+
+                            return { ...current, professionalIds: nextIds }
+                          })
+                        }
+                      />
+                      <span className="min-w-0">
+                        <span className="block font-medium">
+                          {professional.name}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {professional.role}
+                        </span>
+                      </span>
+                    </label>
+                  )
+                })}
+            </div>
+          </FormField>
+        </div>
+        <div className="col-span-full">
+          <FormField label="Observacoes e popularidade">
+            <div className="grid gap-3 md:grid-cols-3">
+              <Input
+                value={form.popularityCount}
+                inputMode="numeric"
+                placeholder="Atendimentos"
+                onChange={(event) => update("popularityCount", event.target.value)}
+              />
+              <Input
+                value={form.revenueGenerated}
+                inputMode="numeric"
+                placeholder="Receita estimada"
+                onChange={(event) =>
+                  update("revenueGenerated", event.target.value)
+                }
+              />
+              <Textarea
+                value={form.notes}
+                placeholder="Observacoes internas"
+                onChange={(event) => update("notes", event.target.value)}
+              />
+            </div>
+          </FormField>
+        </div>
       </FormGrid>
 
-      <div className="mt-5 grid gap-3 border-t pt-5 sm:grid-cols-3">
+      <div className="mt-5 grid gap-3 border-t pt-5 sm:grid-cols-2 xl:grid-cols-4">
+        <BooleanField
+          label="Disponivel no portal"
+          checked={form.portalVisible}
+          onCheckedChange={(checked) => update("portalVisible", checked)}
+        />
+        <BooleanField
+          label="Agendamento online"
+          checked={form.onlineBookable}
+          onCheckedChange={(checked) => update("onlineBookable", checked)}
+        />
+        <BooleanField
+          label="Pode entrar em plano"
+          checked={form.canBeInPlan}
+          onCheckedChange={(checked) => update("canBeInPlan", checked)}
+        />
+        <BooleanField
+          label="Exige profissional"
+          checked={form.requiresProfessionalSelection}
+          onCheckedChange={(checked) =>
+            update("requiresProfessionalSelection", checked)
+          }
+        />
         <BooleanField
           label="A partir de"
           checked={form.startingFrom}
@@ -410,11 +590,12 @@ export function ExibicaoServicosView() {
       description="Registros ativos. Servicos no sistema."
     >
       <div className="grid gap-2">
-        <div className="hidden grid-cols-[4rem_minmax(0,1fr)_7rem_7rem_16rem] gap-3 rounded-md bg-muted/60 px-4 py-3 text-xs font-semibold text-muted-foreground uppercase md:grid">
+        <div className="hidden grid-cols-[4rem_minmax(0,1fr)_7rem_7rem_7rem_16rem] gap-3 rounded-md bg-muted/60 px-4 py-3 text-xs font-semibold text-muted-foreground uppercase md:grid">
           <span>Ordem</span>
           <span>Nome</span>
           <span>Em alta</span>
           <span>Visivel</span>
+          <span>Plano</span>
           <span className="text-right">Opcoes</span>
         </div>
 
@@ -429,7 +610,7 @@ export function ExibicaoServicosView() {
           activeItems.map((service, index) => (
           <article
             key={service.id}
-            className="grid min-w-0 gap-3 rounded-md border bg-background p-3 md:grid-cols-[4rem_minmax(0,1fr)_7rem_7rem_16rem] md:items-center md:px-4"
+            className="grid min-w-0 gap-3 rounded-md border bg-background p-3 md:grid-cols-[4rem_minmax(0,1fr)_7rem_7rem_7rem_16rem] md:items-center md:px-4"
           >
             <div className="flex items-center justify-between gap-3 md:block">
               <span className="text-xs font-semibold text-muted-foreground md:hidden">
@@ -462,6 +643,15 @@ export function ExibicaoServicosView() {
               </span>
               <StatusBadge tone={service.hidden ? "neutral" : "green"}>
                 {service.hidden ? "Oculto" : "Sim"}
+              </StatusBadge>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 md:block">
+              <span className="text-xs font-semibold text-muted-foreground md:hidden">
+                Plano
+              </span>
+              <StatusBadge tone={service.canBeInPlan === false ? "neutral" : "amber"}>
+                {service.canBeInPlan === false ? "Nao" : "Sim"}
               </StatusBadge>
             </div>
 
@@ -506,6 +696,13 @@ export function ListagemServicosView() {
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState<"todos" | ServiceStatus>("todos")
   const [showInactive, setShowInactive] = useState(false)
+  const [portalFilter, setPortalFilter] = useState<"todos" | "sim" | "nao">(
+    "todos"
+  )
+  const [planFilter, setPlanFilter] = useState<"todos" | "sim" | "nao">("todos")
+  const [categoryFilter, setCategoryFilter] = useState("todos")
+  const [detailsService, setDetailsService] =
+    useState<ServiceCatalogItem | null>(null)
 
   const filteredServices = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -513,14 +710,35 @@ export function ListagemServicosView() {
     return serviceCatalog.filter((service) => {
       const matchesInactive = showInactive || service.status === "Ativo"
       const matchesStatus = status === "todos" || service.status === status
+      const matchesPortal =
+        portalFilter === "todos" ||
+        (portalFilter === "sim"
+          ? service.portalVisible !== false && !service.hidden
+          : service.portalVisible === false || service.hidden)
+      const matchesPlan =
+        planFilter === "todos" ||
+        (planFilter === "sim"
+          ? service.canBeInPlan !== false
+          : service.canBeInPlan === false)
+      const matchesCategory =
+        categoryFilter === "todos" || service.category === categoryFilter
       const matchesQuery =
         !normalizedQuery ||
         service.name.toLowerCase().includes(normalizedQuery) ||
-        String(service.id).includes(normalizedQuery)
+        String(service.id).includes(normalizedQuery) ||
+        service.category.toLowerCase().includes(normalizedQuery) ||
+        service.professionals.toLowerCase().includes(normalizedQuery)
 
-      return matchesInactive && matchesStatus && matchesQuery
+      return (
+        matchesInactive &&
+        matchesStatus &&
+        matchesPortal &&
+        matchesPlan &&
+        matchesCategory &&
+        matchesQuery
+      )
     })
-  }, [query, showInactive, status])
+  }, [categoryFilter, planFilter, portalFilter, query, showInactive, status])
 
   return (
     <>
@@ -528,7 +746,7 @@ export function ListagemServicosView() {
         title="Servicos"
         description="Filtros. Preencha os filtros abaixo."
       >
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem] md:items-end">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 md:items-end">
           <FormField label="Pesquise">
             <div className="flex h-10 items-center gap-2 rounded-md border bg-background px-3">
               <HugeiconsIcon
@@ -561,6 +779,58 @@ export function ListagemServicosView() {
               </SelectContent>
             </Select>
           </FormField>
+          <FormField label="Portal">
+            <Select
+              value={portalFilter}
+              onValueChange={(value) =>
+                setPortalFilter(value as "todos" | "sim" | "nao")
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Portal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="sim">Visiveis</SelectItem>
+                <SelectItem value="nao">Ocultos</SelectItem>
+              </SelectContent>
+            </Select>
+          </FormField>
+          <FormField label="Plano">
+            <Select
+              value={planFilter}
+              onValueChange={(value) =>
+                setPlanFilter(value as "todos" | "sim" | "nao")
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Plano" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="sim">Entra em plano</SelectItem>
+                <SelectItem value="nao">Fora do plano</SelectItem>
+              </SelectContent>
+            </Select>
+          </FormField>
+          <FormField label="Categoria">
+            <Select
+              value={categoryFilter}
+              onValueChange={setCategoryFilter}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todas</SelectItem>
+                {database.company.serviceCategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
         </div>
         <label className="mt-4 flex items-center gap-2 text-sm font-medium">
           <Checkbox
@@ -576,28 +846,116 @@ export function ListagemServicosView() {
           columns={[
             "ID",
             "Nome",
+            "Portal",
+            "Plano",
+            "Categoria",
             "Status",
-            "Criado em",
-            "Atualizado em",
             "Opcoes",
           ]}
           rows={filteredServices.map((service) => [
             service.id,
             service.name,
+            <StatusBadge
+              key={`${service.id}-portal`}
+              tone={service.portalVisible === false || service.hidden ? "neutral" : "green"}
+            >
+              {service.portalVisible === false || service.hidden ? "Nao" : "Sim"}
+            </StatusBadge>,
+            <StatusBadge
+              key={`${service.id}-plan`}
+              tone={service.canBeInPlan === false ? "neutral" : "amber"}
+            >
+              {service.canBeInPlan === false ? "Nao" : "Sim"}
+            </StatusBadge>,
+            service.category,
             <ServiceStatusBadge key="status" status={service.status} />,
-            service.createdAt,
-            service.updatedAt,
             <ResponsiveActions key="actions">
+              <Button size="xs" variant="outline" onClick={() => setDetailsService(service)}>
+                Detalhes
+              </Button>
               <Button size="xs" variant="outline">
                 Editar
               </Button>
-              <Button size="xs" variant="outline">
-                Exibir
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => setDetailsService(service)}
+              >
+                {service.hidden ? "Exibir" : "Ocultar"}
               </Button>
             </ResponsiveActions>,
           ])}
         />
       </SectionCard>
+
+      <Dialog
+        open={Boolean(detailsService)}
+        onOpenChange={(open) => !open && setDetailsService(null)}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{detailsService?.name}</DialogTitle>
+            <DialogDescription>
+              Visao operacional do servico, portal, plano e profissionais.
+            </DialogDescription>
+          </DialogHeader>
+          {detailsService ? (
+            <DialogBody className="grid gap-4 md:grid-cols-2">
+              <InfoBlock label="Categoria" value={detailsService.category} />
+              <InfoBlock
+                label="Preco"
+                value={formatCurrency(detailsService.price)}
+              />
+              <InfoBlock label="Duracao" value={detailsService.duration} />
+              <InfoBlock
+                label="Portal"
+                value={
+                  detailsService.portalVisible === false || detailsService.hidden
+                    ? "Nao aparece no portal"
+                    : "Aparece no portal"
+                }
+              />
+              <InfoBlock
+                label="Plano"
+                value={
+                  detailsService.canBeInPlan === false
+                    ? "Nao entra em plano"
+                    : "Pode entrar em plano"
+                }
+              />
+              <InfoBlock
+                label="Profissionais"
+                value={detailsService.professionals}
+              />
+              <InfoBlock
+                label="Popularidade"
+                value={`${detailsService.popularityCount ?? 0} atendimentos`}
+              />
+              <InfoBlock
+                label="Receita estimada"
+                value={formatCurrency(detailsService.revenueGenerated ?? 0)}
+              />
+              <div className="md:col-span-2">
+                <InfoBlock
+                  label="Descricao"
+                  value={detailsService.description || "Sem descricao"}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <InfoBlock
+                  label="Observacoes"
+                  value={detailsService.internalNotes || "Sem observacoes"}
+                />
+              </div>
+            </DialogBody>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetailsService(null)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
@@ -660,6 +1018,17 @@ function ServiceStatusBadge({
     <StatusBadge tone={status === "Ativo" ? "green" : "neutral"}>
       {status}
     </StatusBadge>
+  )
+}
+
+function InfoBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border bg-muted/20 p-3">
+      <p className="text-xs font-semibold uppercase text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 text-sm font-medium break-words">{value}</p>
+    </div>
   )
 }
 

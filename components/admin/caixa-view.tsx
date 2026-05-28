@@ -6,12 +6,8 @@ import {
   Add01Icon,
   CashierIcon,
   Delete02Icon,
-  Edit02Icon,
   MoneyReceiveCircleIcon,
   MoneySendCircleIcon,
-  PaymentSuccess02Icon,
-  ReceiptTextIcon,
-  Wallet02Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
@@ -24,18 +20,16 @@ import {
   cashMovements as initialCashMovements,
   comandas as initialComandas,
   formatCurrency,
+  getComandaPaidTotal,
+  getComandaPendingTotal,
   getComandaTotal,
 } from "@/components/admin/caixa-data"
 import {
-  paymentMethodOptions,
   serviceCatalog,
 } from "@/components/admin/catalog-data"
 import { clients as registeredClients } from "@/components/admin/clientes-data"
 import { database } from "@/components/admin/database"
-import { LatestComandaCard } from "@/components/admin/comanda-card"
-import { MetricCard } from "@/components/admin/metric-card"
 import { SectionCard } from "@/components/admin/section-card"
-import { EmptyState } from "@/components/admin/empty-state"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -56,12 +50,27 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import {
+  APPOINTMENT_STATUS,
+  COMMAND_STATUS,
+  CASH_REGISTER_STATUS,
+  PAYMENT_STATUS,
+  type CashRegister,
+} from "@/types"
 
-const services = serviceCatalog.map((service) => ({
-  name: service.name,
-  category: service.category,
-  price: service.price,
-}))
+const services = serviceCatalog
+  .filter(
+    (service) =>
+      service.status === "Ativo" &&
+      !service.hidden &&
+      service.portalVisible !== false &&
+      service.onlineBookable !== false
+  )
+  .map((service) => ({
+    name: service.name,
+    category: service.category,
+    price: service.price,
+  }))
 
 const chairOptions = database.company.chairs
 const appointments = database.agendaEvents
@@ -72,6 +81,9 @@ const appointments = database.agendaEvents
     return {
       id: `ag-${event.id}`,
       label: `${event.start} - ${event.title}`,
+      date: event.date,
+      start: event.start,
+      status: event.status,
       client: event.title,
       barber: event.barber,
       chair: chairOptions[0] ?? "Geral",
@@ -84,51 +96,72 @@ const products = database.products
 const barberOptions = database.professionals
   .filter((professional) => professional.status === "Ativo")
   .map((professional) => professional.name)
+const cashCardHeaderClassName = "md:flex-col md:items-start md:justify-start"
+const cashCardActionClassName =
+  "md:w-full md:[&_[data-slot=button]]:w-auto"
 
 export function CaixaView() {
   const [comandas, setComandas] = useState<Comanda[]>(initialComandas)
   const [cashMovements, setCashMovements] =
     useState<CashMovement[]>(initialCashMovements)
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingComanda, setEditingComanda] = useState<Comanda | null>(null)
   const [movementModalType, setMovementModalType] =
     useState<CashMovementType | null>(null)
+  const [closeCashModalOpen, setCloseCashModalOpen] = useState(false)
+  const [cashRegister, setCashRegister] = useState<CashRegister>({
+    id: "CX-20260521",
+    openedAt: new Date().toISOString(),
+    status: CASH_REGISTER_STATUS.OPEN,
+    openingAmount: 250,
+  })
 
-  const latestComanda = comandas[comandas.length - 1]
   const paidTotal = comandas
-    .filter((comanda) => comanda.status === "paga")
-    .reduce((sum, comanda) => sum + getComandaTotal(comanda), 0)
+    .filter((comanda) => comanda.status === COMMAND_STATUS.PAID)
+    .reduce((sum, comanda) => sum + getComandaPaidTotal(comanda), 0)
   const openTotal = comandas
-    .filter((comanda) => comanda.status === "aberta")
-    .reduce((sum, comanda) => sum + getComandaTotal(comanda), 0)
-  const partialTotal = comandas
-    .filter((comanda) => comanda.status === "parcial")
-    .reduce((sum, comanda) => sum + getComandaTotal(comanda), 0)
+    .filter(
+      (comanda) =>
+        comanda.status === COMMAND_STATUS.OPEN ||
+        comanda.status === COMMAND_STATUS.PENDING
+    )
+    .reduce((sum, comanda) => sum + getComandaPendingTotal(comanda), 0)
   const manualIncomeTotal = cashMovements
     .filter((movement) => movement.type === "entrada")
     .reduce((sum, movement) => sum + movement.value, 0)
   const expenseTotal = cashMovements
     .filter((movement) => movement.type === "saida")
     .reduce((sum, movement) => sum + movement.value, 0)
-  const cashBalance = paidTotal + manualIncomeTotal - expenseTotal
+  const receivedTotal = paidTotal + manualIncomeTotal
+  const expectedTotal = comandas.reduce(
+    (sum, comanda) => sum + getComandaTotal(comanda),
+    0
+  )
+  const cashBalance =
+    cashRegister.openingAmount + receivedTotal - expenseTotal
+  const paidCount = comandas.filter(
+    (comanda) => comanda.status === COMMAND_STATUS.PAID
+  ).length
+  const openCount = comandas.filter(
+    (comanda) => comanda.status === COMMAND_STATUS.OPEN
+  ).length
+  const pendingStatusCount = comandas.filter(
+    (comanda) => comanda.status === COMMAND_STATUS.PENDING
+  ).length
+  const pendingCount = openCount + pendingStatusCount
 
   function saveComanda(comanda: Comanda) {
-    setComandas((current) =>
-      current.some((item) => item.id === comanda.id)
+    setComandas((current) => {
+      const nextComandas = current.some((item) => item.id === comanda.id)
         ? current.map((item) => (item.id === comanda.id ? comanda : item))
         : [...current, comanda]
-    )
-    setEditingComanda(null)
+
+      database.comandas = nextComandas
+      return nextComandas
+    })
     setModalOpen(false)
   }
 
   function openCreateModal() {
-    setEditingComanda(null)
-    setModalOpen(true)
-  }
-
-  function openEditModal(comanda: Comanda) {
-    setEditingComanda(comanda)
     setModalOpen(true)
   }
 
@@ -137,138 +170,138 @@ export function CaixaView() {
     setMovementModalType(null)
   }
 
+  function closeCashRegister() {
+    setCashRegister((current) => ({
+      ...current,
+      status: CASH_REGISTER_STATUS.CLOSED,
+      closedAt: new Date().toISOString(),
+      closingAmount: cashBalance,
+      receivedAmount: receivedTotal,
+      pendingAmount: openTotal,
+      openCommandsAmount: openTotal,
+      pendingCommandsAmount: openTotal,
+      paidCommandsAmount: paidTotal,
+      openCommandsCount: openCount,
+      pendingCommandsCount: pendingCount,
+      paidCommandsCount: paidCount,
+      cashMovementsCount: cashMovements.length,
+      notes:
+        "Fechamento visual do dia com base em comandas pagas, entradas manuais e pendencias.",
+    }))
+    setCloseCashModalOpen(false)
+  }
+
   return (
     <>
-      <div className="admin-metric-grid">
-        <MetricCard
-          title="Saldo do caixa"
-          value={formatCurrency(cashBalance)}
-          change="Comandas pagas + entradas - saidas"
-          icon={Wallet02Icon}
-          tone="green"
-        />
-        <MetricCard
-          title="Comandas pagas"
-          value={formatCurrency(paidTotal)}
-          change="2 comandas finalizadas"
-          icon={PaymentSuccess02Icon}
-          tone="blue"
-        />
-        <MetricCard
-          title="Em aberto"
-          value={formatCurrency(openTotal + partialTotal)}
-          change="Comandas pendentes no caixa"
-          icon={ReceiptTextIcon}
-          tone="amber"
-        />
-        <MetricCard
-          title="Entradas avulsas"
-          value={formatCurrency(manualIncomeTotal)}
-          change={`${cashMovements.filter((item) => item.type === "entrada").length} lancamento no caixa`}
-          icon={MoneyReceiveCircleIcon}
-          tone="green"
-        />
-        <MetricCard
-          title="Saidas"
-          value={formatCurrency(expenseTotal)}
-          change={`${cashMovements.filter((item) => item.type === "saida").length} lancamentos operacionais`}
-          icon={MoneySendCircleIcon}
-          tone="red"
-        />
-      </div>
-
-      <SectionCard
-        title="Ultima comanda"
-        description="Resumo do atendimento mais recente registrado no caixa"
-        action={
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button size="sm" variant="outline" asChild>
-              <Link href="/caixa/comandas">Ver detalhes</Link>
-            </Button>
-            <Button size="sm" onClick={openCreateModal}>
-              <HugeiconsIcon icon={CashierIcon} size={16} />
-              Nova comanda
-            </Button>
-          </div>
-        }
-      >
-        {latestComanda ? (
-          <LatestComandaCard
-            comanda={latestComanda}
-            action={
+      <div className="grid items-start gap-4 xl:grid-cols-2 2xl:grid-cols-3">
+        <SectionCard
+          title="Entradas e saidas"
+          description="Visao superficial do movimento manual do caixa."
+          headerClassName={cashCardHeaderClassName}
+          actionClassName={cashCardActionClassName}
+          action={
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Button
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => setMovementModalType("entrada")}
+              >
+                <HugeiconsIcon icon={MoneyReceiveCircleIcon} size={16} />
+                Nova entrada
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => openEditModal(latestComanda)}
+                className="w-full sm:w-auto"
+                onClick={() => setMovementModalType("saida")}
               >
-                <HugeiconsIcon icon={Edit02Icon} size={16} />
-                Editar
+                <HugeiconsIcon icon={MoneySendCircleIcon} size={16} />
+                Nova saida
               </Button>
-            }
-          />
-        ) : (
-          <EmptyState
-            icon={CashierIcon}
-            title="Nenhuma comanda hoje"
-            description="O caixa ainda não recebeu agendamentos ou vendas. Clique em 'Nova comanda' para começar."
-            actionLabel="Nova comanda"
-            onAction={openCreateModal}
-          />
-        )}
-      </SectionCard>
-
-      <SectionCard
-        title="Entradas e saidas"
-        description="Lancamentos manuais fora das comandas, como troco, despesas e retiradas"
-        action={
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              size="sm"
-              className="w-full sm:w-auto"
-              onClick={() => setMovementModalType("entrada")}
-            >
-              <HugeiconsIcon icon={MoneyReceiveCircleIcon} size={16} />
-              Nova entrada
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={() => setMovementModalType("saida")}
-            >
-              <HugeiconsIcon icon={MoneySendCircleIcon} size={16} />
-              Nova saida
-            </Button>
-          </div>
-        }
-      >
-        <div className="grid gap-2">
-          {cashMovements.length === 0 ? (
-            <EmptyState
-              icon={Wallet02Icon}
-              title="Sem movimentações"
-              description="Registre entradas ou saídas manuais (troco, despesas, retiradas) para controlar seu saldo."
-              actionLabel="Lançar entrada"
-              onAction={() => setMovementModalType("entrada")}
+            </div>
+          }
+        >
+          <div className="grid gap-2">
+            <CashSummaryTile
+              label="Entradas"
+              value={formatCurrency(manualIncomeTotal)}
             />
-          ) : (
-            cashMovements.slice(0, 5).map((movement) => (
-              <CashMovementRow key={movement.id} movement={movement} />
-            ))
-          )}
-        </div>
-      </SectionCard>
+            <CashSummaryTile label="Saidas" value={formatCurrency(expenseTotal)} />
+            <CashSummaryTile
+              label="Lancamentos"
+              value={String(cashMovements.length)}
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Fechamento do dia"
+          description="Visao superficial antes do fechamento."
+          headerClassName={cashCardHeaderClassName}
+          actionClassName={cashCardActionClassName}
+          action={
+            <Button size="sm" onClick={() => setCloseCashModalOpen(true)}>
+              Fechar caixa
+            </Button>
+          }
+        >
+          <div className="grid gap-2">
+            <CashSummaryTile
+              label="Status"
+              value={
+                cashRegister.status === CASH_REGISTER_STATUS.OPEN
+                  ? "Aberto"
+                  : "Fechado"
+              }
+            />
+            <CashSummaryTile label="Recebido" value={formatCurrency(receivedTotal)} />
+            <CashSummaryTile
+              label="Pendente"
+              value={formatCurrency(openTotal)}
+            />
+            <CashSummaryTile label="Saldo" value={formatCurrency(cashBalance)} />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Comandas"
+          description="Visao superficial das comandas no caixa."
+          headerClassName={cashCardHeaderClassName}
+          actionClassName={cashCardActionClassName}
+          action={
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Button size="sm" variant="outline" asChild>
+                <Link href="/caixa/comandas">Ver historico</Link>
+              </Button>
+              <Button size="sm" onClick={openCreateModal}>
+                <HugeiconsIcon icon={CashierIcon} size={16} />
+                Nova comanda
+              </Button>
+            </div>
+          }
+        >
+          <div className="grid gap-2">
+            <CashSummaryTile
+              label="Total de comandas"
+              value={String(comandas.length)}
+            />
+            <CashSummaryTile label="Pagas" value={String(paidCount)} />
+            <CashSummaryTile label="Pendentes" value={String(pendingCount)} />
+            <CashSummaryTile
+              label="Total recebido"
+              value={formatCurrency(paidTotal)}
+            />
+          </div>
+        </SectionCard>
+      </div>
 
       <NovaComandaModal
-        key={editingComanda?.id ?? "nova-comanda"}
+        key="nova-comanda"
         open={modalOpen}
-        onOpenChange={(open) => {
-          setModalOpen(open)
-          if (!open) setEditingComanda(null)
-        }}
+        onOpenChange={setModalOpen}
         onSave={saveComanda}
         nextNumber={1024 + comandas.length}
-        editingComanda={editingComanda}
+        editingComanda={null}
       />
 
       <CashMovementModal
@@ -281,50 +314,35 @@ export function CaixaView() {
         onSave={addCashMovement}
         nextNumber={cashMovements.length + 1}
       />
+
+      <CashRegisterCloseModal
+        open={closeCashModalOpen}
+        onOpenChange={setCloseCashModalOpen}
+        cashRegister={cashRegister}
+        cashBalance={cashBalance}
+        receivedTotal={receivedTotal}
+        pendingTotal={openTotal}
+        expectedTotal={expectedTotal}
+        openCount={openCount}
+        pendingCount={pendingCount}
+        paidCount={paidCount}
+        onConfirm={closeCashRegister}
+      />
     </>
   )
 }
 
-function CashMovementRow({ movement }: { movement: CashMovement }) {
-  const isIncome = movement.type === "entrada"
-
+function CashSummaryTile({
+  label,
+  value,
+}: {
+  label: string
+  value: string
+}) {
   return (
-    <div className="grid gap-3 rounded-md border bg-background p-3 sm:grid-cols-[minmax(0,1fr)_8rem] sm:items-center">
-      <div className="flex min-w-0 items-start gap-3">
-        <span
-          className={cn(
-            "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-md",
-            isIncome
-              ? "bg-primary/15 text-primary"
-              : "bg-destructive/10 text-destructive"
-          )}
-        >
-          <HugeiconsIcon
-            icon={isIncome ? MoneyReceiveCircleIcon : MoneySendCircleIcon}
-            size={18}
-          />
-        </span>
-        <span className="min-w-0">
-          <span className="flex flex-wrap items-center gap-2">
-            <span className="font-medium">{movement.label}</span>
-            <span className="rounded-full border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
-              {movement.category}
-            </span>
-          </span>
-          <span className="mt-1 block text-sm text-muted-foreground">
-            {movement.time} - {movement.payment}
-          </span>
-        </span>
-      </div>
-      <p
-        className={cn(
-          "text-left text-lg font-semibold sm:text-right",
-          isIncome ? "text-primary" : "text-destructive"
-        )}
-      >
-        {isIncome ? "+" : "-"}
-        {formatCurrency(movement.value)}
-      </p>
+    <div className="rounded-md border bg-muted/20 p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-base font-semibold">{value}</p>
     </div>
   )
 }
@@ -343,12 +361,7 @@ function CashMovementModal({
   nextNumber: number
 }) {
   const [label, setLabel] = useState("")
-  const [category, setCategory] = useState(
-    type === "entrada" ? "Suprimento" : "Despesa operacional"
-  )
-  const [payment, setPayment] = useState(
-    type === "entrada" ? "Dinheiro" : "Pix"
-  )
+  const [description, setDescription] = useState("")
   const [value, setValue] = useState("")
   const isIncome = type === "entrada"
   const parsedValue = Number(value.replace(",", ".")) || 0
@@ -356,8 +369,7 @@ function CashMovementModal({
 
   function reset() {
     setLabel("")
-    setCategory(type === "entrada" ? "Suprimento" : "Despesa operacional")
-    setPayment(type === "entrada" ? "Dinheiro" : "Pix")
+    setDescription("")
     setValue("")
   }
 
@@ -373,9 +385,10 @@ function CashMovementModal({
       id: `MOV-${String(nextNumber).padStart(3, "0")}`,
       type,
       label: label.trim(),
-      category,
+      description: description.trim() || undefined,
+      category: description.trim() || "Sem descricao",
       value: parsedValue,
-      payment,
+      payment: "Manual",
       time: new Intl.DateTimeFormat("pt-BR", {
         hour: "2-digit",
         minute: "2-digit",
@@ -386,7 +399,7 @@ function CashMovementModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="grid grid-rows-[auto_auto_minmax(0,1fr)_auto] shadow-2xl sm:h-[min(38rem,calc(100dvh-2rem))] sm:max-w-[36rem] sm:rounded-xl">
+        <DialogContent className="grid grid-rows-[auto_auto_minmax(0,1fr)_auto] shadow-2xl sm:h-[min(38rem,calc(100dvh-2rem))] sm:max-w-[36rem] sm:rounded-xl">
         <DialogHeader
           className={cn(
             "relative gap-2 overflow-hidden border-b p-4 pt-3 sm:gap-3 sm:p-4",
@@ -429,124 +442,58 @@ function CashMovementModal({
               </span>
             </span>
           </DialogTitle>
-          <DialogDescription className="text-xs leading-relaxed sm:text-sm">
-            {isIncome
-              ? "Use para troco inicial, suprimentos e recebimentos avulsos."
-              : "Use para despesas, retiradas, taxas e ajustes operacionais."}
-          </DialogDescription>
-        </DialogHeader>
+            <DialogDescription className="text-xs leading-relaxed sm:text-sm">
+              {isIncome ? "Nova entrada" : "Nova saida"}
+            </DialogDescription>
+          </DialogHeader>
 
-        <ScrollArea className="min-h-0 bg-muted/15">
-          <div className="grid gap-3 p-3 sm:p-4">
-            <div className="grid gap-2 rounded-lg border bg-background p-3 shadow-xs">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase">
-                Descricao
-              </Label>
-              <Input
-                className="h-12 border-0 bg-muted/35 text-base shadow-none focus-visible:ring-2"
-                value={label}
-                onChange={(event) => setLabel(event.target.value)}
-                autoFocus
-                placeholder={
-                  isIncome ? "Ex.: Troco inicial" : "Ex.: Material descartavel"
-                }
-              />
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <ScrollArea className="min-h-0 bg-muted/15">
+            <div className="grid gap-3 p-3 sm:p-4">
               <div className="grid gap-2 rounded-lg border bg-background p-3 shadow-xs">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase">
-                  Categoria
+                  Nome *
                 </Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="h-12 bg-muted/35 text-left [&>span]:truncate">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isIncome ? (
-                      <>
-                        <SelectItem value="Suprimento">Suprimento</SelectItem>
-                        <SelectItem value="Recebimento avulso">
-                          Recebimento avulso
-                        </SelectItem>
-                        <SelectItem value="Ajuste de caixa">
-                          Ajuste de caixa
-                        </SelectItem>
-                      </>
-                    ) : (
-                      <>
-                        <SelectItem value="Despesa operacional">
-                          Despesa operacional
-                        </SelectItem>
-                        <SelectItem value="Retirada">Retirada</SelectItem>
-                        <SelectItem value="Taxa">Taxa</SelectItem>
-                        <SelectItem value="Ajuste de caixa">
-                          Ajuste de caixa
-                        </SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
+                <Input
+                  className="h-12 border-0 bg-muted/35 text-base shadow-none focus-visible:ring-2"
+                  value={label}
+                  onChange={(event) => setLabel(event.target.value)}
+                  autoFocus
+                  placeholder={isIncome ? "Ex.: Troco inicial" : "Ex.: Compra de material"}
+                />
               </div>
-              <div className="grid gap-2 rounded-lg border bg-background p-3 shadow-xs">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase">
-                  Forma
-                </Label>
-                <Select value={payment} onValueChange={setPayment}>
-                  <SelectTrigger className="h-12 bg-muted/35 text-left [&>span]:truncate">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {paymentMethodOptions.map((method) => (
-                      <SelectItem key={method} value={method}>
-                        {method}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            <div className="rounded-lg border bg-background p-3 shadow-xs">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase">
-                Valor do lancamento
-              </Label>
-              <div className="mt-2 flex items-center rounded-lg border bg-muted/20 px-3 transition-colors focus-within:border-ring/50 focus-within:bg-background focus-within:ring-2 focus-within:ring-ring/25">
-                <span className="shrink-0 text-sm font-semibold text-muted-foreground">
+              <div className="rounded-lg border bg-background p-3 shadow-xs">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">
+                  Valor *
+                </Label>
+                <div className="mt-2 flex items-center rounded-lg border bg-muted/20 px-3 transition-colors focus-within:border-ring/50 focus-within:bg-background focus-within:ring-2 focus-within:ring-ring/25">
+                  <span className="shrink-0 text-sm font-semibold text-muted-foreground">
                   R$
                 </span>
                 <Input
                   className="h-12 border-0 bg-transparent px-2 text-xl font-semibold shadow-none focus-visible:ring-0 sm:text-2xl"
                   value={value}
-                  onChange={(event) => setValue(event.target.value)}
-                  inputMode="decimal"
-                  placeholder="0,00"
+                    onChange={(event) => setValue(event.target.value)}
+                    inputMode="decimal"
+                    placeholder="0,00"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-2 rounded-lg border bg-background p-3 shadow-xs">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">
+                  Descricao
+                </Label>
+                <textarea
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  rows={3}
+                  placeholder="Ex.: Referente ao caixa do dia."
+                  className="w-full resize-none rounded-md border-0 bg-muted/35 px-3 py-2 text-sm shadow-none outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
                 />
               </div>
-              <div
-                className={cn(
-                  "mt-3 flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-sm",
-                  isIncome
-                    ? "border-primary/15 bg-primary/5"
-                    : "border-destructive/15 bg-destructive/5"
-                )}
-              >
-                <span className="font-medium text-muted-foreground">
-                  Previa no saldo
-                </span>
-                <span
-                  className={cn(
-                    "font-semibold tabular-nums",
-                    isIncome ? "text-primary" : "text-destructive"
-                  )}
-                >
-                  {isIncome ? "+" : "-"}
-                  {formatCurrency(parsedValue)}
-                </span>
-              </div>
             </div>
-          </div>
-        </ScrollArea>
+          </ScrollArea>
 
         <DialogFooter className="grid grid-cols-2 gap-2 border-t bg-background/95 p-3 sm:flex sm:bg-muted/25 sm:p-4">
           <Button
@@ -584,7 +531,6 @@ export function NovaComandaModal({
   nextNumber: number
   editingComanda?: Comanda | null
 }) {
-  const [type, setType] = useState(editingComanda?.notes ?? "Atendimento")
   const [appointmentId, setAppointmentId] = useState("")
   const [client, setClient] = useState(editingComanda?.client ?? "")
   const [barber, setBarber] = useState(
@@ -592,19 +538,28 @@ export function NovaComandaModal({
   )
   const [chair, setChair] = useState(editingComanda?.chair ?? "Cadeira 1")
   const [status, setStatus] = useState<ComandaStatus>(
-    editingComanda?.status ?? "aberta"
+    editingComanda?.status ?? COMMAND_STATUS.OPEN
   )
-  const [payment, setPayment] = useState(
-    editingComanda?.payment ?? "Aguardando"
-  )
+  const [payment, setPayment] = useState(editingComanda?.payment ?? "Pendente")
   const [productName, setProductName] = useState("")
   const [productQuantity, setProductQuantity] = useState("1")
   const [serviceName, setServiceName] = useState("")
   const [items, setItems] = useState<ComandaItem[]>(editingComanda?.items ?? [])
   const [step, setStep] = useState(0)
-  const steps = ["Dados", "Produtos", "Servicos", "Confirmar"]
+  const steps = ["Dados", "Servicos", "Produtos", "Fechamento"]
   const lastStep = steps.length - 1
   const editing = Boolean(editingComanda)
+  const isBarberSession = true
+  const paymentOptions = [
+    "Pendente",
+    "Pix direto para barbearia",
+    "Dinheiro em especie",
+    "Maquininha externa debito",
+    "Maquininha externa credito",
+    "Transferencia bancaria direta",
+    "Cartao online (plataforma)",
+    "Assinatura (plataforma)",
+  ]
 
   const total = useMemo(
     () => items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0),
@@ -612,18 +567,32 @@ export function NovaComandaModal({
   )
 
   function reset() {
-    setType("Atendimento")
     setAppointmentId("")
     setClient("")
     setBarber(barberOptions[0] ?? "")
     setChair("Cadeira 1")
-    setStatus("aberta")
-    setPayment("Aguardando")
+    setStatus(COMMAND_STATUS.OPEN)
+    setPayment("Pendente")
     setProductName("")
     setProductQuantity("1")
     setServiceName("")
     setItems([])
     setStep(0)
+  }
+
+  function getRelatedAppointmentByClient(clientName: string) {
+    return appointments
+      .filter(
+        (item) =>
+          item.client === clientName &&
+          item.status !== APPOINTMENT_STATUS.CANCELLED
+      )
+      .sort((first, second) => {
+        if (first.date === second.date) {
+          return first.start.localeCompare(second.start)
+        }
+        return first.date.localeCompare(second.date)
+      })[0]
   }
 
   function handleAppointment(value: string) {
@@ -646,6 +615,14 @@ export function NovaComandaModal({
         },
       ])
     }
+  }
+
+  function handleClientSelect(value: string) {
+    setClient(value)
+    const relatedAppointment = getRelatedAppointmentByClient(value)
+    if (!relatedAppointment) return
+    if (relatedAppointment.id === appointmentId) return
+    handleAppointment(relatedAppointment.id)
   }
 
   function addProduct() {
@@ -687,22 +664,80 @@ export function NovaComandaModal({
 
   function submit() {
     if (!items.length) return
+    if (!client) return
+    if (!barber) return
+
+    if (status === COMMAND_STATUS.PAID && !isBarberSession) {
+      window.alert("Somente o barbeiro pode fechar uma comanda.")
+      return
+    }
+
+    if (status === COMMAND_STATUS.PAID) {
+      const shouldClose = window.confirm(
+        "Deseja adicionar algum servico ou produto antes de fechar esta comanda?"
+      )
+
+      if (!shouldClose) return
+    }
+
+    const createdAt =
+      editingComanda?.createdAt ?? new Date().toISOString()
+    const updatedAt = new Date().toISOString()
+    const openedAt = editingComanda?.openedAt ?? createdAt
+    const closedAt =
+      status === COMMAND_STATUS.PAID ? updatedAt : editingComanda?.closedAt
+
+    const financialMeta = getPaymentFinancialMetadata(payment)
+    const shouldCreatePayment = status === COMMAND_STATUS.PAID
+    const parsedTotal = Number(total.toFixed(2))
+    const paymentAmount = parsedTotal
 
     const comanda: Comanda = {
       id: editingComanda?.id ?? `CMD-${nextNumber}`,
+      type: "attendance",
       time:
         editingComanda?.time ??
         new Intl.DateTimeFormat("pt-BR", {
           hour: "2-digit",
           minute: "2-digit",
         }).format(new Date()),
+      appointmentId: appointmentId || editingComanda?.appointmentId,
+      mainService:
+        items.find((item) => item.category === "servico")?.name ?? serviceName,
+      appointmentDate:
+        appointments.find((item) => item.id === appointmentId)?.date ??
+        editingComanda?.appointmentDate,
+      appointmentStart:
+        appointments.find((item) => item.id === appointmentId)?.start ??
+        editingComanda?.appointmentStart,
+      createdAt,
+      updatedAt,
+      openedAt,
+      closedAt,
       client,
       barber,
       chair,
       status,
       payment,
       items,
-      notes: type,
+      payments: shouldCreatePayment
+        ? [
+            {
+              id: `PAY-${Date.now()}`,
+              commandId: editingComanda?.id ?? `CMD-${nextNumber}`,
+              amount: paymentAmount,
+              method: payment,
+              status: PAYMENT_STATUS.PAID,
+              paidAt: updatedAt,
+              financialOrigin: financialMeta.financialOrigin,
+              processingChannel: financialMeta.processingChannel,
+              isPlatformBalanceEligible: financialMeta.isPlatformBalanceEligible,
+              releaseStatus: financialMeta.releaseStatus,
+            },
+          ]
+        : editingComanda?.payments,
+      notes:
+        "Comanda de atendimento. Fechamento manual pelo barbeiro.",
     }
 
     onSave(comanda)
@@ -754,19 +789,6 @@ export function NovaComandaModal({
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="grid gap-1.5">
-                    <Label>Tipo de comanda</Label>
-                    <Select value={type} onValueChange={setType}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Atendimento">Atendimento</SelectItem>
-                        <SelectItem value="Consumo">Consumo</SelectItem>
-                        <SelectItem value="Avulsa">Avulsa</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-1.5">
                     <Label>Agendamento</Label>
                     <Select
                       value={appointmentId}
@@ -792,7 +814,7 @@ export function NovaComandaModal({
                 <div className="grid gap-3 md:grid-cols-4">
                   <div className="grid gap-1.5 md:col-span-2">
                     <Label>Cliente</Label>
-                    <Select value={client} onValueChange={setClient}>
+                    <Select value={client} onValueChange={handleClientSelect}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecionar cliente" />
                       </SelectTrigger>
@@ -848,33 +870,42 @@ export function NovaComandaModal({
 
             {step === 1 ? (
               <section className="grid gap-3 rounded-md border bg-background p-3">
-                <h3 className="text-sm font-semibold">Produtos</h3>
-                <div className="grid gap-2 md:grid-cols-[1.1fr_0.8fr_0.8fr_2.25rem]">
-                  <Select
-                    value={appointmentId}
-                    onValueChange={handleAppointment}
-                  >
+                <h3 className="text-sm font-semibold">Servicos</h3>
+                <div className="grid gap-2 md:grid-cols-[1fr_2.25rem]">
+                  <Select value={serviceName} onValueChange={setServiceName}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Agendamento" />
+                      <SelectValue placeholder="Servico" />
                     </SelectTrigger>
                     <SelectContent>
-                      {appointments.map((appointment) => (
-                        <SelectItem key={appointment.id} value={appointment.id}>
-                          {appointment.label}
+                      {services.map((service) => (
+                        <SelectItem key={service.name} value={service.name}>
+                          {service.name} - {formatCurrency(service.price)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Select value="Todas">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Todas">Todas categorias</SelectItem>
-                      <SelectItem value="Barba">Barba</SelectItem>
-                      <SelectItem value="Cabelo">Cabelo</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Button
+                    type="button"
+                    size="icon"
+                    aria-label="Adicionar servico"
+                    onClick={addService}
+                  >
+                    <HugeiconsIcon icon={Add01Icon} size={18} />
+                  </Button>
+                </div>
+                <ItemsList
+                  items={items.filter((item) => item.category === "servico")}
+                  allItems={items}
+                  onRemove={removeItem}
+                  empty="Nenhum servico adicionado."
+                />
+              </section>
+            ) : null}
+
+            {step === 2 ? (
+              <section className="grid gap-3 rounded-md border bg-background p-3">
+                <h3 className="text-sm font-semibold">Produtos</h3>
+                <div className="grid gap-2 md:grid-cols-[1fr_2.25rem]">
                   <Select value={productName} onValueChange={setProductName}>
                     <SelectTrigger>
                       <SelectValue placeholder="Produto" />
@@ -917,66 +948,6 @@ export function NovaComandaModal({
               </section>
             ) : null}
 
-            {step === 2 ? (
-              <section className="grid gap-3 rounded-md border bg-background p-3">
-                <h3 className="text-sm font-semibold">Servicos</h3>
-                <div className="grid gap-2 md:grid-cols-[1fr_0.75fr_1fr_2.25rem]">
-                  <Select
-                    value={appointmentId}
-                    onValueChange={handleAppointment}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Agendamento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {appointments.map((appointment) => (
-                        <SelectItem key={appointment.id} value={appointment.id}>
-                          {appointment.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value="Todas">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Todas">Todas categorias</SelectItem>
-                      <SelectItem value="Cabelo">Cabelo</SelectItem>
-                      <SelectItem value="Barba">Barba</SelectItem>
-                      <SelectItem value="Combo">Combo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={serviceName} onValueChange={setServiceName}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Servico" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {services.map((service) => (
-                        <SelectItem key={service.name} value={service.name}>
-                          {service.name} - {formatCurrency(service.price)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    size="icon"
-                    aria-label="Adicionar servico"
-                    onClick={addService}
-                  >
-                    <HugeiconsIcon icon={Add01Icon} size={18} />
-                  </Button>
-                </div>
-                <ItemsList
-                  items={items.filter((item) => item.category === "servico")}
-                  allItems={items}
-                  onRemove={removeItem}
-                  empty="Nenhum servico adicionado."
-                />
-              </section>
-            ) : null}
-
             {step === 3 ? (
               <section className="grid gap-4">
                 <div className="grid gap-3 rounded-md border bg-muted/20 p-3 md:grid-cols-3">
@@ -992,9 +963,17 @@ export function NovaComandaModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="aberta">Aberta</SelectItem>
-                        <SelectItem value="parcial">Parcial</SelectItem>
-                        <SelectItem value="paga">Paga</SelectItem>
+                        <SelectItem value={COMMAND_STATUS.OPEN}>
+                          Aberta
+                        </SelectItem>
+                        <SelectItem value={COMMAND_STATUS.PENDING}>
+                          Pendente
+                        </SelectItem>
+                        {isBarberSession ? (
+                          <SelectItem value={COMMAND_STATUS.PAID}>
+                            Paga
+                          </SelectItem>
+                        ) : null}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1005,8 +984,7 @@ export function NovaComandaModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Aguardando">Aguardando</SelectItem>
-                        {paymentMethodOptions.map((method) => (
+                        {paymentOptions.map((method) => (
                           <SelectItem key={method} value={method}>
                             {method}
                           </SelectItem>
@@ -1181,3 +1159,130 @@ function SummaryInfo({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
+
+function getPaymentFinancialMetadata(method: string) {
+  const normalized = method.toLowerCase()
+
+  if (
+    normalized.includes("assinatura") ||
+    normalized.includes("plataforma") ||
+    normalized.includes("cartao online")
+  ) {
+    return {
+      financialOrigin: normalized.includes("assinatura")
+        ? ("subscription" as const)
+        : ("platform" as const),
+      processingChannel: "platform_gateway" as const,
+      isPlatformBalanceEligible: true,
+      releaseStatus: normalized.includes("assinatura")
+        ? ("available" as const)
+        : ("pending" as const),
+    }
+  }
+
+  return {
+    financialOrigin: "direct" as const,
+    processingChannel: "external" as const,
+    isPlatformBalanceEligible: false,
+    releaseStatus: undefined,
+  }
+}
+
+function CashRegisterCloseModal({
+  open,
+  onOpenChange,
+  cashRegister,
+  cashBalance,
+  receivedTotal,
+  pendingTotal,
+  expectedTotal,
+  openCount,
+  pendingCount,
+  paidCount,
+  onConfirm,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  cashRegister: CashRegister
+  cashBalance: number
+  receivedTotal: number
+  pendingTotal: number
+  expectedTotal: number
+  openCount: number
+  pendingCount: number
+  paidCount: number
+  onConfirm: () => void
+}) {
+  const [notes, setNotes] = useState(cashRegister.notes ?? "")
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="grid grid-rows-[auto_auto_minmax(0,1fr)_auto] sm:h-[min(38rem,calc(100dvh-1rem))] sm:max-w-2xl">
+        <DialogHeader className="border-b p-3 sm:p-4">
+          <DialogTitle>Fechamento de caixa</DialogTitle>
+          <DialogDescription>
+            Resumo visual do caixa atual antes de confirmar o fechamento.
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className="min-h-0">
+          <div className="grid gap-4 p-3 sm:p-4">
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <SummaryInfo label="Status" value={cashRegister.status === "open" ? "Aberto" : "Fechado"} />
+              <SummaryInfo label="Esperado" value={formatCurrency(expectedTotal)} />
+              <SummaryInfo label="Recebido" value={formatCurrency(receivedTotal)} />
+              <SummaryInfo label="Pendente" value={formatCurrency(pendingTotal)} />
+              <SummaryInfo label="Saldo projetado" value={formatCurrency(cashBalance)} />
+            </div>
+
+            <div className="grid gap-2 rounded-md border bg-muted/20 p-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Comandas pagas</span>
+                <span className="font-semibold">{paidCount}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Comandas abertas</span>
+                <span className="font-semibold">{openCount}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Comandas pendentes</span>
+                <span className="font-semibold">{pendingCount}</span>
+              </div>
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Observacao do fechamento</Label>
+              <Input
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Troco conferido, pendencias enviadas, etc."
+              />
+              <p className="text-xs text-muted-foreground">
+                Esta nota fica apenas como referencia visual nesta fase.
+              </p>
+            </div>
+          </div>
+        </ScrollArea>
+
+        <DialogFooter className="border-t p-3 sm:p-4">
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-between">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                onConfirm()
+                setNotes("")
+              }}
+            >
+              Confirmar fechamento
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+

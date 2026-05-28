@@ -4,244 +4,191 @@ import { useState } from "react"
 import { UserAdd01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { database } from "@/components/admin/database"
+import {
+  formatCepInput,
+  formatCnpjInput,
+  formatCpfInput,
+  formatDateInput,
+  formatNumberInput,
+  formatPhoneInput,
+  formatUfInput,
+} from "@/components/admin/client-input-formatters"
+import { FormField, FormGrid } from "@/components/admin/responsive-form"
 import { SectionCard } from "@/components/admin/section-card"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { PlusSignIcon } from "@hugeicons/core-free-icons"
-
-type ProfessionalForm = {
-  name: string
-  phone: string
-  email: string
-  role: string
-  commission: string
-  status: string
-  scheduleStart: string
-  scheduleEnd: string
-}
-
-const initialForm: ProfessionalForm = {
-  name: "",
-  phone: "",
-  email: "",
-  role: "",
-  commission: "40%",
-  status: "Ativo",
-  scheduleStart: "09:00",
-  scheduleEnd: "19:00",
-}
 
 export default function CadastrarProfissionalPage() {
-  const [form, setForm] = useState(initialForm)
-  const [roles, setRoles] = useState<string[]>(database.company.professionalRoles)
-  const [newRoleModalOpen, setNewRoleModalOpen] = useState(false)
-  const [newRoleName, setNewRoleName] = useState("")
-  const [feedback, setFeedback] = useState("Preencha os dados para salvar.")
-
-  function updateForm<Key extends keyof ProfessionalForm>(
-    key: Key,
-    value: ProfessionalForm[Key]
-  ) {
-    setForm((current) => ({ ...current, [key]: value }))
-  }
-
-  function addRole() {
-    if (!newRoleName.trim()) return
-    const role = newRoleName.trim()
-    if (!roles.includes(role)) {
-      const nextRoles = [...roles, role]
-      setRoles(nextRoles)
-      database.company.professionalRoles = nextRoles // Atualiza no "banco" da sessão
-    }
-    updateForm("role", role)
-    setNewRoleName("")
-    setNewRoleModalOpen(false)
-  }
-
-  function saveProfessional() {
-    if (!form.name.trim()) {
-      setFeedback("Informe o nome do profissional antes de salvar.")
-      return
-    }
-
-    setFeedback(`${form.name} foi cadastrado como ${form.role || "Sem função"}.`)
-    setForm(initialForm)
-  }
+  const [birthday, setBirthday] = useState("")
+  const [cpf, setCpf] = useState("")
+  const [cnpj, setCnpj] = useState("")
+  const [phone, setPhone] = useState("")
+  const [pixKey, setPixKey] = useState("")
+  const [cep, setCep] = useState("")
+  const [state, setState] = useState("")
+  const [number, setNumber] = useState("")
+  const [emergencyPhone, setEmergencyPhone] = useState("")
 
   return (
-    <>
-      <SectionCard
-        title="Cadastrar profissional"
-        description="Dados de agenda, função e regras comerciais do profissional"
-        action={
-          <Button size="sm" onClick={saveProfessional}>
-            <HugeiconsIcon icon={UserAdd01Icon} size={16} />
-            Salvar profissional
-          </Button>
-        }
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Nome completo">
+    <SectionCard
+      title="Criar novo usuário"
+      description="Dados. Preencha todos os campos obrigatórios."
+      action={
+        <Button size="sm">
+          <HugeiconsIcon icon={UserAdd01Icon} size={16} />
+          Salvar usuário
+        </Button>
+      }
+    >
+      <div className="grid gap-5">
+        <FormGrid>
+          <FormField label="Nome Completo *">
+            <Input placeholder="Nome completo" />
+          </FormField>
+          <FormField label="Nome no APP *">
+            <Input placeholder="Nome exibido no app" />
+          </FormField>
+          <FormField label="CPF">
             <Input
-              value={form.name}
-              placeholder="Ex.: Profissional 1"
-              onChange={(event) => updateForm("name", event.target.value)}
+              value={cpf}
+              inputMode="numeric"
+              placeholder="000.000.000-00"
+              onChange={(event) => setCpf(formatCpfInput(event.target.value))}
             />
-          </Field>
-          <Field label="Telefone">
+          </FormField>
+          <FormField label="CNPJ">
             <Input
-              value={form.phone}
-              placeholder="(11) 90000-0000"
-              onChange={(event) => updateForm("phone", event.target.value)}
+              value={cnpj}
+              inputMode="numeric"
+              placeholder="00.000.000/0000-00"
+              onChange={(event) => setCnpj(formatCnpjInput(event.target.value))}
             />
-          </Field>
-          <Field label="E-mail">
+          </FormField>
+          <FormField label="Data de nascimento">
             <Input
-              value={form.email}
-              placeholder="profissional@email.com"
-              onChange={(event) => updateForm("email", event.target.value)}
+              value={birthday}
+              inputMode="numeric"
+              placeholder="dd/mm/aaaa"
+              onChange={(event) => setBirthday(formatDateInput(event.target.value))}
             />
-          </Field>
-          <Field label="Função">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <div className="flex-1 min-w-0">
-                <Select
-                  value={form.role}
-                  onValueChange={(value) => updateForm("role", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar função" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.length === 0 ? (
-                      <div className="p-2 text-xs text-muted-foreground text-center">
-                        Nenhuma função cadastrada
-                      </div>
-                    ) : (
-                      roles.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {role}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto shrink-0"
-                onClick={() => setNewRoleModalOpen(true)}
-              >
-                <HugeiconsIcon icon={PlusSignIcon} size={16} />
-                Nova função
-              </Button>
-            </div>
-          </Field>
-          <Field label="Comissão padrão">
+          </FormField>
+          <FormField label="Email *">
+            <Input type="email" placeholder="email@usuario.com" />
+          </FormField>
+          <FormField label="Senha *">
+            <Input type="password" placeholder="Senha" />
+          </FormField>
+          <FormField label="Tipo *">
+            <Input placeholder="Ex.: Profissional" />
+          </FormField>
+          <FormField label="Grupo *">
+            <Input placeholder="Ex.: Barbeiros" />
+          </FormField>
+          <FormField label="Filial *">
+            <Input placeholder="Filial" />
+          </FormField>
+          <FormField label="Telefone *">
             <Input
-              value={form.commission}
-              inputMode="decimal"
-              placeholder="40%"
-              onChange={(event) => updateForm("commission", event.target.value)}
+              value={phone}
+              inputMode="tel"
+              placeholder="(00) 00000-0000"
+              onChange={(event) => setPhone(formatPhoneInput(event.target.value))}
             />
-          </Field>
-          <Field label="Status na agenda">
-            <Select
-              value={form.status}
-              onValueChange={(value) => updateForm("status", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Ativo">Ativo</SelectItem>
-                <SelectItem value="Ferias">Ferias</SelectItem>
-                <SelectItem value="Inativo">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Início da Agenda">
+          </FormField>
+          <FormField label="Chave Pix *">
             <Input
-              type="time"
-              value={form.scheduleStart}
-              onChange={(event) => updateForm("scheduleStart", event.target.value)}
+              value={pixKey}
+              placeholder="CPF, telefone, e-mail ou chave aleatória"
+              onChange={(event) => setPixKey(event.target.value)}
             />
-          </Field>
-          <Field label="Fim da Agenda">
+          </FormField>
+          <div className="rounded-md border bg-muted/20 px-3 py-2 sm:col-span-2">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <Checkbox />
+              <span>Possui acesso à dados de filiais?</span>
+            </label>
+          </div>
+          <FormField label="CEP *">
             <Input
-              type="time"
-              value={form.scheduleEnd}
-              onChange={(event) => updateForm("scheduleEnd", event.target.value)}
+              value={cep}
+              inputMode="numeric"
+              placeholder="00000-000"
+              onChange={(event) => setCep(formatCepInput(event.target.value))}
             />
-          </Field>
-        </div>
+          </FormField>
+          <FormField label="Logradouro *">
+            <Input placeholder="Rua / Avenida" />
+          </FormField>
+          <FormField label="Bairro *">
+            <Input placeholder="Bairro" />
+          </FormField>
+          <FormField label="Cidade *">
+            <Input placeholder="Cidade" />
+          </FormField>
+          <FormField label="UF *">
+            <Input
+              value={state}
+              placeholder="UF"
+              onChange={(event) => setState(formatUfInput(event.target.value))}
+            />
+          </FormField>
+          <FormField label="Número *">
+            <Input
+              value={number}
+              inputMode="numeric"
+              placeholder="Número"
+              onChange={(event) => setNumber(formatNumberInput(event.target.value))}
+            />
+          </FormField>
+          <FormField label="Complemento">
+            <Input placeholder="Complemento" />
+          </FormField>
+        </FormGrid>
 
-        <p className="mt-4 rounded-md border bg-muted/35 px-3 py-2 text-sm text-muted-foreground">
-          {feedback}
-        </p>
-      </SectionCard>
+        <section className="grid gap-2 rounded-md border bg-muted/20 p-3">
+          <h3 className="text-sm font-semibold">Foto</h3>
+          <Input type="file" accept="image/*" />
+          <p className="text-xs text-muted-foreground">Foto de perfil</p>
+        </section>
 
-      <Dialog open={newRoleModalOpen} onOpenChange={setNewRoleModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Nova função</DialogTitle>
-            <DialogDescription>
-              Cadastre uma nova função para os profissionais da sua empresa.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogBody>
-            <div className="grid gap-2">
-              <Label htmlFor="role-name">Nome da função</Label>
+        <section className="grid gap-3 rounded-md border bg-muted/20 p-3">
+          <h3 className="text-sm font-semibold">Contatos de emergência</h3>
+          <p className="text-sm text-muted-foreground">
+            Contatos de emergência adicionados.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <FormField label="Nome *">
+              <Input placeholder="Nome do contato" />
+            </FormField>
+            <FormField label="Telefone *">
               <Input
-                id="role-name"
-                value={newRoleName}
-                placeholder="Ex: Barbeiro Master"
-                onChange={(event) => setNewRoleName(event.target.value)}
-                onKeyDown={(event) => event.key === "Enter" && addRole()}
+                value={emergencyPhone}
+                inputMode="tel"
+                placeholder="(00) 00000-0000"
+                onChange={(event) =>
+                  setEmergencyPhone(formatPhoneInput(event.target.value))
+                }
               />
-            </div>
-          </DialogBody>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewRoleModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={addRole}>Adicionar função</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  )
-}
+            </FormField>
+            <FormField label="Grau de parentesco *">
+              <Input placeholder="Ex.: Mãe, irmão, cônjuge" />
+            </FormField>
+          </div>
+          <p className="text-sm text-muted-foreground">Nenhum contato adicionado!</p>
+        </section>
 
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="grid gap-1.5">
-      <Label>{label}</Label>
-      {children}
-    </div>
+        <section className="grid gap-2 rounded-md border bg-muted/20 p-3">
+          <h3 className="text-sm font-semibold">Contratos</h3>
+          <p className="text-sm text-muted-foreground">Contratos adicionados.</p>
+          <p className="text-sm text-muted-foreground">Nenhum contrato adicionado!</p>
+        </section>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button>Salvar usuário</Button>
+          <Button variant="outline">Cancelar</Button>
+        </div>
+      </div>
+    </SectionCard>
   )
 }

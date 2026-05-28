@@ -1,17 +1,35 @@
-export type { Client, ClientStatus } from "@/types"
+export type {
+  Client,
+  ClientStatus,
+  ClientType,
+  ClientTimelineItem,
+  ClientOrigin,
+} from "@/types"
 
 import { adminService } from "@/services/admin"
-import type { Client } from "@/types"
+import type { Client, ClientStatus, ClientType, Subscription } from "@/types"
+import { SUBSCRIPTION_STATUS } from "@/types"
 
 export const clients: Client[] = adminService.clients
 
 export const loyalClients = clients
-  .filter((client) => client.active && client.visits >= 10)
-  .sort((a, b) => b.visits - a.visits)
+  .filter(
+    (client) =>
+      client.active &&
+      (client.clientType === "recorrente" ||
+        client.clientType === "assinante_ativo" ||
+        client.clientType === "assinante_inadimplente") &&
+      client.visits >= 8
+  )
+  .sort((a, b) => {
+    if (b.visits !== a.visits) return b.visits - a.visits
+    return b.totalSpent - a.totalSpent
+  })
   .slice(0, 6)
 
 export const repurchaseClients = clients
-  .filter((client) => client.active)
+  .filter((client) => (client.noReturnDays ?? 0) >= 30 || client.returnRecommendation)
+  .sort((a, b) => (b.noReturnDays ?? 0) - (a.noReturnDays ?? 0))
   .slice(0, 12)
   .map((client) => {
     const service = adminService.services.find(
@@ -20,36 +38,154 @@ export const repurchaseClients = clients
     const interval = service?.repurchaseDays ?? 30
 
     return {
+      id: client.id,
       client: client.name,
       phone: client.phone,
+      clientType: client.clientType,
+      status: client.status,
       lastPurchase: client.favoriteService,
       lastDate: client.lastVisit,
-      recommended: client.favoriteService,
+      recommended: client.returnRecommendation || client.favoriteService,
       dueDate: getDueDate(client.lastVisit, interval),
-      reason: `${interval} dias desde o ultimo atendimento ou ciclo de recompra do servico.`,
+      reason:
+        client.returnRecommendation ||
+        `${interval} dias desde o ultimo atendimento ou ciclo de recompra do servico.`,
     }
   })
 
-export function getClientStatusLabel(status: import("@/types").ClientStatus) {
-  const labels: Record<import("@/types").ClientStatus, string> = {
-    ativo: "Ativo",
-    novo: "Novo",
+export function getClientById(id: number) {
+  return clients.find((client) => client.id === id)
+}
+
+export function getClientSubscription(client: Client): Subscription | undefined {
+  return adminService.subscriptions.find(
+    (subscription) => subscription.clientId === client.id
+  )
+}
+
+export function getClientTypeLabel(status: ClientType) {
+  const labels: Record<ClientType, string> = {
+    avulso: "Avulso",
     recorrente: "Recorrente",
-    "sem-plano": "Sem plano",
+    assinante_ativo: "Assinante ativo",
+    assinante_inadimplente: "Assinante inadimplente",
+    ex_assinante: "Ex-assinante",
+    sem_plano: "Sem plano",
+  }
+  return labels[status]
+}
+
+export function getClientTypeTone(
+  status: ClientType
+): "amber" | "green" | "blue" | "red" | "neutral" {
+  const tones: Record<ClientType, "amber" | "green" | "blue" | "red" | "neutral"> =
+    {
+      avulso: "neutral",
+      recorrente: "blue",
+      assinante_ativo: "green",
+      assinante_inadimplente: "red",
+      ex_assinante: "amber",
+      sem_plano: "neutral",
+    }
+  return tones[status]
+}
+
+export function getClientStatusLabel(status: ClientStatus) {
+  const labels: Record<ClientStatus, string> = {
+    ativo: "Ativo",
+    em_atencao: "Em atencao",
+    inativo: "Inativo",
+    sem_retorno: "Sem retorno",
   }
   return labels[status]
 }
 
 export function getClientStatusTone(
-  status: import("@/types").ClientStatus
+  status: ClientStatus
 ): "amber" | "green" | "blue" | "red" | "neutral" {
-  const tones = {
-    ativo: "green" as const,
-    novo: "blue" as const,
-    recorrente: "amber" as const,
-    "sem-plano": "neutral" as const,
+  const tones: Record<
+    ClientStatus,
+    "amber" | "green" | "blue" | "red" | "neutral"
+  > = {
+    ativo: "green",
+    em_atencao: "amber",
+    inativo: "neutral",
+    sem_retorno: "red",
   }
   return tones[status]
+}
+
+export function getClientSubscriptionLabel(
+  subscription: Subscription | undefined
+) {
+  if (!subscription) return "Sem plano"
+
+  const labels = {
+    [SUBSCRIPTION_STATUS.ACTIVE]: "Plano ativo",
+    [SUBSCRIPTION_STATUS.DELINQUENT]: "Inadimplente",
+    [SUBSCRIPTION_STATUS.PAUSED]: "Plano pausado",
+    [SUBSCRIPTION_STATUS.CANCELLED]: "Plano cancelado",
+    [SUBSCRIPTION_STATUS.EXPIRED]: "Plano expirado",
+  }
+
+  return labels[subscription.status]
+}
+
+export function getClientSubscriptionTone(
+  subscription: Subscription | undefined
+): "amber" | "green" | "blue" | "red" | "neutral" {
+  if (!subscription) return "neutral"
+
+  const tones = {
+    [SUBSCRIPTION_STATUS.ACTIVE]: "green" as const,
+    [SUBSCRIPTION_STATUS.DELINQUENT]: "red" as const,
+    [SUBSCRIPTION_STATUS.PAUSED]: "amber" as const,
+    [SUBSCRIPTION_STATUS.CANCELLED]: "neutral" as const,
+    [SUBSCRIPTION_STATUS.EXPIRED]: "neutral" as const,
+  }
+
+  return tones[subscription.status]
+}
+
+export function getClientCardSummary(client: Client) {
+  const planLabel = client.planName
+    ? `${client.planName} - ${getClientSubscriptionLabel(
+        getClientSubscription(client)
+      )}`
+    : getClientTypeLabel(client.clientType)
+
+  const returnLabel =
+    client.status === "sem_retorno"
+      ? `${client.noReturnDays ?? 0} dias sem retorno`
+      : client.returnRecommendation || "Cliente ativo na base"
+
+  return {
+    planLabel,
+    returnLabel,
+  }
+}
+
+export function getClientContactLink(client: Client) {
+  const phoneDigits = client.phone.replace(/\D/g, "")
+  return phoneDigits ? `https://wa.me/55${phoneDigits}` : "https://wa.me/"
+}
+
+export function getClientTags(client: Client) {
+  const tags = [...(client.tags ?? [])]
+
+  if (client.pendingCommandTotal && client.pendingCommandTotal > 0) {
+    tags.unshift("Comanda pendente")
+  }
+
+  if (client.nextAppointmentAt) {
+    tags.unshift("Proximo agendamento")
+  }
+
+  if (client.returnRecommendation) {
+    tags.unshift("Retorno recomendado")
+  }
+
+  return Array.from(new Set(tags))
 }
 
 function getDueDate(dateStr: string, days: number) {

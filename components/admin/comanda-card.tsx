@@ -1,9 +1,16 @@
 import { StatusBadge } from "@/components/admin/status-badge"
 import {
   type Comanda,
+  getAttendanceLabel,
+  getClientTypeLabel,
+  getCommandBalanceLabel,
+  getComandaCoveredTotal,
   formatCurrency,
   getComandaSubtotal,
+  getComandaPaidTotal,
+  getComandaPendingTotal,
   getComandaTotal,
+  getOriginLabel,
   getStatusLabel,
   getStatusTone,
 } from "@/components/admin/caixa-data"
@@ -18,7 +25,10 @@ export function ComandaCard({
 }) {
   if (!comanda) return null
   const subtotal = getComandaSubtotal(comanda)
+  const coveredTotal = getComandaCoveredTotal(comanda)
   const total = getComandaTotal(comanda)
+  const paidTotal = getComandaPaidTotal(comanda)
+  const pendingTotal = getComandaPendingTotal(comanda)
   const serviceCount = comanda.items.filter(
     (item) => item.category === "servico"
   ).length
@@ -31,10 +41,10 @@ export function ComandaCard({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <ComandaHeader comanda={comanda} action={action} />
 
-        <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4 lg:min-w-[26rem]">
+        <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4 lg:min-w-[30rem]">
           <ComandaMiniInfo label="Servicos" value={String(serviceCount)} />
           <ComandaMiniInfo label="Produtos" value={String(productCount)} />
-          <ComandaMiniInfo label="Pagamento" value={comanda.payment} />
+          <ComandaMiniInfo label="Pago" value={formatCurrency(paidTotal)} />
           <ComandaMiniInfo label="Total" value={formatCurrency(total)} strong />
         </div>
       </div>
@@ -71,9 +81,11 @@ export function ComandaCard({
       <div className="mt-3 flex flex-col gap-2 rounded-md bg-muted/30 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1 text-muted-foreground">
           <p>Subtotal: {formatCurrency(subtotal)}</p>
+          {coveredTotal > 0 ? <p>Plano: -{formatCurrency(coveredTotal)}</p> : null}
           {comanda.discount ? (
             <p>Desconto: -{formatCurrency(comanda.discount)}</p>
           ) : null}
+          {pendingTotal > 0 ? <p>Pendente: {formatCurrency(pendingTotal)}</p> : null}
           {comanda.notes ? <p>Obs.: {comanda.notes}</p> : null}
         </div>
         <div className="text-left sm:text-right">
@@ -139,6 +151,9 @@ function ComandaHeader({
             <StatusBadge tone={getStatusTone(comanda.status)}>
               {getStatusLabel(comanda.status)}
             </StatusBadge>
+            <StatusBadge tone="neutral">{getClientTypeLabel(comanda)}</StatusBadge>
+            <StatusBadge tone="neutral">{getOriginLabel(comanda)}</StatusBadge>
+            <StatusBadge tone="amber">{getCommandBalanceLabel(comanda)}</StatusBadge>
             <span className="text-xs text-muted-foreground">
               {comanda.time} - {comanda.chair}
             </span>
@@ -151,6 +166,18 @@ function ComandaHeader({
             <span>
               Barbeiro:{" "}
               <span className="font-medium text-foreground">{comanda.barber}</span>
+            </span>
+            <span>
+              Atendimento:{" "}
+              <span className="font-medium text-foreground">
+                {getAttendanceLabel(comanda)}
+              </span>
+            </span>
+            <span>
+              Pagamento:{" "}
+              <span className="font-medium text-foreground">
+                {comanda.paymentMethodLabel ?? comanda.payment}
+              </span>
             </span>
           </span>
         </span>

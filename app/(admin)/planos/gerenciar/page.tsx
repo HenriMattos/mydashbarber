@@ -42,8 +42,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { PLAN_STATUS, PLAN_STATUS_LABELS } from "@/types"
 
-type Plan = DatabasePlan & { subscribers: number }
+type Plan = DatabasePlan & { subscribers?: number }
 
 const initialPlans: Plan[] = database.plans.map((plan) => ({
   ...plan,
@@ -52,7 +53,12 @@ const initialPlans: Plan[] = database.plans.map((plan) => ({
   ).length,
 }))
 
-const statusOptions = ["Todos", "Ativo", "Destaque", "Rascunho", "Inativo"]
+const statusOptions = [
+  { label: "Todos", value: "Todos" },
+  { label: PLAN_STATUS_LABELS.active, value: PLAN_STATUS.ACTIVE },
+  { label: PLAN_STATUS_LABELS.draft, value: PLAN_STATUS.DRAFT },
+  { label: PLAN_STATUS_LABELS.inactive, value: PLAN_STATUS.INACTIVE },
+] as const
 
 export default function GerenciarPlanosPage() {
   const [plans, setPlans] = useState(() => getStoredCommercialPlans(initialPlans))
@@ -60,6 +66,16 @@ export default function GerenciarPlanosPage() {
   const [statusFilter, setStatusFilter] = useState("Todos")
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null)
   const [draft, setDraft] = useState<Plan | null>(null)
+
+  function getSubscriberCount(plan: Plan) {
+    return (
+      plan.subscriberCount ??
+      plan.subscribers ??
+      database.subscriptions.filter(
+        (subscription) => subscription.plan === plan.name
+      ).length
+    )
+  }
 
   const filteredPlans = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -126,7 +142,9 @@ export default function GerenciarPlanosPage() {
 
   function togglePlanStatus(plan: Plan) {
     const nextStatus: Plan["status"] =
-      plan.status === "Inativo" ? "Ativo" : "Inativo"
+      plan.status === PLAN_STATUS.INACTIVE
+        ? PLAN_STATUS.ACTIVE
+        : PLAN_STATUS.INACTIVE
 
     setPlans((current) => {
       const nextPlans = current.map((item) =>
@@ -170,8 +188,8 @@ export default function GerenciarPlanosPage() {
             </SelectTrigger>
             <SelectContent>
               {statusOptions.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status}
+                <SelectItem key={status.value} value={status.value}>
+                  {status.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -191,20 +209,20 @@ export default function GerenciarPlanosPage() {
                       <HugeiconsIcon icon={CrownIcon} size={19} />
                     </span>
                     <span className="rounded-full border border-white/45 bg-white/32 px-3 py-1 text-xs font-semibold text-foreground uppercase shadow-sm">
-                      {plan.status}
+                      {plan.featured ? "Destaque" : PLAN_STATUS_LABELS[plan.status]}
                     </span>
                   </div>
                   <h3 className="mt-4 text-2xl leading-tight font-semibold break-words">
                     {plan.name}
                   </h3>
                   <p className="mt-2 text-sm font-medium break-words text-foreground/72">
-                    {plan.benefit}
+                    {plan.commercialText || plan.benefit}
                   </p>
                 </div>
 
                 <div className="shrink-0 text-right">
                   <p className="text-xs font-semibold text-foreground/62 uppercase">
-                    Mensal
+                    {plan.recurrence}
                   </p>
                   <p className="mt-1 text-2xl font-bold">
                     {formatCurrency(plan.price)}
@@ -212,24 +230,40 @@ export default function GerenciarPlanosPage() {
                 </div>
               </div>
 
+              <div className="flex flex-wrap gap-2">
+                {plan.includedServices.map((service) => (
+                  <span
+                    key={service.serviceId}
+                    className="rounded-full border border-white/45 bg-white/30 px-3 py-1 text-xs font-semibold text-foreground shadow-sm"
+                  >
+                    {service.unlimited
+                      ? `Ilimitado ${service.serviceName}`
+                      : `${service.quantityPerCycle}x ${service.serviceName}`}
+                  </span>
+                ))}
+              </div>
+
               <div className="grid gap-2 sm:grid-cols-3">
                 <PremiumInfo
                   label="Assinantes"
-                  value={String(plan.subscribers)}
+                  value={String(getSubscriberCount(plan))}
                 />
                 <PremiumInfo
                   label="MRR"
-                  value={formatCurrency(plan.price * plan.subscribers)}
+                  value={formatCurrency(
+                    plan.estimatedRecurringRevenue ??
+                      plan.price * getSubscriberCount(plan)
+                  )}
                 />
                 <PremiumInfo
-                  label="Uso"
-                  value={`${plan.servicesLimit} serviços`}
+                  label="Cobertura"
+                  value={`${plan.includedServices.length} servico(s) incluso(s)`}
                 />
               </div>
 
               <div className="flex flex-col gap-2 border-t border-white/40 pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm font-medium text-foreground/70">
-                  Risco de churn: <strong>{plan.churnRisk}</strong>
+                  {plan.usageRulesText || plan.benefitRule.customerRulesText}
                 </p>
                 <div className="grid gap-2 sm:grid-cols-3">
                   <Button
@@ -249,13 +283,13 @@ export default function GerenciarPlanosPage() {
                   >
                     <HugeiconsIcon
                       icon={
-                        plan.status === "Inativo"
+                        plan.status === PLAN_STATUS.INACTIVE
                           ? CheckmarkCircle01Icon
                           : CancelCircleIcon
                       }
                       size={16}
                     />
-                    {plan.status === "Inativo" ? "Ativar" : "Inativar"}
+                    {plan.status === PLAN_STATUS.INACTIVE ? "Ativar" : "Inativar"}
                   </Button>
                   <Button
                     variant="outline"
@@ -267,6 +301,10 @@ export default function GerenciarPlanosPage() {
                   </Button>
                 </div>
               </div>
+
+              <p className="text-xs font-semibold text-foreground/60 uppercase">
+                {plan.featured ? "Plano destaque" : PLAN_STATUS_LABELS[plan.status]}
+              </p>
             </article>
           ))}
         </div>
@@ -309,23 +347,23 @@ export default function GerenciarPlanosPage() {
                   }
                 />
               </Field>
-              <Field className="md:col-span-2" label="Benefício">
+              <Field className="md:col-span-2" label="Descricao comercial">
                 <Input
-                  value={draft.benefit}
+                  value={draft.commercialText || draft.benefit}
                   maxLength={90}
                   onChange={(event) =>
-                    updateDraft("benefit", limitText(event.target.value, 90))
+                    updateDraft("commercialText", limitText(event.target.value, 90))
                   }
                 />
               </Field>
               <Field label="Assinantes">
                 <Input
-                  value={String(draft.subscribers)}
+                  value={String(getSubscriberCount(draft))}
                   inputMode="numeric"
                   maxLength={5}
                   onChange={(event) =>
                     updateDraft(
-                      "subscribers",
+                      "subscriberCount",
                       parseIntegerInput(event.target.value, 99999)
                     )
                   }
@@ -342,14 +380,13 @@ export default function GerenciarPlanosPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Destaque">Destaque</SelectItem>
-                    <SelectItem value="Rascunho">Rascunho</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
+                    <SelectItem value={PLAN_STATUS.ACTIVE}>Ativo</SelectItem>
+                    <SelectItem value={PLAN_STATUS.DRAFT}>Rascunho</SelectItem>
+                    <SelectItem value={PLAN_STATUS.INACTIVE}>Inativo</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Limite de serviços">
+              <Field label="Limite de uso no ciclo">
                 <Input
                   value={String(draft.servicesLimit)}
                   inputMode="numeric"
@@ -362,7 +399,7 @@ export default function GerenciarPlanosPage() {
                   }
                 />
               </Field>
-              <Field label="Risco de churn">
+              <Field label="Risco interno">
                 <Select
                   value={draft.churnRisk}
                   onValueChange={(value) =>

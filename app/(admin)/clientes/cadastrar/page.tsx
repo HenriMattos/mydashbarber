@@ -1,28 +1,38 @@
-import {
-  CashierIcon,
-  CrownIcon,
-  UserAdd01Icon,
-} from "@hugeicons/core-free-icons"
+"use client"
+
+import Link from "next/link"
+import { useState } from "react"
+import { UserAdd01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
-import { planCatalog, serviceNames } from "@/components/admin/catalog-data"
+import {
+  formatCepInput,
+  formatCpfInput,
+  formatDateInput,
+  formatNumberInput,
+  formatPhoneInput,
+  formatUfInput,
+} from "@/components/admin/client-input-formatters"
 import { SectionCard } from "@/components/admin/section-card"
+import { FormField, FormGrid } from "@/components/admin/responsive-form"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function CadastrarClientePage() {
+  const [phone, setPhone] = useState("")
+  const [birthday, setBirthday] = useState("")
+  const [cpf, setCpf] = useState("")
+  const [cep, setCep] = useState("")
+  const [state, setState] = useState("")
+  const [number, setNumber] = useState("")
+
   return (
     <SectionCard
-      title="Cadastrar cliente"
-      description="Dados principais para criar um novo cliente na base"
+      title="Criar novo cliente"
+      description="Dados. Preencha todos os campos obrigatórios."
       action={
         <Button size="sm">
           <HugeiconsIcon icon={UserAdd01Icon} size={16} />
@@ -30,106 +40,106 @@ export default function CadastrarClientePage() {
         </Button>
       }
     >
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-1.5">
-          <Label>Nome completo</Label>
-          <Input placeholder="Ex.: Rafael Lima" />
-        </div>
-        <div className="grid gap-1.5">
-          <Label>Telefone</Label>
-          <Input placeholder="(11) 90000-0000" />
-        </div>
-        <div className="grid gap-1.5">
-          <Label>E-mail</Label>
-          <Input placeholder="cliente@email.com" />
-        </div>
-        <div className="grid gap-1.5">
-          <Label>Status</Label>
-          <Select defaultValue="ativo">
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ativo">Ativo</SelectItem>
-              <SelectItem value="recorrente">Recorrente</SelectItem>
-              <SelectItem value="sem-plano">Sem plano</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid gap-1.5 md:col-span-2">
-          <Label>Servico preferido</Label>
-          <Select defaultValue={serviceNames[0]}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {serviceNames.map((service) => (
-                <SelectItem key={service} value={service}>
-                  {service}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid gap-1.5 md:col-span-2">
-          <Label>Observacoes</Label>
-          <Input placeholder="Preferencias, alergias, produtos favoritos..." />
-        </div>
-      </div>
+      <div className="grid gap-5">
+        <FormGrid>
+          <FormField label="Nome *">
+            <Input placeholder="Nome completo" />
+          </FormField>
+          <FormField label="Email *">
+            <Input type="email" placeholder="email@cliente.com" />
+          </FormField>
+          <FormField label="Como conheceu *">
+            <Input placeholder="Ex.: Indicação" />
+          </FormField>
+          <FormField label="Senha *">
+            <Input type="password" placeholder="Senha de acesso" />
+          </FormField>
+          <FormField label="Telefone *">
+            <Input
+              value={phone}
+              inputMode="tel"
+              placeholder="(00) 00000-0000"
+              onChange={(event) =>
+                setPhone(formatPhoneInput(event.target.value))
+              }
+            />
+          </FormField>
+          <FormField label="Data nascimento *">
+            <Input
+              value={birthday}
+              inputMode="numeric"
+              placeholder="dd/mm/aaaa"
+              onChange={(event) =>
+                setBirthday(formatDateInput(event.target.value))
+              }
+            />
+          </FormField>
+          <FormField label="CPF">
+            <Input
+              value={cpf}
+              inputMode="numeric"
+              placeholder="000.000.000-00"
+              onChange={(event) => setCpf(formatCpfInput(event.target.value))}
+            />
+          </FormField>
+          <FormField label="CEP">
+            <Input
+              value={cep}
+              inputMode="numeric"
+              placeholder="00000-000"
+              onChange={(event) => setCep(formatCepInput(event.target.value))}
+            />
+          </FormField>
+          <FormField label="Logradouro">
+            <Input placeholder="Rua / Avenida" />
+          </FormField>
+          <FormField label="Bairro">
+            <Input placeholder="Bairro" />
+          </FormField>
+          <FormField label="Cidade">
+            <Input placeholder="Cidade" />
+          </FormField>
+          <FormField label="UF">
+            <Input
+              value={state}
+              placeholder="UF"
+              onChange={(event) => setState(formatUfInput(event.target.value))}
+            />
+          </FormField>
+          <FormField label="Número">
+            <Input
+              value={number}
+              inputMode="numeric"
+              placeholder="Número"
+              onChange={(event) =>
+                setNumber(formatNumberInput(event.target.value))
+              }
+            />
+          </FormField>
+          <FormField label="Complemento">
+            <Input placeholder="Complemento" />
+          </FormField>
+        </FormGrid>
 
-      <div className="mt-5 grid gap-4 border-t pt-5 md:grid-cols-2">
-        <div className="grid gap-1.5">
-          <Label className="flex items-center gap-2">
-            <HugeiconsIcon icon={CashierIcon} size={16} />
-            Forma de cobranca
+        <FormField label="Notas do cliente">
+          <Textarea
+            className="min-h-28"
+            placeholder="Notas do cliente"
+          />
+        </FormField>
+
+        <div className="flex items-center gap-2 rounded-md border bg-muted/20 px-3 py-2">
+          <Checkbox id="remember-schedule" />
+          <Label htmlFor="remember-schedule" className="text-sm font-medium">
+            Lembrar ao agendar
           </Label>
-          <Select defaultValue="pix">
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pix">Pix</SelectItem>
-              <SelectItem value="dinheiro">Dinheiro</SelectItem>
-              <SelectItem value="credito">Cartao de credito</SelectItem>
-              <SelectItem value="debito">Cartao de debito</SelectItem>
-              <SelectItem value="online">Cobranca online</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
-        <div className="grid gap-1.5">
-          <Label>Cartao habilitado</Label>
-          <Select defaultValue="sim">
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sim">
-                Sim, cliente pode pagar no cartao
-              </SelectItem>
-              <SelectItem value="nao">Nao, cobrar sem cartao</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid gap-1.5 md:col-span-2">
-          <Label className="flex items-center gap-2">
-            <HugeiconsIcon icon={CrownIcon} size={16} />
-            Plano existente
-          </Label>
-          <Select defaultValue="sem-plano">
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sem-plano">Sem plano</SelectItem>
-              {planCatalog.map((plan) => (
-                <SelectItem key={plan.name} value={plan.name}>
-                  Plano {plan.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button>Salvar cliente</Button>
+          <Button variant="outline" asChild>
+            <Link href="/clientes">Voltar para clientes</Link>
+          </Button>
         </div>
       </div>
     </SectionCard>

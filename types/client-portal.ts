@@ -4,98 +4,116 @@ export type AppointmentStatus =
   | "completed"
   | "cancelled"
 
-export type ClientPortalPaymentMethod = "card" | "pix" | "boleto" | "barbershop"
+export type PlanPeriodicity = "mensal" | "anual"
 
-export type BarberCompany = {
+export interface Client {
+  id: string
+  fullName: string
+  email: string
+  phone: string
+  birthDate: string
+  cpf: string
+  cep: string
+  street: string
+  number: string
+  complement: string
+  city: string
+  district: string
+  state: string
+  avatarUrl: string
+}
+
+export interface Barbershop {
   id: string
   slug: string
   name: string
   slogan: string
   description: string
-  logoUrl?: string
-  bannerUrl?: string
-  address?: string
-  phone?: string
-  whatsapp?: string
-  instagram?: string
-  openingHours?: string
+  bannerUrl: string
+  bannerPlacement: PortalImagePlacement
+  logoUrl: string
+  logoPlacement: PortalImagePlacement
+  address: string
+  phone: string
+  primaryColor: string
 }
 
-export type ClientPortalService = {
+export interface PortalImagePlacement {
+  x: number
+  y: number
+  zoom: number
+}
+
+export interface Service {
   id: string
   name: string
-  description?: string
   durationMinutes: number
   price: number
-  isAvailable: boolean
+  description?: string
 }
 
-export type ClientPortalProfessional = {
+export interface Professional {
   id: string
   name: string
-  role: string
+  role?: string
+  avatarUrl?: string
 }
 
-export type ClientPortalPlan = {
+export interface Appointment {
   id: string
-  name: string
-  description: string
-  price: number
-  billingCycle: "monthly" | "annual" | "custom"
-  benefits: string[]
-  isRecommended?: boolean
-}
-
-export type ClientPortalAppointment = {
-  id: string
-  status: AppointmentStatus
   serviceId: string
-  serviceName: string
   professionalId: string
-  professionalName: string
   date: string
   time: string
-  price: number
-  address?: string
+  status: AppointmentStatus
+  valueOriginal: number
+  valuePaid: number
+  usedPlanBenefit: boolean
   notes?: string
+  createdAt: string
 }
 
-export type ClientProfile = {
+export interface PlanBenefit {
+  id: string
+  serviceName: string
+  originalValue: number
+  discountPercent: number
+  cyclesIncluded: number
+  isExtra?: boolean
+}
+
+export interface Plan {
   id: string
   name: string
-  phone: string
-  email: string
-  birthDate?: string
-  cpf?: string
-  gender?: string
-  avatarUrl?: string
-  contactPreferences: {
-    whatsapp: boolean
-    email: boolean
-    sms: boolean
-  }
+  value: number
+  periodicity: PlanPeriodicity
+  slotsAvailable: number
+  description: string
+  benefits: PlanBenefit[]
 }
 
-export type ClientSubscription = {
+export interface ActivePlan {
   planId: string
-  planName: string
-  status: "active" | "pending" | "cancelled"
-  startedAt: string
-  renewsAt: string
-  price: number
-  paymentMethod: ClientPortalPaymentMethod
-  benefits: string[]
+  status: "ativo"
+  nextChargeDate: string
+  remainingBenefits: Array<{
+    serviceName: string
+    available: number
+    reserved: number
+    consumed: number
+  }>
 }
 
-export type ClientPortalState = {
-  profile: ClientProfile
-  appointments: ClientPortalAppointment[]
-  subscription: ClientSubscription | null
+export interface BookingDraft {
+  serviceId?: string
+  professionalId?: string
+  date?: string
+  time?: string
 }
 
-export type ClientPortalData = {
-  company: BarberCompany | null
-  services: ClientPortalService[]
-  professionals: ClientPortalProfessional[]
-  plans: ClientPortalPlan[]
+export interface PortalNotificationSettings {
+  appointmentConfirmation: boolean
+  appointmentReminder: boolean
+  offersAndNews: boolean
+  planUpdates: boolean
 }
