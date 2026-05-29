@@ -29,7 +29,7 @@ export function PlansScreen({ plans, activePlan, isLoading, onBuyPlan }: PlansSc
 
   async function handleBuy(planId: string) {
     setBuyingPlanId(planId)
-    setGatewayMessage("Voce sera redirecionado para o gateway de pagamento.")
+    setGatewayMessage("Você sera redirecionado para o gateway de pagamento.")
     await onBuyPlan(planId)
     setTimeout(() => setGatewayMessage(null), 2200)
     setBuyingPlanId(null)
@@ -40,7 +40,7 @@ export function PlansScreen({ plans, activePlan, isLoading, onBuyPlan }: PlansSc
       <div>
         <h1 className="text-2xl font-semibold">Planos</h1>
         <p className="text-sm text-muted-foreground">
-          Escolha e gerencie os beneficios da sua assinatura.
+          Escolha e gerencie os benefícios da sua assinatura.
         </p>
       </div>
 

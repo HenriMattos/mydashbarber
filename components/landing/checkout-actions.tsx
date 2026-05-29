@@ -35,7 +35,7 @@ export function CheckoutActions({ planKey }: { planKey: string }) {
       const payload = (await response.json().catch(() => null)) as {
         message?: string
       } | null
-      setError(payload?.message ?? "Nao foi possivel ativar o plano.")
+      setError(payload?.message ?? "Não foi possível ativar o plano.")
       return
     }
 

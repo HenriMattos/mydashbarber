@@ -103,7 +103,7 @@ export function BookingFlow({
         setCreatedAppointment(appointment)
         setStep(6)
       } catch {
-        setError("Nao foi possivel confirmar o agendamento. Tente novamente.")
+        setError("Não foi possível confirmar o agendamento. Tente novamente.")
       } finally {
         setIsSubmitting(false)
       }
@@ -194,7 +194,7 @@ export function BookingFlow({
     1: "Escolher servico",
     2: "Escolher profissional",
     3: "Escolher data",
-    4: "Escolher horario",
+    4: "Escolher horário",
     5: "Confirmacao",
     6: "Sucesso",
   }

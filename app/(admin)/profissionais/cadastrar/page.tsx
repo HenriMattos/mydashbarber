@@ -1,8 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
-import { useState } from "react"
+import { useState, type ChangeEvent } from "react"
 import { UserAdd01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import { Camera, X } from "lucide-react"
 
 import {
   formatCepInput,
@@ -18,6 +20,17 @@ import { SectionCard } from "@/components/admin/section-card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+const professionalTypeOptions = ["PROFISSIONAL", "ADMIN"]
+const professionalGroupOptions = ["Profissionais", "Administradores"]
+const professionalBranchOptions = ["Matriz", "Unidade principal"]
 
 export default function CadastrarProfissionalPage() {
   const [birthday, setBirthday] = useState("")
@@ -29,6 +42,23 @@ export default function CadastrarProfissionalPage() {
   const [state, setState] = useState("")
   const [number, setNumber] = useState("")
   const [emergencyPhone, setEmergencyPhone] = useState("")
+  const [type, setType] = useState(professionalTypeOptions[0])
+  const [group, setGroup] = useState(professionalGroupOptions[0])
+  const [branch, setBranch] = useState(professionalBranchOptions[0])
+  const [photoUrl, setPhotoUrl] = useState("")
+
+  function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return
+      setPhotoUrl(reader.result)
+      event.target.value = ""
+    }
+    reader.readAsDataURL(file)
+  }
 
   return (
     <SectionCard
@@ -74,19 +104,52 @@ export default function CadastrarProfissionalPage() {
             />
           </FormField>
           <FormField label="Email *">
-            <Input type="email" placeholder="email@usuario.com" />
+            <Input type="email" placeholder="email@usuário.com" />
           </FormField>
           <FormField label="Senha *">
             <Input type="password" placeholder="Senha" />
           </FormField>
           <FormField label="Tipo *">
-            <Input placeholder="Ex.: Profissional" />
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {professionalTypeOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FormField>
           <FormField label="Grupo *">
-            <Input placeholder="Ex.: Barbeiros" />
+            <Select value={group} onValueChange={setGroup}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {professionalGroupOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FormField>
           <FormField label="Filial *">
-            <Input placeholder="Filial" />
+            <Select value={branch} onValueChange={setBranch}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {professionalBranchOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FormField>
           <FormField label="Telefone *">
             <Input
@@ -146,18 +209,18 @@ export default function CadastrarProfissionalPage() {
           </FormField>
         </FormGrid>
 
-        <section className="grid gap-2 rounded-md border bg-muted/20 p-3">
-          <h3 className="text-sm font-semibold">Foto</h3>
-          <Input type="file" accept="image/*" />
-          <p className="text-xs text-muted-foreground">Foto de perfil</p>
-        </section>
+        <PhotoUploadSection
+          imageUrl={photoUrl}
+          onUpload={handlePhotoUpload}
+          onRemove={() => setPhotoUrl("")}
+        />
 
         <section className="grid gap-3 rounded-md border bg-muted/20 p-3">
           <h3 className="text-sm font-semibold">Contatos de emergência</h3>
           <p className="text-sm text-muted-foreground">
             Contatos de emergência adicionados.
           </p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <FormField label="Nome *">
               <Input placeholder="Nome do contato" />
             </FormField>
@@ -170,9 +233,6 @@ export default function CadastrarProfissionalPage() {
                   setEmergencyPhone(formatPhoneInput(event.target.value))
                 }
               />
-            </FormField>
-            <FormField label="Grau de parentesco *">
-              <Input placeholder="Ex.: Mãe, irmão, cônjuge" />
             </FormField>
           </div>
           <p className="text-sm text-muted-foreground">Nenhum contato adicionado!</p>
@@ -190,5 +250,57 @@ export default function CadastrarProfissionalPage() {
         </div>
       </div>
     </SectionCard>
+  )
+}
+
+function PhotoUploadSection({
+  imageUrl,
+  onUpload,
+  onRemove,
+}: {
+  imageUrl: string
+  onUpload: (event: ChangeEvent<HTMLInputElement>) => void
+  onRemove: () => void
+}) {
+  return (
+    <section className="overflow-hidden rounded-lg border bg-muted/10">
+      <div className="flex flex-wrap items-center gap-1.5 border-b px-4 py-3">
+        <h3 className="text-sm font-semibold">Foto</h3>
+        <p className="text-sm text-muted-foreground">Foto de perfil.</p>
+      </div>
+      <div className="grid gap-4 p-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+        <div className="grid size-24 place-items-center overflow-hidden rounded-md border bg-background">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt="Foto de perfil"
+              className="size-full object-cover"
+            />
+          ) : (
+            <span className="text-xs font-medium text-muted-foreground">
+              Sem foto
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" asChild>
+            <label>
+              <Camera className="size-4" />
+              Adicionar foto
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={onUpload}
+              />
+            </label>
+          </Button>
+          <Button type="button" variant="outline" onClick={onRemove}>
+            <X className="size-4" />
+            Remover
+          </Button>
+        </div>
+      </div>
+    </section>
   )
 }

@@ -27,12 +27,12 @@ export function PlanCard({ plan, isCurrentPlan, onOpenBenefits, onBuy }: PlanCar
         <div className="rounded-xl border bg-muted/20 p-3">
           <p className="text-lg font-semibold">{formatCurrency(plan.value)}</p>
           <p className="text-xs text-muted-foreground">
-            Cobranca {plan.periodicity} - {plan.slotsAvailable} vagas disponiveis
+            Cobrança {plan.periodicity} - {plan.slotsAvailable} vagas disponiveis
           </p>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           <Button type="button" variant="outline" onClick={onOpenBenefits}>
-            Conferir beneficios
+            Conferir benefícios
           </Button>
           <Button type="button" onClick={onBuy}>
             {isCurrentPlan ? "Gerenciar plano" : "Comprar plano"}

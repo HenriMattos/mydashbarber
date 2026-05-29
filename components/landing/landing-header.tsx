@@ -25,7 +25,7 @@ export function LandingHeader() {
 
           <nav
             className="hidden items-center gap-1 lg:flex"
-            aria-label="Navegacao principal"
+            aria-label="Navegação principal"
           >
             {navLinks.map((item) => (
               <Link

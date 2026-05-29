@@ -338,7 +338,7 @@ export function getFinancialInsights(): FinancialInsights {
     alerts.push({
       label: "Assinantes inadimplentes",
       value: delinquentSubscriptions.length,
-      detail: "Beneficios precisam de conferencia",
+      detail: "Benefícios precisam de conferencia",
     })
   }
   if (clientsWithoutReturn > 0) {
@@ -350,7 +350,7 @@ export function getFinancialInsights(): FinancialInsights {
   }
   if (summary.coveredByPlanValue > 0) {
     alerts.push({
-      label: "Beneficios de plano consumidos",
+      label: "Benefícios de plano consumidos",
       value: summary.coveredByPlanValue,
       detail: "Itens cobertos pelo plano no periodo",
     })
@@ -408,7 +408,7 @@ export function getFinancialInsights(): FinancialInsights {
         label: "Avulso",
         value: summary.serviceRevenue - summary.extraRevenue,
         tone: "green",
-        detail: "Servicos cobrados normalmente",
+        detail: "Serviços cobrados normalmente",
       },
       {
         label: "Planos",
@@ -426,7 +426,7 @@ export function getFinancialInsights(): FinancialInsights {
         label: "Extras",
         value: summary.extraRevenue,
         tone: "red",
-        detail: "Servicos cobrados a parte",
+        detail: "Serviços cobrados a parte",
       },
       {
         label: "Descontos",

@@ -42,7 +42,7 @@ export function ComandaCard({
         <ComandaHeader comanda={comanda} action={action} />
 
         <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4 lg:min-w-[30rem]">
-          <ComandaMiniInfo label="Servicos" value={String(serviceCount)} />
+          <ComandaMiniInfo label="Serviços" value={String(serviceCount)} />
           <ComandaMiniInfo label="Produtos" value={String(productCount)} />
           <ComandaMiniInfo label="Pago" value={formatCurrency(paidTotal)} />
           <ComandaMiniInfo label="Total" value={formatCurrency(total)} strong />
@@ -127,9 +127,9 @@ export function LatestComandaCard({
       </div>
 
       <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
-        <ComandaMiniInfo label="Servicos" value={services} />
+        <ComandaMiniInfo label="Serviços" value={services} />
         <ComandaMiniInfo label="Itens" value={String(comanda.items.length)} />
-        <ComandaMiniInfo label="Pagamento" value={comanda.payment} />
+        <ComandaMiniInfo label="Pagamento" value={comanda.payment ?? ""} />
       </div>
     </article>
   )

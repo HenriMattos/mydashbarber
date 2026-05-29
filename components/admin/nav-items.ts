@@ -7,16 +7,8 @@ import {
   Invoice03Icon,
   ScissorIcon,
   UserAdd01Icon,
-  UserListIcon,
   UserMultipleIcon,
   Wallet02Icon,
-  BankIcon,
-  File01Icon,
-  CreditCardIcon,
-  EyeIcon,
-  PlusSignCircleIcon,
-  CancelCircleIcon,
-  CheckmarkCircle01Icon,
   CashierIcon,
 } from "@hugeicons/core-free-icons"
 
@@ -31,7 +23,7 @@ export const navItems = [
     title: "Agenda",
     href: "/agenda",
     icon: Calendar03Icon,
-    description: "Horarios, barbeiros e confirmacoes",
+    description: "Horários, barbeiros e confirmações",
   },
   {
     title: "Caixa",
@@ -50,7 +42,7 @@ export const navItems = [
     title: "Clientes",
     href: "/clientes",
     icon: UserMultipleIcon,
-    description: "Cadastro, historico e recorrencia",
+    description: "Cadastro, histórico e recorrência",
     children: [
       {
         title: "Cadastrar cliente",
@@ -64,59 +56,18 @@ export const navItems = [
     href: "/financeiro",
     icon: ChartIncreaseIcon,
     description: "Receitas, despesas e metas",
-    children: [
-      {
-        title: "Contas bancárias",
-        href: "/financeiro/contas-bancarias",
-        icon: BankIcon,
-      },
-      {
-        title: "Categorias financeiras",
-        href: "/financeiro/categorias",
-        icon: File01Icon,
-      },
-      {
-        title: "Formas de pagamento",
-        href: "/financeiro/formas-pagamento",
-        icon: CreditCardIcon,
-      },
-    ],
   },
   {
     title: "Planos",
     href: "/planos",
     icon: CrownIcon,
-    description: "Assinaturas e beneficios",
-    children: [
-      {
-        title: "Criar planos",
-        href: "/planos/criar",
-        icon: PlusSignCircleIcon,
-      },
-      {
-        title: "Gerenciar planos",
-        href: "/planos/gerenciar",
-        icon: File01Icon,
-      },
-    ],
+    description: "Assinaturas e benefícios",
   },
   {
     title: "Assinaturas",
     href: "/assinaturas",
     icon: Invoice03Icon,
-    description: "Contratos, cobrancas e inadimplencia",
-    children: [
-      {
-        title: "Gerenciar assinaturas",
-        href: "/assinaturas/gerenciar",
-        icon: CheckmarkCircle01Icon,
-      },
-      {
-        title: "Inadimplentes",
-        href: "/assinaturas/inadimplentes",
-        icon: CancelCircleIcon,
-      },
-    ],
+    description: "Contratos, cobranças e inadimplencia",
   },
   {
     title: "Profissionais",
@@ -132,27 +83,10 @@ export const navItems = [
     ],
   },
   {
-    title: "Servicos",
+    title: "Serviços",
     href: "/servicos",
     icon: ScissorIcon,
     description: "Catalogo, precos e duracao",
-    children: [
-      {
-        title: "Cadastrar servicos",
-        href: "/servicos/cadastrar",
-        icon: PlusSignCircleIcon,
-      },
-      {
-        title: "Exibicao de servicos",
-        href: "/servicos/exibicao",
-        icon: EyeIcon,
-      },
-      {
-        title: "Listagem de servicos",
-        href: "/servicos/listagem",
-        icon: UserListIcon,
-      },
-    ],
   },
   {
     title: "Empresa",

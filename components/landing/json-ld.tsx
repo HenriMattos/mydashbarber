@@ -6,7 +6,7 @@
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     description:
-      "Sistema de gestao para barbearias com agenda, caixa, clientes e planos de assinatura.",
+      "Sistema de gestão para barbearias com agenda, caixa, clientes e planos de assinatura.",
     author: {
       "@type": "Organization",
       name: "Bigood",

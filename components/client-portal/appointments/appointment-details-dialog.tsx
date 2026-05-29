@@ -39,18 +39,18 @@ export function AppointmentDetailsDialog({
           <DialogTitle>Detalhes do agendamento</DialogTitle>
         </DialogHeader>
         <DialogBody className="space-y-3 text-sm">
-          <InfoRow label="Servico" value={serviceName} />
+          <InfoRow label="Serviço" value={serviceName} />
           <InfoRow label="Data" value={dateLabel} />
-          <InfoRow label="Horario" value={time} />
+          <InfoRow label="Horário" value={time} />
           <InfoRow label="Profissional" value={professionalName} />
           <InfoRow label="Status" value={statusLabel} />
           <InfoRow label="Valor original" value={originalValue} />
           <InfoRow label="Valor pago" value={paidValue} />
           <InfoRow
-            label="Beneficio do plano"
-            value={usedPlanBenefit ? "Sim, beneficio aplicado" : "Nao utilizado"}
+            label="Benefício do plano"
+            value={usedPlanBenefit ? "Sim, benefício aplicado" : "Não utilizado"}
           />
-          <InfoRow label="Observacoes" value={notes || "Sem observacoes"} />
+          <InfoRow label="Observações" value={notes || "Sem observações"} />
           <InfoRow label="Codigo" value={appointmentId} />
         </DialogBody>
         <DialogFooter>

@@ -37,12 +37,20 @@ function SheetOverlay({
 function SheetContent({
   className,
   children,
+  overlayClassName,
+  hideHandle = false,
+  contentRef,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  overlayClassName?: string
+  hideHandle?: boolean
+  contentRef?: React.Ref<HTMLDivElement>
+}) {
   return (
     <SheetPortal>
-      <SheetOverlay />
+      <SheetOverlay className={overlayClassName} />
       <DialogPrimitive.Content
+        ref={contentRef}
         data-slot="sheet-content"
         className={cn(
           "fixed inset-x-0 bottom-0 z-50 flex h-[90dvh] max-h-[90dvh] flex-col rounded-t-3xl border border-b-0 bg-background shadow-xl outline-none sm:left-1/2 sm:right-auto sm:w-full sm:max-w-[430px] sm:-translate-x-1/2",
@@ -50,7 +58,9 @@ function SheetContent({
         )}
         {...props}
       >
-        <div className="mx-auto mt-2 h-1.5 w-14 rounded-full bg-muted" />
+        {hideHandle ? null : (
+          <div className="mx-auto mt-2 h-1.5 w-14 rounded-full bg-muted" />
+        )}
         {children}
       </DialogPrimitive.Content>
     </SheetPortal>
@@ -67,15 +77,25 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function SheetTitle({ className, ...props }: React.ComponentProps<"h2">) {
+function SheetTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
-    <h2 data-slot="sheet-title" className={cn("text-base font-semibold", className)} {...props} />
+    <DialogPrimitive.Title
+      data-slot="sheet-title"
+      className={cn("text-base font-semibold", className)}
+      {...props}
+    />
   )
 }
 
-function SheetDescription({ className, ...props }: React.ComponentProps<"p">) {
+function SheetDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Description>) {
   return (
-    <p
+    <DialogPrimitive.Description
       data-slot="sheet-description"
       className={cn("text-sm text-muted-foreground", className)}
       {...props}

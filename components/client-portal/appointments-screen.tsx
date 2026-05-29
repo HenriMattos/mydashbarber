@@ -47,7 +47,7 @@ export function AppointmentsScreen({
         <div>
           <h1 className="text-2xl font-semibold">Agendamentos</h1>
           <p className="text-sm text-muted-foreground">
-            Historico dos seus agendamentos na barbearia.
+            Histórico dos seus agendamentos na barbearia.
           </p>
         </div>
         <Button type="button" onClick={onOpenBooking}>
@@ -59,7 +59,7 @@ export function AppointmentsScreen({
         <Card>
           <CardContent className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            Carregando historico...
+            Carregando histórico...
           </CardContent>
         </Card>
       ) : error ? (
@@ -79,7 +79,7 @@ export function AppointmentsScreen({
           <CardContent className="space-y-3 py-10 text-center">
             <CalendarClock className="mx-auto size-7 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              Nenhum agendamento registrado ate o momento.
+              Nenhum agendamento registrado até o momento.
             </p>
             <Button type="button" onClick={onOpenBooking}>
               Novo agendamento

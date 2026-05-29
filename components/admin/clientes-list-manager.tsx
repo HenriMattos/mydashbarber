@@ -156,7 +156,65 @@ export function ClientesListManager() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
+      <div className="grid gap-2 md:hidden">
+        {filteredItems.length === 0 ? (
+          <div className="rounded-md border bg-muted/20 px-3 py-6 text-center text-sm text-muted-foreground">
+            Nenhum cliente encontrado.
+          </div>
+        ) : (
+          filteredItems.map((client, index) => (
+            <article
+              key={client.id}
+              className="min-w-0 rounded-md border bg-background p-3"
+            >
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    ID {client.id}
+                  </p>
+                  <h3 className="mt-1 truncate text-sm font-semibold">
+                    {client.name}
+                  </h3>
+                </div>
+                <div className="flex shrink-0 gap-1.5">
+                  <Button
+                    size="icon-sm"
+                    variant="outline"
+                    onClick={() => openEditModal(client)}
+                    aria-label={`Editar ${client.name}`}
+                  >
+                    <HugeiconsIcon icon={PencilEdit02Icon} size={14} />
+                  </Button>
+                  <Button
+                    size="icon-sm"
+                    variant="destructive"
+                    onClick={() => removeClient(client.id)}
+                    aria-label={`Remover ${client.name}`}
+                  >
+                    <HugeiconsIcon icon={Delete02Icon} size={14} />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-3 grid gap-2 text-xs text-muted-foreground">
+                <MobileInfoLine
+                  label="Criado em"
+                  value={formatDateTime(client.createdAt, index)}
+                />
+                <MobileInfoLine
+                  label="Atualizado em"
+                  value={formatDateTime(
+                    client.nextAppointmentAt ?? client.lastVisit,
+                    index + 1
+                  )}
+                />
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="hidden rounded-md border md:block md:overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="bg-muted/30 text-left">
             <tr>
@@ -407,6 +465,17 @@ function EditField({
     <div className="grid gap-1.5">
       <Label>{label}</Label>
       {children}
+    </div>
+  )
+}
+
+function MobileInfoLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-3 rounded-md bg-muted/30 px-2.5 py-2">
+      <span className="shrink-0">{label}</span>
+      <span className="min-w-0 truncate text-right font-medium text-foreground">
+        {value}
+      </span>
     </div>
   )
 }

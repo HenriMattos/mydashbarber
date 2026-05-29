@@ -69,7 +69,7 @@ export function AuthScreen({
                     id="login-email"
                     type="email"
                     required
-                    placeholder="voce@email.com"
+                    placeholder="você@email.com"
                     value={loginData.email}
                     onChange={(event) =>
                       setLoginData((current) => ({ ...current, email: event.target.value }))
@@ -130,7 +130,7 @@ export function AuthScreen({
                     id="signup-email"
                     type="email"
                     required
-                    placeholder="voce@email.com"
+                    placeholder="você@email.com"
                     value={signupData.email}
                     onChange={(event) =>
                       setSignupData((current) => ({ ...current, email: event.target.value }))

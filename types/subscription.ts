@@ -32,5 +32,5 @@ export type FunctionalSubscription = {
   lastUsageAt?: string
   nextAppointmentAt?: string
   alert?: string
-  notes?: string
+  notes: string
 }

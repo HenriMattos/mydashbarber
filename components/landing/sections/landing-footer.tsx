@@ -29,11 +29,11 @@ const footerColumns = [
         { label: "Como funciona", href: "#como-funciona" },
         { label: "Dashboard", href: "#dashboard" },
         { label: "Recursos", href: "#recursos" },
-        { label: "DÃºvidas", href: "#duvidas" },
+        { label: "Dúvidas", href: "#duvidas" },
       ],
     },
     {
-      title: "GestÃ£o",
+      title: "Gestão",
       links: [
         { label: "Agenda online", href: "#recursos" },
         { label: "Caixa e comandas", href: "#recursos" },
@@ -45,20 +45,20 @@ const footerColumns = [
       title: "Acesso",
       links: [
         { label: "Entrar", href: "/login" },
-        { label: "DÃºvidas", href: "#duvidas" },
+        { label: "Dúvidas", href: "#duvidas" },
       ],
     },
 ]
 
 export function LandingFooter() {
   return (
-    <footer className="bg-[var(--landing-primary-dark)] text-white" aria-label="RodapÃ©">
+    <footer className="bg-[var(--landing-primary-dark)] text-white" aria-label="Rodap?">
       <Container className="py-12">
         <div className="grid gap-8 border-b border-white/10 pb-8 lg:grid-cols-[1.1fr_1.4fr_0.9fr]">
           <div>
             <BrandMark inverse />
             <p className="mt-5 max-w-[360px] text-sm leading-6 text-white/64">
-              Sistema de gestÃ£o para barbearias que querem agenda, caixa,
+              Sistema de gestão para barbearias que querem agenda, caixa,
               clientes e planos de assinatura no mesmo lugar.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
@@ -99,19 +99,19 @@ export function LandingFooter() {
 <div className="rounded-[28px] border border-white/10 bg-white/6 p-6">
             <p className="text-sm font-black text-white">Pronto para conversar?</p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              Fale com o time comercial e receba a configuracao ideal.
+              Fale com o time comercial e receba a configuração ideal.
             </p>
             <LandingLinkButton
               href="#demonstracao"
               className={cn(limeButtonClass, "mt-6")}
             >
-              Agendar demonstraÃ§Ã£o
+              Agendar demonstração
             </LandingLinkButton>
           </div>
         </div>
 
         <div className="flex flex-col gap-4 pt-7 text-xs font-semibold text-white/44 md:flex-row md:items-center md:justify-between">
-          <p>&copy; 2026 Bigood. GestÃ£o simples para barbearias.</p>
+          <p>&copy; 2026 Bigood. Gestão simples para barbearias.</p>
           <p>Feito para agenda, caixa, clientes e assinaturas.</p>
         </div>
       </Container>

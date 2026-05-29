@@ -20,5 +20,5 @@ export type Attendance = {
   startedAt?: string
   completedAt?: string
   services: AttendanceServiceItem[]
-  notes?: string
+  notes: string
 }

@@ -4,13 +4,13 @@
 import { useState, type ChangeEvent, type ReactNode } from "react"
 import { CheckmarkCircle01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Camera, Info, X } from "lucide-react"
+import { Camera, X } from "lucide-react"
 
 import {
   formatCnpjInput,
-  formatNumberInput,
   onlyDigits,
 } from "@/components/admin/client-input-formatters"
+import { database } from "@/components/admin/database"
 import {
   FormField,
   FormGrid,
@@ -28,6 +28,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import {
+  COMPANY_LOGO_STORAGE_KEY,
+  COMPANY_TRADE_NAME_STORAGE_KEY,
+} from "@/components/company/company-assets"
 import {
   defaultPortalSettings,
   getPortalUrl,
@@ -67,17 +71,32 @@ const penaltyOptions = ["24 horas", "3 dias", "7 dias", "15 dias", "30 dias"]
 const initialCompanyForm = {
   corporateName: "Paulo Jean Barros Ferreira Junior",
   tradeName: "Studio Simetria",
+  panelName: database.company.tradeName,
+  panelLogoUrl: database.company.logoUrl || "",
   cnpj: "55.540.659/0001-22",
   email: "paulojeanbarbeiro@gmail.com",
   timezone: "America/Manaus",
   phone: "5592994592664",
   cancellationTolerance: toleranceOptions[1],
   penaltyDuration: penaltyOptions[2],
-  dpoteCommission: "40",
 }
 
 export function EmpresaView() {
-  const [form, setForm] = useState(initialCompanyForm)
+  const [form, setForm] = useState(() => ({
+    ...initialCompanyForm,
+    panelName:
+      typeof window === "undefined"
+        ?
+        initialCompanyForm.panelName
+        : window.localStorage.getItem(COMPANY_TRADE_NAME_STORAGE_KEY) ||
+          initialCompanyForm.panelName,
+    panelLogoUrl:
+      typeof window === "undefined"
+        ?
+        initialCompanyForm.panelLogoUrl
+        : window.localStorage.getItem(COMPANY_LOGO_STORAGE_KEY) ||
+          initialCompanyForm.panelLogoUrl,
+  }))
   const [feedback, setFeedback] = useState(
     "Preencha todos os campos obrigatorios."
   )
@@ -92,6 +111,7 @@ export function EmpresaView() {
   const requiredFilled =
     form.corporateName.trim().length > 0 &&
     form.tradeName.trim().length > 0 &&
+    form.panelName.trim().length > 0 &&
     form.cnpj.trim().length > 0 &&
     form.email.trim().length > 0 &&
     form.timezone.trim().length > 0 &&
@@ -110,7 +130,33 @@ export function EmpresaView() {
       return
     }
 
+    window.localStorage.setItem(COMPANY_TRADE_NAME_STORAGE_KEY, form.panelName)
+    if (form.panelLogoUrl) {
+      window.localStorage.setItem(COMPANY_LOGO_STORAGE_KEY, form.panelLogoUrl)
+    } else {
+      window.localStorage.removeItem(COMPANY_LOGO_STORAGE_KEY)
+    }
+    window.dispatchEvent(new Event("bigood_company_sync"))
     setFeedback("Dados da empresa salvos.")
+  }
+
+  function handlePanelLogoUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return
+      update("panelLogoUrl", reader.result)
+      setFeedback("Logo do painel carregada. Salve para atualizar o menu.")
+      event.target.value = ""
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function removePanelLogo() {
+    update("panelLogoUrl", "")
+    setFeedback("Logo do painel removida. Salve para atualizar o menu.")
   }
 
   function updatePortal<Key extends keyof typeof portalForm>(
@@ -252,6 +298,12 @@ export function EmpresaView() {
               onChange={(event) => update("tradeName", event.target.value)}
             />
           </FormField>
+          <FormField label="Nome exibido no painel *">
+            <Input
+              value={form.panelName}
+              onChange={(event) => update("panelName", event.target.value)}
+            />
+          </FormField>
           <FormField label="CNPJ *">
             <Input
               value={form.cnpj}
@@ -268,7 +320,7 @@ export function EmpresaView() {
               onChange={(event) => update("email", event.target.value)}
             />
           </FormField>
-          <FormField label="Fuso horario *">
+          <FormField label="Fuso horário *">
             <Select
               value={form.timezone}
               onValueChange={(value) => update("timezone", value)}
@@ -295,6 +347,12 @@ export function EmpresaView() {
             />
           </FormField>
         </FormGrid>
+
+        <AdminLogoUploadSection
+          imageUrl={form.panelLogoUrl}
+          onUpload={handlePanelLogoUpload}
+          onRemove={removePanelLogo}
+        />
 
         <FeedbackMessage>{feedback}</FeedbackMessage>
       </SectionCard>
@@ -329,7 +387,7 @@ export function EmpresaView() {
               onChange={(event) => updatePortal("slogan", event.target.value)}
             />
           </FormField>
-          <FormField label="Descricao *" className="sm:col-span-2">
+          <FormField label="Descrição *" className="sm:col-span-2">
             <Input
               value={portalForm.description}
               onChange={(event) =>
@@ -364,12 +422,9 @@ export function EmpresaView() {
             buttonLabel="Adicionar banner"
             imageUrl={portalForm.bannerUrl}
             placement={portalForm.bannerPlacement}
-            imageClassName="aspect-[16/5] w-full max-w-2xl rounded-t-lg"
-            actionsClassName="w-full max-w-2xl rounded-b-lg"
             onUpload={(event) =>
               handlePortalImageUpload(event, "bannerUrl", "Banner")
             }
-            onEdit={() => openImageEditor("bannerUrl", "Banner")}
             onRemove={() => removePortalImage("bannerUrl")}
           />
           <PortalImageUploadSection
@@ -378,12 +433,9 @@ export function EmpresaView() {
             buttonLabel="Adicionar logo"
             imageUrl={portalForm.logoUrl}
             placement={portalForm.logoPlacement}
-            imageClassName="aspect-square w-full max-w-sm rounded-t-lg"
-            actionsClassName="w-full max-w-sm rounded-b-lg"
             onUpload={(event) =>
               handlePortalImageUpload(event, "logoUrl", "Logo")
             }
-            onEdit={() => openImageEditor("logoUrl", "Logo")}
             onRemove={() => removePortalImage("logoUrl")}
           />
         </div>
@@ -447,23 +499,60 @@ export function EmpresaView() {
         </FormGrid>
       </SectionCard>
 
-      <SectionCard
-        title="Configuracoes modulo Dpote"
-        description="Apenas para assinantes Dpote"
-      >
-        <FormGrid>
-          <FormField label="Comissao (%) *">
-            <Input
-              value={form.dpoteCommission}
-              inputMode="numeric"
-              onChange={(event) =>
-                update("dpoteCommission", formatNumberInput(event.target.value))
-              }
-            />
-          </FormField>
-        </FormGrid>
-      </SectionCard>
     </>
+  )
+}
+
+function AdminLogoUploadSection({
+  imageUrl,
+  onUpload,
+  onRemove,
+}: {
+  imageUrl: string
+  onUpload: (event: ChangeEvent<HTMLInputElement>) => void
+  onRemove: () => void
+}) {
+  return (
+    <section className="mt-5 overflow-hidden rounded-lg border bg-background">
+      <div className="flex flex-wrap items-center gap-1.5 border-b px-4 py-3">
+        <h3 className="text-sm font-semibold">Logo do painel</h3>
+        <p className="text-sm text-muted-foreground">
+          Imagem exibida no menu administrativo.
+        </p>
+      </div>
+      <div className="grid gap-4 p-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+        <div className="grid size-20 place-items-center overflow-hidden rounded-md border bg-muted">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt="Logo do painel"
+              className="size-full object-cover"
+            />
+          ) : (
+            <span className="text-xs font-medium text-muted-foreground">
+              Sem logo
+            </span>
+          )}
+        </div>
+        <ResponsiveActions>
+          <Button type="button" asChild>
+            <label>
+              <Camera className="size-4" />
+              Adicionar logo
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={onUpload}
+              />
+            </label>
+          </Button>
+          <Button type="button" variant="outline" onClick={onRemove}>
+            Remover
+          </Button>
+        </ResponsiveActions>
+      </div>
+    </section>
   )
 }
 
@@ -509,7 +598,7 @@ function PortalImageEditorDialog({
             >
               <img
                 src={editor.src}
-                alt={`Edicao de ${editor.label.toLowerCase()}`}
+                alt={`Edição de ${editor.label.toLowerCase()}`}
                 className="size-full object-cover"
                 style={{
                   objectPosition: `${editor.placement.x}% ${editor.placement.y}%`,
@@ -566,10 +655,7 @@ function PortalImageUploadSection({
   buttonLabel,
   imageUrl,
   placement,
-  imageClassName,
-  actionsClassName,
   onUpload,
-  onEdit,
   onRemove,
 }: {
   title: string
@@ -577,23 +663,42 @@ function PortalImageUploadSection({
   buttonLabel: string
   imageUrl: string
   placement: PortalImagePlacement
-  imageClassName: string
-  actionsClassName: string
   onUpload: (event: ChangeEvent<HTMLInputElement>) => void
-  onEdit: () => void
   onRemove: () => void
 }) {
+  const isBanner = title === "Banner"
+
   return (
-    <section className="overflow-hidden rounded-lg border bg-background">
-      <div className="flex flex-wrap items-center gap-1.5 border-b px-4 py-3">
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <p className="text-sm text-muted-foreground">{description}</p>
-        <Info className="size-4 text-muted-foreground" aria-hidden="true" />
+    <section className="overflow-hidden rounded-lg border bg-card">
+      <div className="flex flex-wrap items-baseline gap-2 border-b px-4 py-4">
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <p className="text-base text-muted-foreground">{description}</p>
       </div>
-      <div className="space-y-6 p-4">
-        <div>
+      <div className="grid gap-5 p-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:p-6">
+        <div
+          className={`grid place-items-center overflow-hidden rounded-lg border bg-muted/30 ${
+            isBanner ? "h-28 w-full max-w-xs sm:h-32 sm:w-72" : "size-28"
+          }`}
+        >
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={title}
+              className="size-full object-cover"
+              style={{
+                objectPosition: `${placement.x}% ${placement.y}%`,
+                transform: `scale(${placement.zoom})`,
+              }}
+            />
+          ) : (
+            <span className="px-3 text-center text-sm font-medium text-muted-foreground">
+              Sem {title.toLowerCase()}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Button type="button" asChild>
-            <label>
+            <label className="cursor-pointer">
               <Camera className="size-4" />
               {buttonLabel}
               <input
@@ -604,37 +709,11 @@ function PortalImageUploadSection({
               />
             </label>
           </Button>
-        </div>
-
-        <div className="mx-auto">
-          <div className={`mx-auto overflow-hidden ${imageClassName}`}>
-            <img
-              src={imageUrl}
-              alt={title}
-              className="size-full object-cover"
-              style={{
-                objectPosition: `${placement.x}% ${placement.y}%`,
-                transform: `scale(${placement.zoom})`,
-              }}
-            />
-          </div>
-          <div className={`mx-auto grid ${actionsClassName}`}>
-            <button
-              type="button"
-              onClick={onRemove}
-              className="flex min-h-10 items-center justify-center gap-2 bg-pink-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-pink-600"
-            >
-              <X className="size-4" />
-              Remover
-            </button>
-          </div>
-        </div>
-
-        <ResponsiveActions>
-          <Button type="button" variant="outline" onClick={onEdit}>
-            Editar enquadramento
+          <Button type="button" variant="outline" onClick={onRemove}>
+            <X className="size-4" />
+            Remover
           </Button>
-        </ResponsiveActions>
+        </div>
       </div>
     </section>
   )

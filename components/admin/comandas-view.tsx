@@ -148,8 +148,8 @@ export function ComandasView() {
   return (
     <>
       <SectionCard
-        title="Historico de comandas"
-        description="Listagem da primeira ate a ultima comanda registrada no caixa"
+        title="Histórico de comandas"
+        description="Listagem da primeira até a última comanda registrada no caixa"
         action={
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button size="sm" variant="outline" asChild>
@@ -314,7 +314,7 @@ function ComandaDetailsDialog({
                     <tr>
                       <th className="px-3 py-2 font-semibold">Cliente</th>
                       <th className="px-3 py-2 font-semibold">Data e hora do agendamento</th>
-                      <th className="px-3 py-2 font-semibold">Total dos servicos</th>
+                      <th className="px-3 py-2 font-semibold">Total dos serviços</th>
                       <th className="px-3 py-2 font-semibold">Total de descontos</th>
                     </tr>
                   </thead>
@@ -339,16 +339,16 @@ function ComandaDetailsDialog({
             </section>
 
             <section className="rounded-md border p-3">
-              <h3 className="text-sm font-semibold">Servicos</h3>
+              <h3 className="text-sm font-semibold">Serviços</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Servicos adicionados na comanda.
+                Serviços adicionados na comanda.
               </p>
               <div className="mt-3 overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead className="bg-muted/30 text-left">
                     <tr>
                       <th className="px-3 py-2 font-semibold">Profissional</th>
-                      <th className="px-3 py-2 font-semibold">Servico</th>
+                      <th className="px-3 py-2 font-semibold">Serviço</th>
                       <th className="px-3 py-2 font-semibold">Valor</th>
                       <th className="px-3 py-2 font-semibold">Desconto</th>
                     </tr>
@@ -380,8 +380,8 @@ function ComandaDetailsDialog({
             <section className="rounded-md border p-3">
               <h3 className="text-sm font-semibold">Valores</h3>
               <div className="mt-3 grid gap-2 text-sm">
-                <DetailLine label="Total de servicos com desconto" value={demoCurrency} />
-                <DetailLine label="Desconto em servicos" value={demoCurrency} />
+                <DetailLine label="Total de serviços com desconto" value={demoCurrency} />
+                <DetailLine label="Desconto em serviços" value={demoCurrency} />
                 <DetailLine label="Total de produtos com desconto" value={demoCurrency} />
                 <DetailLine label="Desconto em produtos" value={demoCurrency} />
                 <DetailLine label="Total da comanda" value={demoCurrency} />

@@ -62,11 +62,11 @@ export default async function ContaPage() {
                 <InfoCard label="E-mail" value={session.email} />
                 <InfoCard
                   label="Responsavel"
-                  value={session.name || "Nao informado"}
+                  value={session.name || "Não informado"}
                 />
                 <InfoCard
                   label="Barbearia"
-                  value={session.companyName || "Nao informada"}
+                  value={session.companyName || "Não informada"}
                 />
                 <InfoCard
                   label="Assinatura"

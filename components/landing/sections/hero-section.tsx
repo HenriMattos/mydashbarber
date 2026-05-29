@@ -14,16 +14,16 @@ const limeButtonClass =
 
 const trustNumbers = [
   { value: "200+", label: "Barbearias ativas" },
-  { value: "15mil+", label: "Agendamentos/mÃªs" },
+  { value: "15mil+", label: "Agendamentos/mês" },
   { value: "R$ 2mi+", label: "Em planos processados" },
-  { value: "98%", label: "SatisfaÃ§Ã£o" },
+  { value: "98%", label: "Satisfa??o" },
 ]
 
 const highlights = [
   "Agenda online",
   "Planos de assinatura",
   "Caixa e comandas",
-  "Gestao de clientes",
+  "Gestão de clientes",
 ]
 
 export function HeroSection() {
@@ -41,7 +41,7 @@ export function HeroSection() {
           >
             Sua barbearia mais organizada.
             <br />
-            <span className="text-[var(--landing-primary)]">Seus clientes voltando todo mÃªs.</span>
+            <span className="text-[var(--landing-primary)]">Seus clientes voltando todo mês.</span>
           </h1>
           <p className="mt-4 max-w-[480px] text-[15px] leading-6 text-[var(--landing-muted)] md:mt-5 md:text-base md:leading-7">
             Agenda, caixa, clientes e planos de assinatura em um
@@ -50,7 +50,7 @@ export function HeroSection() {
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row md:mt-8">
             <LandingLinkButton href="#demonstracao" className={cn(limeButtonClass, "hero-cta-glow")}>
-              Agendar demonstraÃ§Ã£o
+              Agendar demonstração
             </LandingLinkButton>
           </div>
 

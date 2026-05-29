@@ -28,18 +28,18 @@ export function ConfirmationStep({
     <Card>
       <CardContent className="space-y-2 pt-4 text-sm">
         <InfoRow label="Barbearia" value={barbershopName} />
-        <InfoRow label="Servico" value={serviceName} />
+        <InfoRow label="Serviço" value={serviceName} />
         <InfoRow label="Valor" value={formatCurrency(serviceValue)} />
         <InfoRow label="Tempo estimado" value={`${serviceDuration} min`} />
         <InfoRow label="Profissional" value={professionalName} />
         <InfoRow label="Data" value={dateLabel} />
-        <InfoRow label="Horario" value={time} />
+        <InfoRow label="Horário" value={time} />
         <div className="rounded-xl border bg-muted/20 p-3">
-          <p className="text-xs text-muted-foreground">Beneficio de plano</p>
+          <p className="text-xs text-muted-foreground">Benefício de plano</p>
           {usesPlanBenefit ? (
             <Badge className="mt-1">Aplicado</Badge>
           ) : (
-            <p className="mt-1 font-medium">Nao aplicado</p>
+            <p className="mt-1 font-medium">Não aplicado</p>
           )}
         </div>
         <div className="rounded-xl border bg-muted/20 p-3">

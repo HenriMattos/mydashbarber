@@ -21,11 +21,11 @@ export function PlanBenefitsDialog({ open, onOpenChange, plan }: PlanBenefitsDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Beneficios de {plan.name}</DialogTitle>
+          <DialogTitle>Benefícios de {plan.name}</DialogTitle>
         </DialogHeader>
         <DialogBody className="space-y-4 text-sm">
           <section className="space-y-2">
-            <h3 className="font-semibold">Servicos inclusos</h3>
+            <h3 className="font-semibold">Serviços inclusos</h3>
             {coreBenefits.map((benefit) => {
               const finalValue = benefit.originalValue * (1 - benefit.discountPercent / 100)
               return (
@@ -44,9 +44,9 @@ export function PlanBenefitsDialog({ open, onOpenChange, plan }: PlanBenefitsDia
             })}
           </section>
           <section className="space-y-2">
-            <h3 className="font-semibold">Servicos extras com desconto</h3>
+            <h3 className="font-semibold">Serviços extras com desconto</h3>
             {extraBenefits.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Sem servicos extras com desconto.</p>
+              <p className="text-xs text-muted-foreground">Sem serviços extras com desconto.</p>
             ) : (
               extraBenefits.map((benefit) => {
                 const finalValue = benefit.originalValue * (1 - benefit.discountPercent / 100)

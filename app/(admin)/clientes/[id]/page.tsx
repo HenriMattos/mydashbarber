@@ -4,7 +4,6 @@ import {
   ArrowRight01Icon,
   Calendar03Icon,
   Message01Icon,
-  PlusSignCircleIcon,
   Wallet01Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -112,7 +111,7 @@ export default async function ClienteDetalhePage({
                           ? "border-amber-300 bg-amber-50 text-amber-800"
                           : tag === "Retorno recomendado"
                             ? "border-sky-300 bg-sky-50 text-sky-800"
-                            : tag === "Proximo agendamento"
+                            : tag === "Próximo agendamento"
                               ? "border-primary/30 bg-primary/10 text-primary"
                               : "border-border bg-muted text-muted-foreground"
                       )}
@@ -142,22 +141,16 @@ export default async function ClienteDetalhePage({
                     WhatsApp
                   </Link>
                 </Button>
-                <Button variant="outline" size="sm" asChild className="justify-start">
-                  <Link href="/planos/gerenciar">
-                    <HugeiconsIcon icon={PlusSignCircleIcon} size={16} />
-                    Oferecer plano
-                  </Link>
-                </Button>
               </div>
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <InfoTile
-                label="Ultima visita"
+                label="Última visita"
                 value={formatDateForDisplay(client.lastVisit)}
               />
               <InfoTile
-                label="Proximo agendamento"
+                label="Próximo agendamento"
                 value={
                   client.nextAppointmentAt
                     ? formatDateForDisplay(client.nextAppointmentAt)
@@ -170,7 +163,7 @@ export default async function ClienteDetalhePage({
           </div>
 
           <div className="grid gap-4">
-            <SectionCard title="Plano e beneficios" description="Resumo do plano atual e saldo">
+            <SectionCard title="Plano e benefícios" description="Resumo do plano atual e saldo">
               {subscription ? (
                 <div className="grid gap-3">
                   <div className="rounded-md border bg-background p-4">
@@ -184,7 +177,7 @@ export default async function ClienteDetalhePage({
                       Inicio: {formatDateForDisplay(subscription.startedAt)}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Proxima cobranca: {formatDateForDisplay(subscription.nextCharge)}
+                      Próxima cobrança: {formatDateForDisplay(subscription.nextCharge)}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Valor: {formatCurrency(subscription.value)}
@@ -210,7 +203,7 @@ export default async function ClienteDetalhePage({
                         <div className="flex items-center justify-between gap-3">
                           <p className="font-medium">{balance.serviceName}</p>
                           <span className="text-xs text-muted-foreground">
-                            {balance.available} disponivel
+                            {balance.available} disponível
                           </span>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -222,11 +215,11 @@ export default async function ClienteDetalhePage({
 
                   <div className="grid gap-2 md:grid-cols-3">
                     <InfoTile
-                      label="Ultimo uso"
+                      label="Último uso"
                       value={subscription.lastUsageAt ? formatDateForDisplay(subscription.lastUsageAt) : "Sem uso"}
                     />
                     <InfoTile
-                      label="Proximo agendamento"
+                      label="Próximo agendamento"
                       value={
                         subscription.nextAppointmentAt
                           ? formatDateForDisplay(subscription.nextAppointmentAt)
@@ -255,7 +248,7 @@ export default async function ClienteDetalhePage({
                 <QuickAction label="Editar cliente" value="Ajustar cadastro" />
                 <QuickAction
                   label="WhatsApp"
-                  value={client.whatsappEnabled ? "Disponivel" : "Nao informado"}
+                  value={client.whatsappEnabled ? "Disponível" : "Não informado"}
                 />
               </div>
             </SectionCard>
@@ -264,12 +257,12 @@ export default async function ClienteDetalhePage({
       </SectionCard>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <SectionCard title="Historico recente" description="Atendimentos, comandas e observacoes">
+        <SectionCard title="Histórico recente" description="Atendimentos, comandas e observações">
           {history.length === 0 ? (
             <EmptyState
               icon={Calendar03Icon}
-              title="Sem historico recente"
-              description="Este cliente ainda nao possui eventos suficientes para exibir na ficha."
+              title="Sem histórico recente"
+              description="Este cliente ainda não possui eventos suficientes para exibir na ficha."
               className="min-h-[220px]"
             />
           ) : (
@@ -300,24 +293,24 @@ export default async function ClienteDetalhePage({
           )}
         </SectionCard>
 
-        <SectionCard title="Preferencias e observacoes" description="Continuidade de atendimento">
+        <SectionCard title="Preferências e observações" description="Continuidade de atendimento">
           <div className="grid gap-3">
             <InfoTile
-              label="Servico preferido"
+              label="Serviço preferido"
               value={client.favoriteService}
             />
             <InfoTile
               label="Profissional preferido"
-              value={client.preferredProfessional || "Nao informado"}
+              value={client.preferredProfessional || "Não informado"}
             />
             <InfoTile
               label="Frequencia"
-              value={client.frequencyLabel || "Nao informada"}
+              value={client.frequencyLabel || "Não informada"}
             />
             <div className="rounded-md border bg-background p-3">
-              <p className="text-xs text-muted-foreground">Observacoes internas</p>
+              <p className="text-xs text-muted-foreground">Observações internas</p>
               <p className="mt-1 text-sm text-foreground">
-                {client.internalNotes || "Sem observacoes internas registradas."}
+                {client.internalNotes || "Sem observações internas registradas."}
               </p>
             </div>
             <div className="rounded-md border bg-background p-3">
@@ -333,7 +326,7 @@ export default async function ClienteDetalhePage({
             ) : null}
             {client.clientType === "assinante_inadimplente" ? (
               <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
-                Cliente assinante inadimplente: confira antes de aplicar beneficio.
+                Cliente assinante inadimplente: confira antes de aplicar benefício.
               </div>
             ) : null}
           </div>

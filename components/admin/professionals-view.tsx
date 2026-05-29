@@ -1,7 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useState, type ChangeEvent, type ReactNode } from "react"
 import {
   Delete02Icon,
   PencilEdit02Icon,
@@ -10,6 +11,7 @@ import {
   UserAdd01Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import { Camera, X } from "lucide-react"
 
 import {
   formatCepInput,
@@ -73,7 +75,6 @@ type ContactRow = {
   id: string
   name: string
   phone: string
-  kinship: string
 }
 
 type ProductCommissionRow = {
@@ -106,9 +107,9 @@ type ProfessionalDraft = Pick<
   number: string
   complement: string
   hidden: boolean
+  profilePhotoUrl: string
   emergencyName: string
   emergencyPhone: string
-  emergencyKinship: string
   permissions: string[]
   selectedService: string
   serviceCommission: string
@@ -152,6 +153,9 @@ const permissionOptions = [
   "Remoção de folgas",
   "Edição de notas",
 ]
+const professionalTypeOptions = ["PROFISSIONAL", "ADMIN"]
+const professionalGroupOptions = ["Profissionais", "Administradores"]
+const professionalBranchOptions = ["Matriz", "Unidade principal"]
 const initialServiceRows: ServiceRow[] = [
   ["Barba", "40%", "30 min", "R$ 50,00"],
   ["Corte", "40%", "30 min", "R$ 50,00"],
@@ -238,9 +242,9 @@ export function ProfessionalsView() {
       number: "81",
       complement: "",
       hidden: false,
+      profilePhotoUrl: "",
       emergencyName: "",
       emergencyPhone: "",
-      emergencyKinship: "",
       permissions: permissionOptions,
       selectedService: serviceCatalog[0]?.name ?? "",
       serviceCommission: "40",
@@ -362,9 +366,21 @@ export function ProfessionalsView() {
         id: createId("contact"),
         name: draft.emergencyName,
         phone: draft.emergencyPhone,
-        kinship: draft.emergencyKinship,
       },
     ])
+  }
+
+  function handleProfilePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return
+      updateDraft("profilePhotoUrl", reader.result)
+      event.target.value = ""
+    }
+    reader.readAsDataURL(file)
   }
 
   function addProductCommission() {
@@ -470,7 +486,73 @@ export function ProfessionalsView() {
           </div>
         </div>
 
-        <div className="mt-4 overflow-x-auto rounded-md border">
+        <div className="mt-4 grid gap-2 md:hidden">
+          {filteredItems.length === 0 ? (
+            <div className="rounded-md border bg-muted/20 px-3 py-6 text-center text-sm text-muted-foreground">
+              Nenhum usuário encontrado.
+            </div>
+          ) : (
+            filteredItems.map((professional, index) => (
+              <article
+                key={professional.id}
+                className="min-w-0 rounded-md border bg-background p-3"
+              >
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      ID {professional.id}
+                    </p>
+                    <h3 className="mt-1 truncate text-sm font-semibold">
+                      {professional.name}
+                    </h3>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      {professional.email || "-"}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Button
+                      size="icon-sm"
+                      variant="outline"
+                      onClick={() => openEditModal(professional)}
+                      aria-label={`Editar ${professional.name}`}
+                    >
+                      <HugeiconsIcon icon={PencilEdit02Icon} size={14} />
+                    </Button>
+                    <Button
+                      size="icon-sm"
+                      variant="destructive"
+                      onClick={() => removeProfessional(professional)}
+                      aria-label={`Remover ${professional.name}`}
+                    >
+                      <HugeiconsIcon icon={Delete02Icon} size={14} />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-2 text-xs text-muted-foreground">
+                  <ProfessionalMobileInfoLine
+                    label="Status"
+                    value={formatStatus(professional.status)}
+                  />
+                  <ProfessionalMobileInfoLine
+                    label="Tipo"
+                    value={formatType(professional.role)}
+                  />
+                  <ProfessionalMobileInfoLine
+                    label="Criado em"
+                    value={getCreatedAt(professional.id, index)}
+                  />
+                  <ProfessionalMobileInfoLine
+                    label="Atualizado em"
+                    value={getUpdatedAt(professional.id, index)}
+                  />
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+
+        <div className="mt-4 hidden rounded-md border md:block md:overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-muted/30 text-left">
               <tr>
@@ -577,8 +659,9 @@ export function ProfessionalsView() {
                     <Select value={draft.type} onValueChange={(value) => updateDraft("type", value)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PROFISSIONAL">PROFISSIONAL</SelectItem>
-                        <SelectItem value="ADMIN">ADMIN</SelectItem>
+                        {professionalTypeOptions.map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </EditField>
@@ -586,8 +669,9 @@ export function ProfessionalsView() {
                     <Select value={draft.group} onValueChange={(value) => updateDraft("group", value)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Profissionais">Profissionais</SelectItem>
-                        <SelectItem value="Administradores">Administradores</SelectItem>
+                        {professionalGroupOptions.map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </EditField>
@@ -595,8 +679,9 @@ export function ProfessionalsView() {
                     <Select value={draft.branch} onValueChange={(value) => { updateDraft("branch", value); updateDraft("unit", value) }}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Matriz">Matriz</SelectItem>
-                        <SelectItem value="Unidade principal">Unidade principal</SelectItem>
+                        {professionalBranchOptions.map((option) => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </EditField>
@@ -635,9 +720,14 @@ export function ProfessionalsView() {
                 </div>
               </FormSection>
 
-              <FormSection title="Foto" description="Foto de perfil">
-                <Input type="file" accept="image/*" />
-              </FormSection>
+              <PhotoUploadSection
+                title="Foto"
+                description="Foto de perfil."
+                buttonLabel="Adicionar foto"
+                imageUrl={draft.profilePhotoUrl}
+                onUpload={handleProfilePhotoUpload}
+                onRemove={() => updateDraft("profilePhotoUrl", "")}
+              />
 
               <FormSection title="Segurança" description="Gerenciar senha de acesso.">
                 <div className="grid gap-3 rounded-md border bg-muted/20 p-3">
@@ -649,23 +739,12 @@ export function ProfessionalsView() {
               </FormSection>
 
               <FormSection title="Contatos de emergência" description="Contatos de emergência adicionados.">
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_3rem]">
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_3rem]">
                   <EditField label="Nome *">
                     <Input value={draft.emergencyName} onChange={(event) => updateDraft("emergencyName", event.target.value)} />
                   </EditField>
                   <EditField label="Telefone *">
                     <Input value={draft.emergencyPhone} inputMode="tel" onChange={(event) => updateDraft("emergencyPhone", formatPhoneInput(event.target.value))} />
-                  </EditField>
-                  <EditField label="Grau de parentesco *">
-                    <Select value={draft.emergencyKinship} onValueChange={(value) => updateDraft("emergencyKinship", value)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Mãe">Mãe</SelectItem>
-                        <SelectItem value="Pai">Pai</SelectItem>
-                        <SelectItem value="Cônjuge">Cônjuge</SelectItem>
-                        <SelectItem value="Irmão">Irmão</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </EditField>
                   <AddButton onClick={addContact} label="Adicionar contato" />
                 </div>
@@ -673,17 +752,15 @@ export function ProfessionalsView() {
                   <EmptyLine>Nenhum contato adicionado!</EmptyLine>
                 ) : (
                   <DataTable
-                    columns={["Nome", "Telefone", "Grau de parentesco", "Opções"]}
+                    columns={["Nome", "Telefone", "Opções"]}
                     rows={draft.contacts.map((contact) => [
                       contact.name,
                       contact.phone,
-                      contact.kinship,
                       <RowActions
                         key={contact.id}
                         onEdit={() => {
                           updateDraft("emergencyName", contact.name)
                           updateDraft("emergencyPhone", contact.phone)
-                          updateDraft("emergencyKinship", contact.kinship)
                           removeRow("contact", contact.id)
                         }}
                         onDelete={() => removeRow("contact", contact.id)}
@@ -1027,6 +1104,23 @@ function TableCell({ className, children }: { className?: string; children: Reac
   return <td className={`px-3 py-2 align-middle ${className ?? ""}`}>{children}</td>
 }
 
+function ProfessionalMobileInfoLine({
+  label,
+  value,
+}: {
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-3 rounded-md bg-muted/30 px-2.5 py-2">
+      <span className="shrink-0">{label}</span>
+      <span className="min-w-0 truncate text-right font-medium text-foreground">
+        {value}
+      </span>
+    </div>
+  )
+}
+
 function EditField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid gap-1.5">
@@ -1074,6 +1168,64 @@ function FormSection({
         ) : null}
       </div>
       {children}
+    </section>
+  )
+}
+
+function PhotoUploadSection({
+  title,
+  description,
+  buttonLabel,
+  imageUrl,
+  onUpload,
+  onRemove,
+}: {
+  title: string
+  description: string
+  buttonLabel: string
+  imageUrl: string
+  onUpload: (event: ChangeEvent<HTMLInputElement>) => void
+  onRemove: () => void
+}) {
+  return (
+    <section className="overflow-hidden rounded-lg border bg-muted/10">
+      <div className="flex flex-wrap items-center gap-1.5 border-b px-4 py-3">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+      <div className="grid gap-4 p-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+        <div className="grid size-24 place-items-center overflow-hidden rounded-md border bg-background">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={title}
+              className="size-full object-cover"
+            />
+          ) : (
+            <span className="text-xs font-medium text-muted-foreground">
+              Sem foto
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" asChild>
+            <label>
+              <Camera className="size-4" />
+              {buttonLabel}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={onUpload}
+              />
+            </label>
+          </Button>
+          <Button type="button" variant="outline" onClick={onRemove}>
+            <X className="size-4" />
+            Remover
+          </Button>
+        </div>
+      </div>
     </section>
   )
 }

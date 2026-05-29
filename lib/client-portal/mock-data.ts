@@ -92,7 +92,7 @@ export const mockAppointments: Appointment[] = [
     valueOriginal: 60,
     valuePaid: 0,
     usedPlanBenefit: true,
-    notes: "Beneficio reservado para este horario.",
+    notes: "Benefício reservado para este horário.",
     createdAt: "2026-05-27T09:02:00.000Z",
   },
   {
@@ -173,7 +173,7 @@ export const mockPlans: Plan[] = [
     value: 1290,
     periodicity: "anual",
     slotsAvailable: 8,
-    description: "Plano anual com desconto e prioridade em horarios.",
+    description: "Plano anual com desconto e prioridade em horários.",
     benefits: [
       {
         id: "benefit-4",

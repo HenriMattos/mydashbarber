@@ -173,7 +173,65 @@ export function CompanyBranchesView() {
             </Button>
           </div>
 
-          <div className="overflow-x-auto rounded-md border">
+          <div className="grid gap-2 md:hidden">
+            {filteredBranches.length === 0 ? (
+              <div className="rounded-md border bg-muted/20 px-3 py-6 text-center text-sm text-muted-foreground">
+                Nenhuma filial encontrada.
+              </div>
+            ) : (
+              filteredBranches.map((branch) => (
+                <article
+                  key={branch.id}
+                  className="min-w-0 rounded-md border bg-background p-3"
+                >
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        ID {branch.id}
+                      </p>
+                      <h3 className="mt-1 truncate text-sm font-semibold">
+                        {branch.neighborhood}
+                      </h3>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                        {branch.city}, {branch.state}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-1.5">
+                      <Button
+                        size="icon-sm"
+                        variant="outline"
+                        onClick={() => openEdit(branch)}
+                        aria-label={`Editar filial ${branch.neighborhood}`}
+                      >
+                        <HugeiconsIcon icon={PencilEdit02Icon} size={14} />
+                      </Button>
+                      <Button
+                        size="icon-sm"
+                        variant="destructive"
+                        onClick={() => removeBranch(branch)}
+                        aria-label={`Remover filial ${branch.neighborhood}`}
+                      >
+                        <HugeiconsIcon icon={Delete02Icon} size={14} />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid gap-2 text-xs text-muted-foreground">
+                    <BranchMobileInfoLine
+                      label="Criado em"
+                      value={formatDateTime(branch.createdAt)}
+                    />
+                    <BranchMobileInfoLine
+                      label="Atualizado em"
+                      value={formatDateTime(branch.updatedAt)}
+                    />
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+
+          <div className="hidden rounded-md border md:block md:overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-muted/30 text-left">
                 <tr>
@@ -346,6 +404,23 @@ function TableHead({ className, children }: { className?: string; children: Reac
 
 function TableCell({ className, children }: { className?: string; children: ReactNode }) {
   return <td className={`px-3 py-2 align-middle ${className ?? ""}`}>{children}</td>
+}
+
+function BranchMobileInfoLine({
+  label,
+  value,
+}: {
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-3 rounded-md bg-muted/30 px-2.5 py-2">
+      <span className="shrink-0">{label}</span>
+      <span className="min-w-0 truncate text-right font-medium text-foreground">
+        {value}
+      </span>
+    </div>
+  )
 }
 
 function EditField({ label, children }: { label: string; children: ReactNode }) {

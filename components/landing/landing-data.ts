@@ -29,36 +29,36 @@ export const navLinks = [
   { label: "Ver como funciona", href: "#como-funciona" },
   { label: "Recursos", href: "#recursos" },
   { label: "Dashboard", href: "#dashboard" },
- { label: "DÃºvidas", href: "#duvidas" },
+ { label: "Dúvidas", href: "#duvidas" },
 ]
 
 export const trustItems = [
   "Agenda online",
   "Caixa e comandas",
   "Planos recorrentes",
-  "Gestao de clientes",
+  "Gestão de clientes",
 ]
 
 export const painPoints = [
   {
     title: "Agenda no improviso",
     description:
-      "HorÃ¡rio perdido, remarcaÃ§Ã£o manual e cliente esperando no WhatsApp.",
+      "Horário perdido, remarcação manual e cliente esperando no WhatsApp.",
     icon: Calendar03Icon,
   },
   {
-    title: "Caixa sem visÃ£o clara",
+    title: "Caixa sem visão clara",
     description: "Comanda, pagamento e fechamento espalhados no fim do dia.",
     icon: CashierIcon,
   },
   {
-    title: "Clientes sem recorrÃªncia",
+    title: "Clientes sem recorrência",
     description:
-      "Sem assinatura, a barbearia depende sÃ³ do atendimento avulso.",
+      "Sem assinatura, a barbearia depende só do atendimento avulso.",
     icon: CreditCardIcon,
   },
   {
-    title: "Sistema que nÃ£o entende barbearia",
+    title: "Sistema que não entende barbearia",
     description:
       "Tela demais, rotina pesada e pouco foco no dia a dia do barbeiro.",
     icon: DashboardSquare03Icon,
@@ -68,21 +68,21 @@ export const painPoints = [
 export const clientPlanExamples = [
   {
     name: "Plano Corte Mensal",
-    benefit: "1 ou 2 cortes por mÃªs com valor fixo.",
-    frequency: "RenovaÃ§Ã£o mensal",
+    benefit: "1 ou 2 cortes por mês com valor fixo.",
+    frequency: "Renovação mensal",
     status: "Ativo",
     subscriber: "Cliente: Rafael M.",
   },
   {
     name: "Plano Corte + Barba",
-    benefit: "2 cortes + 1 barba por mÃªs.",
+    benefit: "2 cortes + 1 barba por mês.",
     frequency: "Renova em 12 dias",
     status: "Renovando",
     subscriber: "Cliente: Diego S.",
   },
   {
     name: "Plano Premium",
-    benefit: "Prioridade de horÃ¡rio e serviÃ§os inclusos.",
+    benefit: "Prioridade de horário e serviços inclusos.",
     frequency: "Ciclo mensal",
     status: "Ativo",
     subscriber: "Cliente: Marcos A.",
@@ -100,31 +100,31 @@ export const flowSteps = [
   {
     title: "Configure sua barbearia",
     description:
-      "Cadastre servicos, profissionais, horarios, unidades e dados operacionais da barbearia.",
+      "Cadastre serviços, profissionais, horários, unidades e dados operacionais da barbearia.",
     icon: PaintBoardIcon,
   },
   {
     title: "Receba agendamentos",
     description:
-      "A equipe organiza agendamentos, servicos, profissionais, data e horario pelo painel.",
+      "A equipe organiza agendamentos, serviços, profissionais, data e horário pelo painel.",
     icon: SmartPhone01Icon,
   },
   {
     title: "Controle o atendimento",
     description:
-      "Acompanhe agenda, comandas, caixa, clientes e histÃ³rico em um painel Ãºnico.",
+      "Acompanhe agenda, comandas, caixa, clientes e histórico em um painel único.",
     icon: CashierIcon,
   },
   {
     title: "Venda planos recorrentes",
     description:
-      "Crie planos de assinatura, controle benefÃ­cios, acompanhe renovaÃ§Ãµes e aumente previsibilidade.",
+      "Crie planos de assinatura, controle benefícios, acompanhe renovações e aumente previsibilidade.",
     icon: CreditCardIcon,
   },
   {
     title: "Acompanhe o crescimento",
     description:
-      "Veja receita, clientes ativos, assinaturas, agendamentos e desempenho da operaÃ§Ã£o.",
+      "Veja receita, clientes ativos, assinaturas, agendamentos e desempenho da operação.",
     icon: ChartIncreaseIcon,
   },
 ] satisfies Array<{
@@ -140,13 +140,13 @@ export const features = [
     icon: Calendar03Icon,
   },
   {
-    title: "Gestao de clientes",
-    description: "Clientes, planos, historico e recorrencia no painel.",
+    title: "Gestão de clientes",
+    description: "Clientes, planos, histórico e recorrência no painel.",
     icon: SmartPhone01Icon,
   },
   {
     title: "Planos e assinaturas",
-    description: "Controle benefÃ­cios, status, inÃ­cio e renovaÃ§Ã£o.",
+    description: "Controle benefícios, status, início e renovação.",
     icon: CreditCardIcon,
   },
   {
@@ -155,63 +155,63 @@ export const features = [
     icon: CashierIcon,
   },
   {
-    title: "GestÃ£o de clientes",
-    description: "HistÃ³rico, preferÃªncias, planos ativos e relacionamento.",
+    title: "Gestão de clientes",
+    description: "Histórico, preferências, planos ativos e relacionamento.",
     icon: UserGroupIcon,
   },
   {
-    title: "Profissionais e serviÃ§os",
-    description: "Equipe, horÃ¡rios, valores, serviÃ§os e disponibilidade.",
+    title: "Profissionais e serviços",
+    description: "Equipe, horários, valores, serviços e disponibilidade.",
     icon: ScissorIcon,
   },
   {
     title: "Financeiro",
-    description: "Faturamento, pagamentos, recorrÃªncia e visÃ£o geral.",
+    description: "Faturamento, pagamentos, recorrência e visão geral.",
     icon: ChartIncreaseIcon,
   },
   {
     title: "Multiunidades",
-    description: "AtÃ© 3 unidades no Pro e operaÃ§Ãµes maiores no Personalizado.",
+    description: "Até 3 unidades no Pro e operações maiores no Personalizado.",
     icon: Building03Icon,
   },
 ] satisfies Array<{ title: string; description: string; icon: IconSvgElement }>
 
 export const trustNumbers = [
   { value: "200+", label: "Barbearias ativas" },
-  { value: "15mil+", label: "Agendamentos/mÃªs" },
+  { value: "15mil+", label: "Agendamentos/mês" },
   { value: "R$ 2mi+", label: "Em planos processados" },
-  { value: "98%", label: "SatisfaÃ§Ã£o dos barbeiros" },
+  { value: "98%", label: "Satisfação dos barbeiros" },
 ] satisfies Array<{ value: string; label: string }>
 
 export const testimonials = [
   {
     name: "Carlos A.",
     role: "Barbeiro, SP",
-    text: "Antes eu perdia cliente porque nÃ£o lembrava de renovar plano. O Bigood me avisa e o cliente jÃ¡ sai com o prÃ³ximo agendado. Minha receita recorrente subiu 40%.",
+    text: "Antes eu perdia cliente porque não lembrava de renovar plano. O Bigood me avisa e o cliente já sai com o próximo agendado. Minha receita recorrente subiu 40%.",
   },
   {
     name: "Rafael M.",
-    role: "ProprietÃ¡rio, MG",
-    text: "Tinha agenda no WhatsApp, comanda no papel e planilha no fim do mÃªs. Agora Ã© uma tela sÃ³. Economizo umas 10 horas por semana sÃ³ de conferÃªncia.",
+    role: "Proprietário, MG",
+    text: "Tinha agenda no WhatsApp, comanda no papel e planilha no fim do mês. Agora é uma tela só. Economizo umas 10 horas por semana só de conferência.",
   },
   {
     name: "Diego S.",
     role: "Barbeiro, RJ",
-    text: "O gestao de clientes mudou tudo. O pessoal agenda direto pelo celular, para de mandar mensagem perguntando horÃ¡rio. Minha agenda lota sozinha.",
+    text: "O gestão de clientes mudou tudo. O pessoal agenda direto pelo celular, para de mandar mensagem perguntando horário. Minha agenda lota sozinha.",
   },
 ] satisfies Array<{ name: string; role: string; text: string }>
 
 export const dashboardMetrics = [
   {
     label: "Agenda de hoje",
-    value: "32 horÃ¡rios",
-    detail: "ServiÃ§os, profissionais e confirmaÃ§Ãµes em uma tela.",
+    value: "32 horários",
+    detail: "Serviços, profissionais e confirmações em uma tela.",
     icon: Calendar03Icon,
   },
   {
     label: "Clientes assinantes",
     value: "86 ativos",
-    detail: "Planos, benefÃ­cios e status acompanhados.",
+    detail: "Planos, benefícios e status acompanhados.",
     icon: UserMultipleIcon,
   },
   {
@@ -227,13 +227,13 @@ export const dashboardMetrics = [
     icon: CashierIcon,
   },
   {
-    label: "ServiÃ§os mais vendidos",
+    label: "Serviços mais vendidos",
     value: "Corte + barba",
-    detail: "HistÃ³rico para entender demanda e equipe.",
+    detail: "Histórico para entender demanda e equipe.",
     icon: ScissorIcon,
   },
   {
-    label: "RenovaÃ§Ãµes prÃ³ximas",
+    label: "Renovações próximas",
     value: "14 clientes",
     detail: "Planos que precisam de acompanhamento.",
     icon: StoreManagement01Icon,
@@ -247,33 +247,33 @@ export const dashboardMetrics = [
 
 export const faqs = [
   {
-    question: "O Bigood Ã© sÃ³ uma agenda online?",
+    question: "O Bigood é só uma agenda online?",
     answer:
-      "NÃ£o. O Bigood Ã© um sistema completo para gerenciar agenda, clientes, profissionais, serviÃ§os, caixa, financeiro e planos de assinatura da barbearia.",
+      "Não. O Bigood é um sistema completo para gerenciar agenda, clientes, profissionais, serviços, caixa, financeiro e planos de assinatura da barbearia.",
   },
   {
     question: "Consigo vender planos de assinatura para meus clientes?",
     answer:
-      "Sim. A barbearia pode criar planos, definir benefÃ­cios, acompanhar clientes assinantes, controlar inÃ­cio, renovaÃ§Ã£o e status.",
+      "Sim. A barbearia pode criar planos, definir benefícios, acompanhar clientes assinantes, controlar início, renovação e status.",
   },
   {
     question: "O cliente consegue agendar pelo celular?",
     answer:
-      "Nao. A gestao fica concentrada no painel administrativo da barbearia.",
+      "Não. A gestão fica concentrada no painel administrativo da barbearia.",
   },
   {
     question: "O sistema serve para barbearias pequenas?",
     answer:
-      "Sim. O Bigood foi pensado para barbearias que querem sair do improviso e organizar a operaÃ§Ã£o desde cedo.",
+      "Sim. O Bigood foi pensado para barbearias que querem sair do improviso e organizar a operação desde cedo.",
   },
   {
     question: "Tenho mais de uma unidade. Posso usar?",
     answer:
-      "Sim. O Plano Pro cobre atÃ© 3 unidades. OperaÃ§Ãµes com 4 ou mais unidades entram no Plano Personalizado.",
+      "Sim. O Plano Pro cobre até 3 unidades. Operações com 4 ou mais unidades entram no Plano Personalizado.",
   },
   {
     question: "O Bigood foi criado por barbeiros?",
     answer:
-      "O Bigood foi desenvolvido com apoio real de um barbeiro consultor, com anos de experiÃªncia na prÃ³pria barbearia e participaÃ§Ã£o direta na validaÃ§Ã£o das necessidades do sistema.",
+      "O Bigood foi desenvolvido com apoio real de um barbeiro consultor, com anos de experiência na própria barbearia e participação direta na validação das necessidades do sistema.",
   },
 ]

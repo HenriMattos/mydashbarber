@@ -26,13 +26,13 @@ export default function EscolherPlanoPage() {
       <div className="mx-auto max-w-[1200px]">
         <header className="text-center mb-12">
           <p className="inline-flex rounded-full border border-[var(--landing-border)] bg-[var(--landing-primary-soft)] px-3 py-1.5 text-sm font-bold text-[var(--landing-primary)]">
-            Configuracao da conta
+            Configuração da conta
           </p>
           <h1 className="mt-4 text-[42px] font-extrabold tracking-[-0.04em] text-[var(--landing-primary-dark)]">
             Escolha seu plano Bigood
           </h1>
           <p className="mt-3 text-lg text-[var(--landing-muted)] max-w-[600px] mx-auto">
-            Selecione a melhor opcao para a gestao da sua barbearia e comece agora.
+            Selecione a melhor opcao para a gestão da sua barbearia e comece agora.
           </p>
         </header>
 

@@ -13,7 +13,7 @@ const limeButtonClass =
 const benefits = [
   "Agenda e comandas em tempo real",
   "Planos de assinatura para clientes",
-  "Gestao de clientes pronto para vender",
+  "Gestão de clientes pronto para vender",
   "Financeiro claro sem surpresa",
 ]
 
@@ -27,11 +27,11 @@ export function DashboardShowcaseSection() {
               Por dentro do Bigood
             </p>
             <h2 id="dashboard-heading" className="mt-4 max-w-[480px] text-[clamp(26px,3.2vw,40px)] leading-[1.1] font-bold text-[var(--landing-primary-dark)]">
-              Um painel. Toda a operaÃ§Ã£o.
+              Um painel. Toda a operação.
             </h2>
             <p className="mt-3 max-w-[440px] text-[15px] leading-6 text-[var(--landing-muted)]">
               Abra o dashboard e veja agenda, caixa, clientes e receita sem
-              procurar informaÃ§Ã£o em trÃªs lugares.
+              procurar informação em três lugares.
             </p>
 
             <div className="mt-6 grid gap-2.5">
@@ -44,7 +44,7 @@ export function DashboardShowcaseSection() {
             </div>
 
             <LandingLinkButton href="#demonstracao" className={cn(limeButtonClass, "mt-7")}>
-              Agendar demonstraÃ§Ã£o
+              Agendar demonstração
             </LandingLinkButton>
           </div>
 

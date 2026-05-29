@@ -31,7 +31,7 @@ export function BrandMark({
             inverse ? "text-white/70" : "text-[var(--landing-foreground-soft)]"
           }`}
         >
-          Gestao premium para barbearias
+          Gestão premium para barbearias
         </span>
       )}
     </span>

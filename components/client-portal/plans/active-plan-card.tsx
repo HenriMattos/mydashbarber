@@ -17,7 +17,7 @@ export function ActivePlanCard({ plan, activePlan, onManage }: ActivePlanCardPro
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle>Plano ativo</CardTitle>
-            <CardDescription>Seu plano atual e beneficios restantes.</CardDescription>
+            <CardDescription>Seu plano atual e benefícios restantes.</CardDescription>
           </div>
           <Badge>Ativo</Badge>
         </div>
@@ -30,7 +30,7 @@ export function ActivePlanCard({ plan, activePlan, onManage }: ActivePlanCardPro
               {formatCurrency(plan.value)} / {plan.periodicity}
             </p>
             <p className="text-muted-foreground">
-              Proxima cobranca: {formatDate(activePlan.nextChargeDate)}
+              Próxima cobrança: {formatDate(activePlan.nextChargeDate)}
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
@@ -38,7 +38,7 @@ export function ActivePlanCard({ plan, activePlan, onManage }: ActivePlanCardPro
             <article key={benefit.serviceName} className="rounded-xl border p-3">
               <p className="font-medium">{benefit.serviceName}</p>
               <p className="text-xs text-muted-foreground">
-                {benefit.available} disponivel, {benefit.reserved} reservado, {benefit.consumed} consumido
+                {benefit.available} disponível, {benefit.reserved} reservado, {benefit.consumed} consumido
               </p>
             </article>
           ))}

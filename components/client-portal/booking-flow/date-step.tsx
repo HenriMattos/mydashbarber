@@ -32,7 +32,7 @@ export function DateStep({ availableDates, selectedDate, onSelect }: DateStepPro
         })}
       </div>
       <p className="text-xs text-muted-foreground">
-        Selecione um dia para ver os horarios disponiveis.
+        Selecione um dia para ver os horários disponiveis.
       </p>
     </div>
   )

@@ -76,11 +76,11 @@ const demoPlans: Plan[] = [
       customerRulesText: "Inclui 2 cortes masculinos por ciclo mensal.",
       schedulingRulesText: "Exige reserva em agendamento confirmado.",
       usageRulesText:
-        "Beneficio consumido no atendimento concluido e abatido na comanda.",
+        "Benefício consumido no atendimento concluido e abatido na comanda.",
     },
     extraDiscountPercent: 10,
     productDiscountPercent: 5,
-    commercialText: "Plano enxuto para gerar recorrencia sem complicar a operacao.",
+    commercialText: "Plano enxuto para gerar recorrência sem complicar a operação.",
     subscriberCount: 24,
     estimatedRecurringRevenue: 2136,
     usageRulesText: "Saldo por servico incluso, com reserva no agendamento.",
@@ -90,7 +90,7 @@ const demoPlans: Plan[] = [
   {
     id: 2,
     name: "Clube Barba e Cabelo",
-    description: "Plano mensal para corte e barba com beneficios separados.",
+    description: "Plano mensal para corte e barba com benefícios separados.",
     benefit: "Corte e barba todo mes, com acabamento incluso.",
     price: 129,
     billingCycle: "monthly",
@@ -130,7 +130,7 @@ const demoPlans: Plan[] = [
       extraDiscountPercent: 15,
       productDiscountPercent: 10,
       customerRulesText: "Inclui 2 cortes e 1 barba por ciclo mensal.",
-      schedulingRulesText: "Prioridade de agenda para servicos inclusos.",
+      schedulingRulesText: "Prioridade de agenda para serviços inclusos.",
       usageRulesText: "Extras e produtos continuam cobrados a parte.",
     },
     extraDiscountPercent: 15,
@@ -139,14 +139,14 @@ const demoPlans: Plan[] = [
     subscriberCount: 38,
     estimatedRecurringRevenue: 4902,
     usageRulesText: "2 cortes e 1 barba por ciclo, com extras cobrados a parte.",
-    schedulingRulesText: "Beneficios inclusos precisam de reserva para serem abatidos.",
+    schedulingRulesText: "Benefícios inclusos precisam de reserva para serem abatidos.",
     churnRisk: "Baixo",
   },
   {
     id: 3,
     name: "Clube Premium",
     description: "Plano mensal para clientes com rotina completa.",
-    benefit: "Atendimentos recorrentes com beneficios completos.",
+    benefit: "Atendimentos recorrentes com benefícios completos.",
     price: 179,
     billingCycle: "monthly",
     status: PLAN_STATUS.ACTIVE,
@@ -202,7 +202,7 @@ const demoPlans: Plan[] = [
       customerRulesText: "Inclui 4 cortes e 2 barbas por ciclo mensal.",
       schedulingRulesText: "Mais flexibilidade para clientes premium.",
       usageRulesText:
-        "Acabamento ilimitado e demais servicos com quantidade por ciclo.",
+        "Acabamento ilimitado e demais serviços com quantidade por ciclo.",
     },
     extraDiscountPercent: 20,
     productDiscountPercent: 15,
@@ -211,7 +211,7 @@ const demoPlans: Plan[] = [
     estimatedRecurringRevenue: 3401,
     usageRulesText:
       "4 cortes, 2 barbas e acabamento ilimitado dentro do ciclo vigente.",
-    schedulingRulesText: "Permite maior flexibilidade de horarios e encaixes.",
+    schedulingRulesText: "Permite maior flexibilidade de horários e encaixes.",
     churnRisk: "Medio",
   },
   {
@@ -252,7 +252,7 @@ const demoPlans: Plan[] = [
     commercialText: "Plano de entrada para testar adesao sem aumentar a barreira de preco.",
     subscriberCount: 0,
     estimatedRecurringRevenue: 0,
-    usageRulesText: "Beneficio limitado a 1 corte por ciclo.",
+    usageRulesText: "Benefício limitado a 1 corte por ciclo.",
     schedulingRulesText: "Configurado para venda assistida e uso simples.",
     churnRisk: "Alto",
   },
@@ -263,7 +263,7 @@ const demoServices: ServiceCatalogItem[] = [
     id: 1,
     name: "Corte masculino",
     description: "Corte tradicional com acabamento limpo e consulta rapida.",
-    internalDescription: "Servico base do plano e do agendamento online.",
+    internalDescription: "Serviço base do plano e do agendamento online.",
     category: "Cabelo",
     duration: "45min",
     durationMinutes: 45,
@@ -292,7 +292,7 @@ const demoServices: ServiceCatalogItem[] = [
     id: 2,
     name: "Barba completa",
     description: "Barba com toalha quente, alinhamento e acabamento.",
-    internalDescription: "Servico incluso em planos recorrentes e extras.",
+    internalDescription: "Serviço incluso em planos recorrentes e extras.",
     category: "Barba",
     duration: "35min",
     durationMinutes: 35,
@@ -321,7 +321,7 @@ const demoServices: ServiceCatalogItem[] = [
     id: 3,
     name: "Corte + barba",
     description: "Combo completo para rotina de manutencao.",
-    internalDescription: "Servico premium com ticket maior e agenda longa.",
+    internalDescription: "Serviço premium com ticket maior e agenda longa.",
     category: "Combo",
     duration: "75min",
     durationMinutes: 75,
@@ -379,7 +379,7 @@ const demoServices: ServiceCatalogItem[] = [
     id: 5,
     name: "Sobrancelha",
     description: "Ajuste rapido para acabamento do visual.",
-    internalDescription: "Servico interno, sem agendamento online por enquanto.",
+    internalDescription: "Serviço interno, sem agendamento online por enquanto.",
     category: "Finalizacao",
     duration: "20min",
     durationMinutes: 20,
@@ -400,7 +400,7 @@ const demoServices: ServiceCatalogItem[] = [
     onlineBookable: false,
     canBeInPlan: false,
     requiresProfessionalSelection: true,
-    internalNotes: "Desativado, mantido apenas para historico.",
+    internalNotes: "Desativado, mantido apenas para histórico.",
     popularityCount: 14,
     revenueGenerated: 350,
   },
@@ -450,7 +450,7 @@ const demoProfessionals: Professional[] = [
     todayAppointments: 4,
     nextAppointmentAt: "11:30",
     estimatedRevenue: 1750,
-    notes: "Horarios mais tardios e menor disponibilidade de manha.",
+    notes: "Horários mais tardios e menor disponibilidade de manha.",
     portalVisible: true,
   },
   {
@@ -617,15 +617,15 @@ const demoClients: Client[] = [
     subscriptionStatus: SUBSCRIPTION_STATUS.DELINQUENT,
     pendingCommandTotal: 45,
     hasOpenCommand: true,
-    internalNotes: "Beneficios bloqueados ate regularizacao.",
+    internalNotes: "Benefícios bloqueados até regularizacao.",
     preferences: ["Barba com acabamento limpo"],
     tags: ["Inadimplente", "Conferir"],
     history: [
       {
         id: "client-h-004",
         date: toDateInputValue(addDays(today, -9)),
-        title: "Atendimento com atencao",
-        detail: "Servico precisa ser cobrado como avulso.",
+        title: "Atendimento com atenção",
+        detail: "Serviço precisa ser cobrado como avulso.",
         kind: "comanda",
         professional: "Diego Martins",
         amount: 45,
@@ -703,7 +703,7 @@ const demoClients: Client[] = [
     subscriptionStatus: SUBSCRIPTION_STATUS.CANCELLED,
     pendingCommandTotal: 0,
     hasOpenCommand: false,
-    internalNotes: "Ex-assinante com historico bom de retorno.",
+    internalNotes: "Ex-assinante com histórico bom de retorno.",
     preferences: ["Corte baixo"],
     tags: ["Ex-assinante", "Reativar"],
     history: [
@@ -711,7 +711,7 @@ const demoClients: Client[] = [
         id: "client-h-006",
         date: toDateInputValue(addDays(today, -68)),
         title: "Plano cancelado",
-        detail: "Cliente saiu mas manteve o historico.",
+        detail: "Cliente saiu mas manteve o histórico.",
         kind: "assinatura",
         professional: "Lucas Santos",
       },
@@ -719,7 +719,7 @@ const demoClients: Client[] = [
     returnRecommendation: "Reativar com oferta de plano de entrada.",
     whatsappEnabled: true,
     noReturnDays: 68,
-    lastAttendanceSummary: "Plano cancelado, historico preservado.",
+    lastAttendanceSummary: "Plano cancelado, histórico preservado.",
     planStatus: PLAN_STATUS.INACTIVE,
   },
   {
@@ -750,8 +750,8 @@ const demoClients: Client[] = [
       {
         id: "client-h-007",
         date: toDateInputValue(addDays(today, -96)),
-        title: "Ultimo atendimento",
-        detail: "Faz tempo que nao volta.",
+        title: "Último atendimento",
+        detail: "Faz tempo que não volta.",
         kind: "atendimento",
         professional: "Rafael Oliveira",
       },
@@ -759,7 +759,7 @@ const demoClients: Client[] = [
     returnRecommendation: "Sem retorno ha mais de 90 dias.",
     whatsappEnabled: true,
     noReturnDays: 96,
-    lastAttendanceSummary: "Ultimo atendimento ha mais de 90 dias.",
+    lastAttendanceSummary: "Último atendimento ha mais de 90 dias.",
   },
   {
     id: 7,
@@ -782,7 +782,7 @@ const demoClients: Client[] = [
     createdAt: toDateInputValue(addDays(today, -21)),
     pendingCommandTotal: 0,
     hasOpenCommand: false,
-    internalNotes: "Cliente novo, observar recorrencia.",
+    internalNotes: "Cliente novo, observar recorrência.",
     preferences: ["Corte curto"],
     tags: ["Novo", "Avulso"],
     history: [
@@ -790,13 +790,13 @@ const demoClients: Client[] = [
         id: "client-h-008",
         date: toDateInputValue(addDays(today, -1)),
         title: "Primeiro retorno",
-        detail: "Servico avulso pago normalmente.",
+        detail: "Serviço avulso pago normalmente.",
         kind: "atendimento",
         professional: "Diego Martins",
         amount: 60,
       },
     ],
-    returnRecommendation: "Acompanhar retorno para possivel assinatura.",
+    returnRecommendation: "Acompanhar retorno para possível assinatura.",
     whatsappEnabled: true,
     noReturnDays: 1,
     lastAttendanceSummary: "Primeiro retorno avulso pago normalmente.",
@@ -829,7 +829,7 @@ const demoClients: Client[] = [
       {
         id: "client-h-009",
         date: toDateInputValue(addDays(today, -4)),
-        title: "Servico recorrente",
+        title: "Serviço recorrente",
         detail: "Corte + barba com pagamento no Pix.",
         kind: "atendimento",
         professional: "Lucas Santos",
@@ -870,13 +870,13 @@ const demoClients: Client[] = [
         id: "client-h-010",
         date: toDateInputValue(addDays(today, -2)),
         title: "Comanda pendente",
-        detail: "Servico concluido com pagamento pendente.",
+        detail: "Serviço concluido com pagamento pendente.",
         kind: "comanda",
         professional: "Rafael Oliveira",
         amount: 74,
       },
     ],
-    returnRecommendation: "Cobrar a comanda antes do proximo atendimento.",
+    returnRecommendation: "Cobrar a comanda antes do próximo atendimento.",
     whatsappEnabled: true,
     noReturnDays: 2,
     lastAttendanceSummary: "Atendimento concluido com pagamento pendente.",
@@ -955,7 +955,7 @@ const demoClients: Client[] = [
         id: "client-h-012",
         date: toDateInputValue(addDays(today, -11)),
         title: "Plano pausado",
-        detail: "Beneficios temporariamente indisponiveis.",
+        detail: "Benefícios temporariamente indisponiveis.",
         kind: "assinatura",
         professional: "Rafael Oliveira",
       },
@@ -1029,9 +1029,9 @@ const demoClients: Client[] = [
     createdAt: toDateInputValue(addDays(today, -260)),
     pendingCommandTotal: 0,
     hasOpenCommand: false,
-    internalNotes: "Alta recorrencia e ticket acima da media.",
+    internalNotes: "Alta recorrência e ticket acima da media.",
     preferences: ["Corte + barba", "Toalha quente"],
-    tags: ["Alta recorrencia", "Valor alto"],
+    tags: ["Alta recorrência", "Valor alto"],
     history: [
       {
         id: "client-h-014",
@@ -1071,15 +1071,15 @@ const demoClients: Client[] = [
     subscriptionStatus: SUBSCRIPTION_STATUS.ACTIVE,
     pendingCommandTotal: 0,
     hasOpenCommand: false,
-    internalNotes: "Mantem beneficio reservado com antecedencia.",
+    internalNotes: "Mantem benefício reservado com antecedencia.",
     preferences: ["Reserva cedo", "Corte alinhado"],
     tags: ["Saldo reservado", "Portal"],
     history: [
       {
         id: "client-h-015",
         date: toDateInputValue(addDays(today, -1)),
-        title: "Beneficio reservado",
-        detail: "Proximo corte ja reservado no ciclo.",
+        title: "Benefício reservado",
+        detail: "Próximo corte já reservado no ciclo.",
         kind: "assinatura",
         professional: "Rafael Oliveira",
       },
@@ -1087,7 +1087,7 @@ const demoClients: Client[] = [
     returnRecommendation: "Assinante ativo com boa previsibilidade.",
     whatsappEnabled: true,
     noReturnDays: 1,
-    lastAttendanceSummary: "Beneficio reservado em agendamento futuro.",
+    lastAttendanceSummary: "Benefício reservado em agendamento futuro.",
     planStatus: PLAN_STATUS.ACTIVE,
   },
   {
@@ -1118,8 +1118,8 @@ const demoClients: Client[] = [
       {
         id: "client-h-016",
         date: toDateInputValue(addDays(today, -58)),
-        title: "Ultimo atendimento",
-        detail: "Sem retorno apos o ultimo corte.",
+        title: "Último atendimento",
+        detail: "Sem retorno apos o último corte.",
         kind: "atendimento",
         professional: "Lucas Santos",
         amount: 74,
@@ -1144,14 +1144,14 @@ const demoClients: Client[] = [
     nextAppointmentAt: undefined,
     favoriteService: "Acabamento",
     preferredProfessional: "Diego Martins",
-    frequencyLabel: "Curta recorrencia",
+    frequencyLabel: "Curta recorrência",
     origin: "campanha",
     birthday: "2001-05-17",
     active: true,
     createdAt: toDateInputValue(addDays(today, -90)),
     pendingCommandTotal: 0,
     hasOpenCommand: false,
-    internalNotes: "Aceitou campanha mas ainda nao virou plano.",
+    internalNotes: "Aceitou campanha mas ainda não virou plano.",
     preferences: ["Acabamento rapido"],
     tags: ["Interesse em plano", "Campanha"],
     history: [
@@ -1272,7 +1272,7 @@ const subscriptionBlueprints: Record<
     lastUsageAt?: string
     nextAppointmentAt?: string
     alert?: string
-    notes?: string
+    notes: string
   }
 > = {
   1: {
@@ -1293,7 +1293,7 @@ const subscriptionBlueprints: Record<
     ],
     lastUsageAt: toDateInputValue(addDays(today, -3)),
     nextAppointmentAt: toDateInputValue(addDays(today, 2)),
-    alert: "Beneficio reservado e consumido no mesmo ciclo.",
+    alert: "Benefício reservado e consumido no mesmo ciclo.",
     notes: "Reserva convertida em consumo no atendimento concluido.",
   },
   3: {
@@ -1302,8 +1302,8 @@ const subscriptionBlueprints: Record<
     usageHistory: [],
     lastUsageAt: toDateInputValue(addDays(today, -9)),
     nextAppointmentAt: toDateInputValue(addDays(today, 2)),
-    alert: "Cliente inadimplente: beneficios bloqueados.",
-    notes: "Cobrar como avulso ate regularizacao.",
+    alert: "Cliente inadimplente: benefícios bloqueados.",
+    notes: "Cobrar como avulso até regularizacao.",
   },
   4: {
     status: SUBSCRIPTION_STATUS.ACTIVE,
@@ -1321,30 +1321,30 @@ const subscriptionBlueprints: Record<
     ],
     lastUsageAt: toDateInputValue(addDays(today, -2)),
     nextAppointmentAt: toDateInputValue(addDays(today, 1)),
-    alert: "Proximo atendimento ja reservado.",
-    notes: "Beneficio mantido para o proximo horario.",
+    alert: "Próximo atendimento já reservado.",
+    notes: "Benefício mantido para o próximo horário.",
   },
   5: {
     status: SUBSCRIPTION_STATUS.CANCELLED,
     mode: "cancelled",
     lastUsageAt: toDateInputValue(addDays(today, -68)),
     alert: "Assinatura cancelada pelo cliente.",
-    notes: "Contrato encerrado e mantido no historico.",
+    notes: "Contrato encerrado e mantido no histórico.",
   },
   10: {
     status: SUBSCRIPTION_STATUS.ACTIVE,
     mode: "normal",
     lastUsageAt: toDateInputValue(addDays(today, -2)),
     nextAppointmentAt: toDateInputValue(addDays(today, 3)),
-    alert: "Plano ativo com saldo disponivel.",
-    notes: "Beneficios disponiveis para uso no ciclo.",
+    alert: "Plano ativo com saldo disponível.",
+    notes: "Benefícios disponiveis para uso no ciclo.",
   },
   11: {
     status: SUBSCRIPTION_STATUS.PAUSED,
     mode: "paused",
     lastUsageAt: toDateInputValue(addDays(today, -11)),
     alert: "Plano pausado temporariamente.",
-    notes: "Beneficios suspensos ate reativacao.",
+    notes: "Benefícios suspensos até reativacao.",
   },
   12: {
     status: SUBSCRIPTION_STATUS.EXPIRED,
@@ -1358,7 +1358,7 @@ const subscriptionBlueprints: Record<
     mode: "consumed",
     lastUsageAt: toDateInputValue(addDays(today, -1)),
     nextAppointmentAt: toDateInputValue(addDays(today, 8)),
-    alert: "Beneficios sendo consumidos de forma previsivel.",
+    alert: "Benefícios sendo consumidos de forma previsivel.",
     notes: "Saldo em uso no ciclo atual.",
   },
 }
@@ -1430,11 +1430,11 @@ export function getCompany(): Company {
       welcomeMessage:
         "Agende online, acompanhe seu plano e fale com a barbearia quando precisar.",
       cancellationPolicy:
-        "Cancelamento ate 4 horas antes do horario reservado.",
+        "Cancelamento até 4 horas antes do horário reservado.",
       noShowPolicy:
         "Faltas podem impactar o saldo do plano conforme a regra da barbearia.",
       paymentMethods: ["Pix", "Dinheiro", "Cartao de credito", "Cartao de debito"],
-      blockedDaysNote: "Domingo fechado e feriados conforme operacao da unidade.",
+      blockedDaysNote: "Domingo fechado e feriados conforme operação da unidade.",
     },
     address: {
       street: "Rua Augusta",
@@ -1487,7 +1487,7 @@ export function getAgendaEvents(): AgendaEvent[] {
       attendanceStatus: ATTENDANCE_STATUS.COMPLETED,
       commandId: "CMD-1001",
       origin: "portal",
-      notes: "Assinante ativo com beneficio reservado.",
+      notes: "Assinante ativo com benefício reservado.",
       reservedBenefitServiceId: "1",
       type: "appointment",
     },
@@ -1503,7 +1503,7 @@ export function getAgendaEvents(): AgendaEvent[] {
       attendanceStatus: ATTENDANCE_STATUS.COMPLETED,
       commandId: "CMD-1002",
       origin: "manual",
-      notes: "Servico fora da cobertura restante; cobrar como extra.",
+      notes: "Serviço fora da cobertura restante; cobrar como extra.",
       type: "appointment",
     },
     {
@@ -1518,7 +1518,7 @@ export function getAgendaEvents(): AgendaEvent[] {
       attendanceStatus: ATTENDANCE_STATUS.COMPLETED,
       commandId: "CMD-1003",
       origin: "portal",
-      notes: "Assinatura inadimplente; beneficio bloqueado.",
+      notes: "Assinatura inadimplente; benefício bloqueado.",
       type: "appointment",
     },
     {
@@ -1561,7 +1561,7 @@ export function getAgendaEvents(): AgendaEvent[] {
       detail: "Barba completa",
       status: APPOINTMENT_STATUS.NO_SHOW,
       origin: "portal",
-      notes: "Cliente nao compareceu. Politica de falta ainda em aberto.",
+      notes: "Cliente não compareceu. Politica de falta ainda em aberto.",
       reservedBenefitServiceId: "2",
       type: "appointment",
     },
@@ -1649,7 +1649,7 @@ function buildAutomaticCommandFromAppointment(
   event: AgendaEvent,
   commandId: string
 ): Comanda {
-  const firstServiceLabel = event.detail.split(",")[0]?.trim() || "Servico"
+  const firstServiceLabel = event.detail.split(",")[0]?.trim() || "Serviço"
   const service = demoServices.find((item) => item.name === firstServiceLabel)
   const client = demoClients.find(
     (item) => item.name.toLowerCase() === event.title.toLowerCase()
@@ -1720,7 +1720,7 @@ function attachAutomaticCommands(
       command.status === COMMAND_STATUS.PAID && !command.closedAt
         ? `${toDateInputValue(today)}T${command.time}:00`
         : command.closedAt,
-    payments: command.payments?.map((payment) => ({
+    payments: (command.payments ?? []).map((payment) => ({
       ...payment,
       ...buildPaymentMetadata(payment),
     })),
@@ -1792,7 +1792,7 @@ export function getComandas(
           method: "Plano",
           status: PAYMENT_STATUS.PAID,
           paidAt: toDateInputValue(today),
-          notes: "Servico coberto pelo plano",
+          notes: "Serviço coberto pelo plano",
         },
       ] satisfies Payment[],
       items: [
@@ -1863,7 +1863,7 @@ export function getComandas(
           coverage: "extra_paid",
         },
       ],
-      notes: "Assinante inadimplente, beneficio bloqueado.",
+      notes: "Assinante inadimplente, benefício bloqueado.",
     },
     {
       id: "CMD-1004",
@@ -1948,7 +1948,7 @@ export function getComandas(
         },
       ],
       discount: 0,
-      notes: "Servico incluso no plano com produto adicional e pagamento parcial.",
+      notes: "Serviço incluso no plano com produto adicional e pagamento parcial.",
     },
     {
       id: "CMD-1006",
@@ -2112,7 +2112,7 @@ export function getComandas(
           coverage: "regular",
         },
       ],
-      notes: "Servico coberto pelo plano com produto extra.",
+      notes: "Serviço coberto pelo plano com produto extra.",
     },
     {
       id: "CMD-1010",
@@ -2337,7 +2337,7 @@ export const adminService = {
       id: "MOV-2",
       type: "entrada",
       label: "Comandas pagas",
-      category: "Servicos",
+      category: "Serviços",
       value: 155,
       payment: "Cartao",
       time: "11:30",
@@ -2374,7 +2374,7 @@ export const adminService = {
     },
     {
       id: 2,
-      name: "Servicos avulsos",
+      name: "Serviços avulsos",
       description: "Comandas e atendimentos",
       type: "Receita",
       monthlyAmount: 24850,

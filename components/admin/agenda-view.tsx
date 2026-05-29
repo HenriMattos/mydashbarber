@@ -94,7 +94,7 @@ type NewAgendaClient = {
   name: string
   phone: string
   email: string
-  notes: string
+  notes?: string
 }
 
 const barbers: Barber[] = database.professionals
@@ -303,7 +303,7 @@ export function AgendaView() {
                 rescheduledFromId: event.id,
                 notes: appendEventNote(
                   nextEvent.notes,
-                  "Novo horario criado por remarcacao."
+                  "Novo horário criado por remarcacao."
                 ),
               },
             ]
@@ -372,7 +372,7 @@ export function AgendaView() {
       attendanceStatus: undefined,
       notes: appendEventNote(
         editingEvent?.notes,
-        "Cliente marcado como falta. Politica de beneficio permanece decisao aberta."
+        "Cliente marcado como falta. Politica de benefício permanece decisao aberta."
       ),
     })
   }
@@ -405,7 +405,7 @@ export function AgendaView() {
       name: client.name.trim(),
       phone: client.phone.trim(),
       email: client.email.trim() || undefined,
-      notes: client.notes.trim() || undefined,
+      notes: client.notes?.trim(),
       lastVisit: "Novo cadastro",
     }
 
@@ -536,39 +536,47 @@ function AgendaDayScreen({
   onOpenSlot: (barber: Barber, slot: string) => void
 }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm">
-      <div className="border-b p-3 sm:p-4">
+    <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-card shadow-sm">
+      <div className="shrink-0 border-b p-3 sm:p-4">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between gap-2 text-left font-normal sm:w-[240px]"
-                >
-                  <span className="flex items-center gap-2">
-                    <HugeiconsIcon icon={Calendar03Icon} size={16} />
-                    <span>{format(selectedDateObj, "PPP", { locale: ptBR })}</span>
-                  </span>
-                  <HugeiconsIcon
-                    icon={ArrowDown01Icon}
-                    size={16}
-                    className="opacity-50"
+          <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(0,15rem)_2rem_2rem_minmax(10rem,1fr)] xl:w-auto">
+            <div className="min-w-0">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-11 w-full justify-between gap-2 text-left font-normal sm:h-10"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <HugeiconsIcon
+                        icon={Calendar03Icon}
+                        size={16}
+                        className="shrink-0"
+                      />
+                      <span className="min-w-0 truncate">
+                        {format(selectedDateObj, "PPP", { locale: ptBR })}
+                      </span>
+                    </span>
+                    <HugeiconsIcon
+                      icon={ArrowDown01Icon}
+                      size={16}
+                      className="shrink-0 opacity-50"
+                    />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDateObj}
+                    onSelect={onDateSelect}
                   />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDateObj}
-                  onSelect={onDateSelect}
-                />
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
             <Button
               size="icon-sm"
               variant="outline"
-              className="rounded-full text-[0px] text-foreground shrink-0"
+              className="hidden shrink-0 rounded-full text-[0px] text-foreground sm:inline-flex sm:size-8"
               aria-label="Dia anterior"
               onClick={onPreviousDay}
             >
@@ -577,14 +585,14 @@ function AgendaDayScreen({
             <Button
               size="icon-sm"
               variant="outline"
-              className="rounded-full text-[0px] text-foreground shrink-0"
-              aria-label="Proximo dia"
+              className="hidden shrink-0 rounded-full text-[0px] text-foreground sm:inline-flex sm:size-8"
+              aria-label="Próximo dia"
               onClick={onNextDay}
             >
               <HugeiconsIcon icon={ArrowRight01Icon} size={16} />›
             </Button>
             <Select value={selectedBarber} onValueChange={onBarberChange}>
-              <SelectTrigger className="h-11 w-full bg-background sm:h-10 sm:w-40">
+              <SelectTrigger className="h-11 w-full bg-background sm:h-10">
                 <SelectValue placeholder="Barbeiro" />
               </SelectTrigger>
               <SelectContent>
@@ -598,8 +606,7 @@ function AgendaDayScreen({
           </div>
 
           <Button
-            size="sm"
-            className="w-full sm:w-auto"
+            className="h-11 w-full justify-center text-sm font-semibold sm:h-8 sm:w-auto"
             onClick={onNewAppointment}
           >
             <HugeiconsIcon icon={Add01Icon} size={16} />
@@ -607,14 +614,14 @@ function AgendaDayScreen({
           </Button>
         </div>
 
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-3 flex min-w-0 flex-wrap gap-1.5 sm:gap-2">
           {agendaFilterOptions.map((option) => (
             <Button
               key={option.value}
               type="button"
               size="sm"
               variant={agendaFilter === option.value ? "default" : "outline"}
-              className="h-8 shrink-0 text-xs"
+              className="h-8 min-w-0 shrink px-2 text-[10px] sm:px-3 sm:text-xs"
               onClick={() => onAgendaFilterChange(option.value)}
             >
               {option.label}
@@ -635,11 +642,13 @@ function AgendaDayScreen({
         </div>
       </div>
 
-      <ScheduleBoard
-        barber={selectedBarber}
-        events={events}
-        onOpenSlot={onOpenSlot}
-      />
+      <div className="min-h-0 flex-1">
+        <ScheduleBoard
+          barber={selectedBarber}
+          events={events}
+          onOpenSlot={onOpenSlot}
+        />
+      </div>
     </section>
   )
 }
@@ -654,13 +663,13 @@ function ScheduleBoard({
   onOpenSlot: (barber: Barber, slot: string) => void
 }) {
   return (
-    <div className="min-w-0 overflow-hidden bg-background">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden bg-background">
       {events.length === 0 ? (
-        <div className="border-b bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+        <div className="shrink-0 border-b bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
           Nenhum horário agendado para este filtro.
         </div>
       ) : null}
-      <div className="md:hidden">
+      <div className="min-h-0 md:hidden">
         <MobileScheduleList
           barber={barber}
           events={events}
@@ -715,7 +724,7 @@ function MobileScheduleList({
   })
 
   return (
-    <ScrollArea className="h-[clamp(18rem,calc(100svh-21rem),36rem)]">
+    <ScrollArea className="h-[min(36rem,calc(100dvh-16rem))] min-h-[24rem]">
       <div className="space-y-2 bg-muted/15 p-2.5 sm:p-3">
         {visibleSlots.map((slot) => {
           const event = events.find((item) => isSlotInsideEvent(slot, item))
@@ -727,11 +736,11 @@ function MobileScheduleList({
               type="button"
               onClick={() => onOpenSlot(barber, slot)}
               className={cn(
-                "grid w-full grid-cols-[3.5rem_minmax(0,1fr)] gap-2 rounded-lg border bg-card p-2 text-left shadow-xs transition-colors hover:bg-muted/50",
+                "grid w-full grid-cols-[2.75rem_minmax(0,1fr)] gap-1.5 rounded-lg border bg-card p-1.5 text-left shadow-xs transition-colors hover:bg-muted/50 min-[380px]:grid-cols-[3.25rem_minmax(0,1fr)] min-[380px]:gap-2 min-[380px]:p-2",
                 event && "border-primary/20 bg-primary/5"
               )}
             >
-              <span className="pt-2 text-sm font-semibold text-muted-foreground">
+              <span className="pt-2 text-xs font-semibold text-muted-foreground min-[380px]:text-sm">
                 {slot}
               </span>
               {event && startsHere ? (
@@ -823,19 +832,19 @@ function AgendaEventCard({ event }: { event: AgendaEvent }) {
   return (
     <span
       className={cn(
-        "block h-full overflow-hidden rounded-md border px-3 py-2",
+        "block h-full overflow-hidden rounded-md border px-2.5 py-2 sm:px-3",
         tone
       )}
     >
       <span className="flex h-full flex-col gap-1.5">
         <span className="min-w-0">
-          <span className="flex items-center gap-1.5 text-sm font-medium">
+          <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium min-[380px]:text-sm">
             <HugeiconsIcon icon={icon} size={14} />
             <span className="min-w-0 truncate">{event.title}</span>
           </span>
           <span
             className={cn(
-              "block text-xs",
+              "block truncate text-[11px] min-[380px]:text-xs",
               event.type === "blocked"
                 ? "text-red-950/75"
                 : event.type === "break"
@@ -846,7 +855,15 @@ function AgendaEventCard({ event }: { event: AgendaEvent }) {
             {event.detail}
           </span>
         </span>
-        <span className="flex flex-wrap items-center gap-1">
+        <span className="flex flex-wrap items-center gap-1 sm:hidden [&>span]:px-2 [&>span]:py-0.5 [&>span]:text-[10px]">
+          <StatusBadge tone="neutral">{event.start} - {event.end}</StatusBadge>
+          {event.type === "appointment" ? (
+            <StatusBadge tone={info.appointmentTone}>
+              {info.appointmentLabel}
+            </StatusBadge>
+          ) : null}
+        </span>
+        <span className="hidden flex-wrap items-center gap-1 sm:flex">
           <StatusBadge tone="neutral">
             {event.start} - {event.end}
           </StatusBadge>
@@ -957,7 +974,7 @@ function ScheduleModal({
   const [newClientPhone, setNewClientPhone] = useState("")
   const [newClientEmail, setNewClientEmail] = useState("")
   const [newClientNotes, setNewClientNotes] = useState("")
-  const steps = ["Dados", "Cliente", "Servicos", "Confirmar"]
+  const steps = ["Dados", "Cliente", "Serviços", "Confirmar"]
   const lastStep = steps.length - 1
   const selectedClient = clients.find((item) => item.name === client)
   const operationalInfo =
@@ -1078,7 +1095,7 @@ function ScheduleModal({
                                   {selectedClient.name}
                                 </span>
                                 <span className="truncate text-[11px] text-muted-foreground sm:hidden">
-                                  {selectedClient.phone} - ultima visita:{" "}
+                                  {selectedClient.phone} - última visita:{" "}
                                   {selectedClient.lastVisit}
                                 </span>
                               </span>
@@ -1094,7 +1111,7 @@ function ScheduleModal({
                                     {item.name}
                                   </span>
                                   <span className="truncate text-xs text-muted-foreground">
-                                    {item.phone} - ultima visita:{" "}
+                                    {item.phone} - última visita:{" "}
                                     {item.lastVisit}
                                   </span>
                                 </span>
@@ -1151,7 +1168,7 @@ function ScheduleModal({
                         }
                         className="size-4 rounded border accent-primary"
                       />
-                      Sem preferencia por profissional
+                      Sem preferência por profissional
                     </label>
                   </div>
 
@@ -1268,7 +1285,7 @@ function ScheduleModal({
               {step === 1 ? (
                 <>
                   <InfoBlock
-                    title="Ultimos 3 agendamentos"
+                    title="Últimos 3 agendamentos"
                     icon={InformationCircleIcon}
                   >
                     {client.trim() ? (
@@ -1323,7 +1340,7 @@ function ScheduleModal({
                       <EmptyState
                         icon={InformationCircleIcon}
                         title="Sem recompras"
-                        description="Cliente nao possui itens para recompra."
+                        description="Cliente não possui itens para recompra."
                         className="min-h-40"
                       />
                     )}
@@ -1333,7 +1350,7 @@ function ScheduleModal({
 
               {step === 2 ? (
                 <div className="border-t pt-4">
-                  <h3 className="text-sm font-semibold">Servicos</h3>
+                  <h3 className="text-sm font-semibold">Serviços</h3>
                   <div className="mt-3 grid grid-cols-[minmax(0,1fr)_2.25rem] gap-2 sm:grid-cols-[minmax(0,1fr)_2.5rem]">
                     <div className="grid gap-1 sm:gap-1.5">
                       <FieldLabel required>Adicionar servico</FieldLabel>
@@ -1408,19 +1425,19 @@ function ScheduleModal({
                     <div className="mt-2 grid gap-1.5 text-sm sm:mt-3 sm:gap-2">
                       <SummaryRow
                         label="Cliente"
-                        value={client || "Cliente nao selecionado"}
+                        value={client || "Cliente não selecionado"}
                       />
                       <SummaryRow
                         label="Data"
                         value={formatShortDate(selectedDate)}
                       />
-                      <SummaryRow label="Horario" value={`${start} - ${end}`} />
+                      <SummaryRow label="Horário" value={`${start} - ${end}`} />
                       <SummaryRow
                         label="Profissional"
-                        value={noPreference ? "Sem preferencia" : barber}
+                        value={noPreference ? "Sem preferência" : barber}
                       />
                       <SummaryRow
-                        label="Servicos"
+                        label="Serviços"
                         value={
                           addedServices.length
                             ? addedServices.join(", ")
@@ -1430,7 +1447,7 @@ function ScheduleModal({
                     </div>
                   </div>
                   <div className="rounded-lg border border-primary/30 bg-primary/10 p-2.5 text-xs leading-snug text-foreground sm:rounded-md sm:p-3">
-                    Revise os dados antes de concluir. Voce pode voltar e
+                    Revise os dados antes de concluir. Você pode voltar e
                     ajustar qualquer etapa.
                   </div>
                 </div>
@@ -1479,7 +1496,7 @@ function ScheduleModal({
               </div>
               {step < lastStep ? (
                 <Button className="h-10 w-full sm:w-auto" onClick={goNext}>
-                  Proximo
+                  Próximo
                   <HugeiconsIcon icon={ArrowRight01Icon} size={16} />
                 </Button>
               ) : (
@@ -1575,7 +1592,7 @@ function ScheduleModal({
                 <Input
                   value={newClientNotes}
                   onChange={(event) => setNewClientNotes(event.target.value)}
-                  placeholder="Preferencias, alergias, observacoes..."
+                  placeholder="Preferências, alergias, observações..."
                   enterKeyHint="done"
                   className="scroll-mt-28"
                 />
@@ -1849,10 +1866,10 @@ function LegacyScheduleModal({
         <div className="flex items-center justify-between gap-3 border-b p-4">
           <div className="min-w-0">
             <h2 className="text-base font-semibold">
-              {editing ? "Editar horario" : "Novo agendamento"}
+              {editing ? "Editar horário" : "Novo agendamento"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {barber} · agende, bloqueie ou desbloqueie este horario.
+              {barber} · agende, bloqueie ou desbloqueie este horário.
             </p>
           </div>
           <Button size="icon-sm" variant="ghost" onClick={onClose}>
@@ -1900,7 +1917,7 @@ function LegacyScheduleModal({
               />
             </label>
             <label className="grid gap-1 text-sm font-medium">
-              Servico
+              Serviço
               <select
                 value={service}
                 onChange={(event) => onServiceChange(event.target.value)}
@@ -1934,7 +1951,7 @@ function LegacyScheduleModal({
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button variant="outline" onClick={onBlock}>
-              Bloquear horario
+              Bloquear horário
             </Button>
             <Button onClick={onSaveAppointment}>
               {editing ? "Salvar agendamento" : "Agendar cliente"}
@@ -2188,7 +2205,7 @@ function getCoverageInfo({
   }
 
   if (subscriptionStatus === SUBSCRIPTION_STATUS.DELINQUENT) {
-    return { label: "Beneficio bloqueado", tone: "red" as const }
+    return { label: "Benefício bloqueado", tone: "red" as const }
   }
 
   if (hasIncludedCommandItem) {
@@ -2196,14 +2213,14 @@ function getCoverageInfo({
   }
 
   if (hasReservedBenefit) {
-    return { label: "Beneficio reservado", tone: "blue" as const }
+    return { label: "Benefício reservado", tone: "blue" as const }
   }
 
   if (hasExtraCommandItem || balanceAvailable <= 0) {
     return { label: "Extra pago", tone: "amber" as const }
   }
 
-  return { label: "Cobertura disponivel", tone: "green" as const }
+  return { label: "Cobertura disponível", tone: "green" as const }
 }
 
 function getAppointmentTone(status: AppointmentStatus): StatusTone {
@@ -2358,4 +2375,3 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "")
 }
-

@@ -119,7 +119,7 @@ export default async function CheckoutPage({
               <div className="mt-6 grid gap-3 text-sm">
                 <InfoLine text={plan.payment} />
                 <InfoLine text={plan.transition} />
-                <InfoLine text="Plano Pro inclui ate 3 unidades. Para 4 ou mais unidades, use o Personalizado." />
+                <InfoLine text="Plano Pro inclui até 3 unidades. Para 4 ou mais unidades, use o Personalizado." />
               </div>
             </div>
 

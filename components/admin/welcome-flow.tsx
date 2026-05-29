@@ -33,17 +33,17 @@ type ActiveDialog = "idle" | "welcome" | "trial" | "none"
 const setupSteps = [
   {
     title: "Configure a barbearia",
-    description: "Nome, identidade, horarios e dados principais.",
+    description: "Nome, identidade, horários e dados principais.",
     icon: Store01Icon,
   },
   {
-    title: "Monte equipe e servicos",
+    title: "Monte equipe e serviços",
     description: "Profissionais, duracoes, precos e categorias.",
     icon: UserAdd01Icon,
   },
   {
     title: "Organize a agenda",
-    description: "Disponibilidade, atendimentos e confirmacoes.",
+    description: "Disponibilidade, atendimentos e confirmações.",
     icon: Calendar03Icon,
   },
   {
@@ -161,7 +161,7 @@ export function WelcomeFlow({ children }: { children: React.ReactNode }) {
                     O tutorial fica dentro do painel.
                   </p>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Voce pode pular, voltar depois e configurar cada parte no
+                    Você pode pular, voltar depois e configurar cada parte no
                     seu ritmo.
                   </p>
                 </div>
@@ -190,10 +190,10 @@ export function WelcomeFlow({ children }: { children: React.ReactNode }) {
               <HugeiconsIcon icon={CrownIcon} size={31} />
             </div>
             <DialogTitle className="mx-auto mt-3 max-w-md text-3xl leading-none font-extrabold tracking-[-0.03em]">
-              Voce tem 30 dias gratuitos.
+              Você tem 30 dias gratuitos.
             </DialogTitle>
             <DialogDescription className="mx-auto mt-2 max-w-lg text-base leading-7">
-              Explore o Bigood com todos os recursos liberados. Depois voce
+              Explore o Bigood com todos os recursos liberados. Depois você
               escolhe um plano para continuar usando o painel.
             </DialogDescription>
           </DialogHeader>

@@ -1,4 +1,5 @@
-﻿export const COMPANY_LOGO_STORAGE_KEY = "mydashbarber.v1.logoUrl"
+export const COMPANY_LOGO_STORAGE_KEY = "mydashbarber.v1.logoUrl"
+export const COMPANY_TRADE_NAME_STORAGE_KEY = "mydashbarber.v1.tradeName"
 export const COMPANY_ICON_STORAGE_KEY = "mydashbarber.v1.iconUrl"
 export const COMPANY_CAROUSEL_IMAGE_1_STORAGE_KEY =
   "mydashbarber.v1.carouselImage1"

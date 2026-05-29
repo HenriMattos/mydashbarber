@@ -62,9 +62,9 @@ export default function ClienteRecomprasPage() {
               </div>
 
               <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                <Info label="Ultima compra" value={item.lastPurchase} />
+                <Info label="Última compra" value={item.lastPurchase} />
                 <Info
-                  label="Ultima visita"
+                  label="Última visita"
                   value={formatDateForDisplay(item.lastDate)}
                 />
                 <Info label="Oferta recomendada" value={item.recommended} strong />

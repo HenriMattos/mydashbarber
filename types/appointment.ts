@@ -32,5 +32,5 @@ export type Appointment = {
   benefitReservation?: AppointmentBenefitReservation
   rescheduledFromAppointmentId?: string
   cancelReason?: AppointmentCancelReason
-  notes?: string
+  notes: string
 }

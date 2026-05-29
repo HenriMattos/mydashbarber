@@ -9,14 +9,17 @@ import {
   DashboardSquare01Icon,
   Logout03Icon,
   Menu01Icon,
-  Notification03Icon,
   Search01Icon,
   UserMultipleIcon,
   Wallet02Icon,
 } from "@hugeicons/core-free-icons"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { database } from "@/components/admin/database"
-import { COMPANY_LOGO_STORAGE_KEY } from "@/components/company/company-assets"
+import {
+  COMPANY_LOGO_STORAGE_KEY,
+  COMPANY_TRADE_NAME_STORAGE_KEY,
+} from "@/components/company/company-assets"
+import { MobileBottomSheetShell } from "@/components/admin/mobile-bottom-sheet-shell"
 
 import { navItems } from "@/components/admin/nav-items"
 import { Button } from "@/components/ui/button"
@@ -58,7 +61,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     function sync() {
       setCompanyData({
-        tradeName: database.company.tradeName,
+        tradeName:
+          window.localStorage.getItem(COMPANY_TRADE_NAME_STORAGE_KEY) ||
+          database.company.tradeName,
         logoUrl:
           window.localStorage.getItem(COMPANY_LOGO_STORAGE_KEY) ||
           database.company.logoUrl ||
@@ -71,8 +76,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       setMounted(true)
     })
     window.addEventListener("storage", sync)
+    window.addEventListener("bigood_company_sync", sync)
     return () => {
       window.removeEventListener("storage", sync)
+      window.removeEventListener("bigood_company_sync", sync)
     }
   }, [])
 
@@ -272,19 +279,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <Button
-                variant="outline"
-                size="icon"
-                className="hidden sm:inline-flex"
-                aria-label="Notificacoes"
-              >
-                <HugeiconsIcon icon={Notification03Icon} size={19} />
-              </Button>
-
-              <span className="hidden size-9 items-center justify-center rounded-full border bg-muted text-muted-foreground sm:flex">
-                <HugeiconsIcon icon={DashboardSquare01Icon} size={18} />
-              </span>
-
-              <Button
                 variant="ghost"
                 size="icon"
                 aria-label="Sair do painel"
@@ -398,6 +392,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       <MobileAdminBottomNav
         pathname={pathname}
+        sheetOpen={mobileMoreOpen || searchOpen}
         onMenu={() => setMobileMoreOpen(true)}
         onSearch={() => setSearchOpen(true)}
         onPrefetch={(href) => router.prefetch(href)}
@@ -439,11 +434,13 @@ const mobileAdminNavItems = [
 
 function MobileAdminBottomNav({
   pathname,
+  sheetOpen,
   onMenu,
   onSearch,
   onPrefetch,
 }: {
   pathname: string
+  sheetOpen: boolean
   onMenu: () => void
   onSearch: () => void
   onPrefetch?: (href: string) => void
@@ -456,7 +453,10 @@ function MobileAdminBottomNav({
     <>
       <button
         type="button"
-        className="admin-mobile-search-fab lg:hidden"
+        className={cn(
+          "admin-mobile-search-fab lg:hidden",
+          sheetOpen && "pointer-events-none opacity-0"
+        )}
         onClick={onSearch}
         aria-label="Buscar no painel"
       >
@@ -465,7 +465,7 @@ function MobileAdminBottomNav({
 
       <nav
         className="admin-mobile-bottom-nav lg:hidden"
-        aria-label="Navegacao principal do painel"
+        aria-label="Navegação principal do painel"
       >
         <div className="admin-mobile-bottom-shell">
           {mobileAdminNavItems.map((item) => {
@@ -496,7 +496,7 @@ function MobileAdminBottomNav({
               !hasPrimaryActive && "is-active"
             )}
             onClick={onMenu}
-            aria-label="Abrir mais opcoes"
+            aria-label="Abrir mais opções"
           >
             <HugeiconsIcon icon={ArrowDown01Icon} size={19} aria-hidden />
             <span>Mais</span>
@@ -532,141 +532,104 @@ function MobileMoreModal({
   const secondaryItems = navItems.filter((item) => !mainHrefs.has(item.href))
 
   return (
-    <div
-      className="admin-mobile-modal lg:hidden"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Mais opcoes do painel"
+    <MobileBottomSheetShell
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose()
+      }}
+      title="Mais opções"
+      subtitle={companyData.tradeName}
+      icon={Menu01Icon}
+      bodyClassName="grid gap-2"
+      footer={
+        <Link
+          href="/conta"
+          onClick={onNavigate}
+          className="admin-mobile-more-link w-full"
+        >
+          <HugeiconsIcon icon={DashboardSquare01Icon} size={20} aria-hidden />
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-bold">
+              Configurar perfil
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              Conta, acesso e preferências
+            </span>
+          </span>
+        </Link>
+      }
     >
+      <div className="grid gap-2">
+        {secondaryItems.map((item) => {
+          const isActive = pathname.startsWith(item.href)
+
+          return (
+            <div key={item.href} className="grid gap-1">
+              <Link
+                href={item.href}
+                onClick={onNavigate}
+                onMouseEnter={() => onPrefetch?.(item.href)}
+                onFocus={() => onPrefetch?.(item.href)}
+                className={cn(
+                  "admin-mobile-more-link",
+                  isActive && "is-active"
+                )}
+              >
+                <HugeiconsIcon icon={item.icon} size={20} aria-hidden />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">
+                    {item.title}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {item.description}
+                  </span>
+                </span>
+              </Link>
+
+              {"children" in item && item.children.length ? (
+                <div className="grid gap-1 pl-3">
+                  {item.children.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      onClick={onNavigate}
+                      onMouseEnter={() => onPrefetch?.(child.href)}
+                      onFocus={() => onPrefetch?.(child.href)}
+                      className={cn(
+                        "admin-mobile-more-child",
+                        pathname === child.href && "is-active"
+                      )}
+                    >
+                      <HugeiconsIcon
+                        icon={child.icon}
+                        size={16}
+                        aria-hidden
+                      />
+                      <span>{child.title}</span>
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
       <button
         type="button"
-        className="admin-mobile-modal-backdrop"
-        aria-label="Fechar opcoes"
-        onClick={onClose}
-      />
-      <div className="admin-mobile-modal-panel">
-        <div className="admin-mobile-modal-grabber" aria-hidden />
-        <div className="flex items-center gap-3 px-1">
-          {companyData.logoUrl ? (
-            <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-2xl border bg-background">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={companyData.logoUrl}
-                alt={companyData.tradeName}
-                className="h-full w-full object-cover"
-              />
-            </span>
-          ) : (
-            <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-2xl border bg-background">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={BIGOOD_MARK_DARK}
-                alt="Bigood"
-                className="h-full w-full object-contain"
-              />
-            </span>
-          )}
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold">
-              {companyData.tradeName}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              Escolha uma area do painel
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-2">
-          {secondaryItems.map((item) => {
-            const isActive = pathname.startsWith(item.href)
-
-            return (
-              <div key={item.href} className="grid gap-1">
-                <Link
-                  href={item.href}
-                  onClick={onNavigate}
-                  onMouseEnter={() => onPrefetch?.(item.href)}
-                  onFocus={() => onPrefetch?.(item.href)}
-                  className={cn(
-                    "admin-mobile-more-link",
-                    isActive && "is-active"
-                  )}
-                >
-                  <HugeiconsIcon icon={item.icon} size={20} aria-hidden />
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-bold">
-                      {item.title}
-                    </span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {item.description}
-                    </span>
-                  </span>
-                </Link>
-
-                {"children" in item && item.children?.length ? (
-                  <div className="grid gap-1 pl-3">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        onClick={onNavigate}
-                        onMouseEnter={() => onPrefetch?.(child.href)}
-                        onFocus={() => onPrefetch?.(child.href)}
-                        className={cn(
-                          "admin-mobile-more-child",
-                          pathname === child.href && "is-active"
-                        )}
-                      >
-                        <HugeiconsIcon
-                          icon={child.icon}
-                          size={16}
-                          aria-hidden
-                        />
-                        <span>{child.title}</span>
-                      </Link>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="mt-4 grid gap-2 border-t pt-4">
-          <Link
-            href="/conta"
-            onClick={onNavigate}
-            className="admin-mobile-more-link"
-          >
-            <HugeiconsIcon icon={DashboardSquare01Icon} size={20} aria-hidden />
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-bold">
-                Configurar perfil
-              </span>
-              <span className="block truncate text-xs text-muted-foreground">
-                Conta, acesso e preferencias
-              </span>
-            </span>
-          </Link>
-
-          <button
-            type="button"
-            className="admin-mobile-more-link text-left text-destructive"
-            onClick={onLogout}
-          >
-            <HugeiconsIcon icon={Logout03Icon} size={20} aria-hidden />
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-bold">
-                Sair do painel
-              </span>
-              <span className="block truncate text-xs text-muted-foreground">
-                Encerrar sessao atual
-              </span>
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+        className="admin-mobile-more-link mt-2 w-full text-left text-destructive"
+        onClick={onLogout}
+      >
+        <HugeiconsIcon icon={Logout03Icon} size={20} aria-hidden />
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-bold">
+            Sair do painel
+          </span>
+          <span className="block truncate text-xs text-muted-foreground">
+            Encerrar sessão atual
+          </span>
+        </span>
+      </button>
+    </MobileBottomSheetShell>
   )
 }
 
@@ -692,20 +655,17 @@ function MobileSearchModal({
   if (!open) return null
 
   return (
-    <div
-      className="admin-mobile-modal admin-mobile-search-modal lg:hidden"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Buscar no painel"
+    <MobileBottomSheetShell
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose()
+      }}
+      title="Pesquisar"
+      subtitle="Buscar cliente, servico ou pagina"
+      icon={Search01Icon}
+      contentRef={searchRef}
+      bodyClassName="flex flex-col gap-3"
     >
-      <button
-        type="button"
-        className="admin-mobile-modal-backdrop"
-        aria-label="Fechar busca"
-        onClick={onClose}
-      />
-      <div ref={searchRef} className="admin-mobile-search-panel">
-        <div className="admin-mobile-modal-grabber" aria-hidden />
         <label className="admin-mobile-search-field">
           <HugeiconsIcon icon={Search01Icon} size={19} aria-hidden />
           <input
@@ -717,7 +677,7 @@ function MobileSearchModal({
           />
         </label>
 
-        <div className="mt-4 grid max-h-[58dvh] gap-1 overflow-y-auto pr-1">
+        <div className="grid gap-1">
           {results.length ? (
             results.map((item, index) => (
               <button
@@ -753,8 +713,7 @@ function MobileSearchModal({
             </p>
           )}
         </div>
-      </div>
-    </div>
+    </MobileBottomSheetShell>
   )
 }
 
@@ -804,18 +763,6 @@ function buildSearchItems(): SearchItem[] {
       kind: "dado",
     }))
 
-  const serviceItems: SearchItem[] = database.services
-    .filter((service) => !service.hidden)
-    .slice(0, 20)
-    .map((service) => ({
-      id: `service:${service.id}`,
-      title: service.name,
-      subtitle: "Servico",
-      href: "/servicos/listagem",
-      searchBlob: `${service.name} ${service.category} ${service.professionals}`,
-      kind: "dado" as const,
-    }))
-
   const professionalItems: SearchItem[] = database.professionals
     .slice(0, 20)
     .map((pro) => ({
@@ -848,30 +795,12 @@ function buildSearchItems(): SearchItem[] {
       kind: "acao",
     },
     {
-      id: "action:new-service",
-      title: "Cadastrar servico",
-      subtitle: "Acao rapida | Servicos",
-      href: "/servicos/cadastrar",
-      searchBlob: "novo servico cadastrar servico criar servico",
-      actionLabel: "Cadastrar",
-      kind: "acao",
-    },
-    {
       id: "action:new-professional",
       title: "Cadastrar profissional",
       subtitle: "Acao rapida | Profissionais",
       href: "/profissionais/cadastrar",
       searchBlob: "novo profissional cadastrar profissional criar profissional",
       actionLabel: "Cadastrar",
-      kind: "acao",
-    },
-    {
-      id: "action:new-plan",
-      title: "Criar plano",
-      subtitle: "Acao rapida | Planos",
-      href: "/planos/criar",
-      searchBlob: "novo plano criar plano cadastrar plano assinatura",
-      actionLabel: "Criar",
       kind: "acao",
     },
     {
@@ -888,7 +817,7 @@ function buildSearchItems(): SearchItem[] {
       title: "Receber pagamento",
       subtitle: "Acao rapida | Financeiro",
       href: "/financeiro",
-      searchBlob: "receber pagamento cobrar pagamento nova cobranca",
+      searchBlob: "receber pagamento cobrar pagamento nova cobrança",
       actionLabel: "Receber",
       kind: "acao",
     },
@@ -907,7 +836,6 @@ function buildSearchItems(): SearchItem[] {
     ...quickActionItems,
     ...navigationItems,
     ...clientItems,
-    ...serviceItems,
     ...professionalItems,
   ]
 }
@@ -1023,7 +951,7 @@ function SidebarContent({
                     <button
                       type="button"
                       aria-label={
-                        isOpen ? "Fechar subopcoes" : "Abrir subopcoes"
+                        isOpen ? "Fechar subopções" : "Abrir subopções"
                       }
                       onClick={() => toggleItem(item.href)}
                       className={cn(
@@ -1076,13 +1004,6 @@ function SidebarContent({
           })}
         </nav>
       </ScrollArea>
-
-      <div className="mt-4 shrink-0 rounded-md border border-sidebar-border bg-background/60 p-3">
-        <p className="text-xs font-semibold">Ambiente</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Configuracao generica ativa
-        </p>
-      </div>
     </div>
   )
 }

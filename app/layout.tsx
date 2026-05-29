@@ -21,11 +21,11 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
   ),
   title: {
-    default: "Bigood | Sistema de Gestao para Barbearias",
+    default: "Bigood | Sistema de Gestão para Barbearias",
     template: "%s | Bigood",
   },
   description:
-    "Sistema de gestao para barbearias com agenda, clientes, caixa, financeiro, planos e recorrencia.",
+    "Sistema de gestão para barbearias com agenda, clientes, caixa, financeiro, planos e recorrência.",
 }
 
 export default function RootLayout({

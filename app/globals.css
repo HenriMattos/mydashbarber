@@ -1109,53 +1109,6 @@
     color: var(--primary);
   }
 
-  .admin-mobile-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 80;
-    display: grid;
-    align-items: end;
-    padding: 1rem;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  }
-
-  .admin-mobile-modal-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgb(5 23 16 / 0.32);
-    backdrop-filter: blur(8px);
-  }
-
-  .admin-mobile-modal-panel,
-  .admin-mobile-search-panel {
-    position: relative;
-    width: min(100%, 28rem);
-    max-height: min(78dvh, 42rem);
-    padding: 0.625rem 0.875rem 0.875rem;
-    margin-inline: auto;
-    overflow-y: auto;
-    background: rgb(255 255 255 / 0.98);
-    border: 1px solid color-mix(in oklch, var(--border), var(--primary) 14%);
-    border-radius: 1.75rem;
-    box-shadow: 0 28px 80px -34px rgb(5 23 16 / 0.58);
-  }
-
-  .admin-mobile-search-modal {
-    align-items: center;
-  }
-
-  .admin-mobile-search-panel {
-    max-height: min(76dvh, 34rem);
-  }
-
-  .admin-mobile-modal-grabber {
-    width: 2.75rem;
-    height: 0.25rem;
-    margin: 0 auto 0.875rem;
-    background: color-mix(in oklch, var(--muted-foreground), white 68%);
-    border-radius: 999px;
-  }
-
   .admin-mobile-more-link,
   .admin-mobile-search-result {
     display: flex;
@@ -1710,7 +1663,7 @@
     }
   }
 
-  /* Melhorando o contraste do texto primÃ¡rio no branco */
+  /* Melhorando o contraste do texto primário no branco */
   @media (prefers-reduced-motion: reduce) {
     .admin-app,
     .landing-page,

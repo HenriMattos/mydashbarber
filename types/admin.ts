@@ -82,7 +82,7 @@ export type Client = {
   history?: ClientTimelineItem[]
   returnRecommendation?: string
   whatsappEnabled?: boolean
-  noReturnDays?: number
+  noReturnDays: number
   lastAttendanceSummary?: string
   planStatus?: PlanStatus
 }
@@ -99,7 +99,7 @@ export type ServiceCatalogItem = {
   credits: number
   repurchaseDays: number
   professionals: string
-  professionalIds?: number[]
+  professionalIds: number[]
   status: ServiceStatus
   createdAt: string
   updatedAt: string
@@ -149,7 +149,7 @@ export type Subscription = {
   lastUsageAt?: string
   nextAppointmentAt?: string
   alert?: string
-  notes?: string
+  notes: string
 }
 
 export type OverdueSubscription = {
@@ -172,17 +172,17 @@ export type Professional = {
   commission: string
   scheduleStart: string
   scheduleEnd: string
-  workingDays?: string[]
+  workingDays: string[]
   breakStart?: string
   breakEnd?: string
   unit?: string
-  services?: string[]
-  specialties?: string[]
+  services: string[]
+  specialties: string[]
   status: ProfessionalStatus
-  todayAppointments?: number
+  todayAppointments: number
   nextAppointmentAt?: string
   estimatedRevenue?: number
-  notes?: string
+  notes: string
   portalVisible?: boolean
 }
 
@@ -201,7 +201,7 @@ export type AgendaEvent = {
   end: string
   title: string
   detail: string
-  status?: AppointmentStatus
+  status: AppointmentStatus
   attendanceStatus?: AttendanceStatus
   commandId?: string
   origin?: "portal" | "manual" | "walk_in" | "recurring"

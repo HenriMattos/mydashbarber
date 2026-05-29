@@ -271,7 +271,7 @@ export function CaixaView() {
           action={
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <Button size="sm" variant="outline" asChild>
-                <Link href="/caixa/comandas">Ver historico</Link>
+                <Link href="/caixa/comandas">Ver histórico</Link>
               </Button>
               <Button size="sm" onClick={openCreateModal}>
                 <HugeiconsIcon icon={CashierIcon} size={16} />
@@ -386,7 +386,7 @@ function CashMovementModal({
       type,
       label: label.trim(),
       description: description.trim() || undefined,
-      category: description.trim() || "Sem descricao",
+      category: description.trim() || "Sem descrição",
       value: parsedValue,
       payment: "Manual",
       time: new Intl.DateTimeFormat("pt-BR", {
@@ -482,7 +482,7 @@ function CashMovementModal({
 
               <div className="grid gap-2 rounded-lg border bg-background p-3 shadow-xs">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase">
-                  Descricao
+                  Descrição
                 </Label>
                 <textarea
                   value={description}
@@ -546,7 +546,7 @@ export function NovaComandaModal({
   const [serviceName, setServiceName] = useState("")
   const [items, setItems] = useState<ComandaItem[]>(editingComanda?.items ?? [])
   const [step, setStep] = useState(0)
-  const steps = ["Dados", "Servicos", "Produtos", "Fechamento"]
+  const steps = ["Dados", "Serviços", "Produtos", "Fechamento"]
   const lastStep = steps.length - 1
   const editing = Boolean(editingComanda)
   const isBarberSession = true
@@ -735,7 +735,7 @@ export function NovaComandaModal({
               releaseStatus: financialMeta.releaseStatus,
             },
           ]
-        : editingComanda?.payments,
+        : editingComanda?.payments ?? [],
       notes:
         "Comanda de atendimento. Fechamento manual pelo barbeiro.",
     }
@@ -759,7 +759,7 @@ export function NovaComandaModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="grid grid-rows-[auto_auto_minmax(0,1fr)_auto] sm:h-[min(38rem,calc(100dvh-1rem))] sm:max-w-3xl">
+      <DialogContent className="grid h-auto max-h-[calc(100dvh-1rem)] grid-rows-[auto_auto_auto_auto] sm:h-[min(38rem,calc(100dvh-1rem))] sm:grid-rows-[auto_auto_minmax(0,1fr)_auto] sm:max-w-3xl">
         <DialogHeader className="shrink-0 border-b p-3 sm:p-4">
           <DialogTitle className="flex items-center gap-2">
             <HugeiconsIcon icon={CashierIcon} size={18} />
@@ -773,12 +773,15 @@ export function NovaComandaModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="border-b px-3 py-2 sm:px-4">
+        <div data-slot="dialog-stepper" className="shrink-0 border-b px-3 py-2 sm:px-4">
           <ComandaStepper steps={steps} currentStep={step} />
         </div>
 
-        <ScrollArea className="h-full min-h-0">
-          <div className="h-full space-y-4 overflow-y-auto p-3 pr-4 sm:p-4 sm:pr-5">
+        <div
+          data-slot="dialog-body"
+          className="min-h-0 overflow-y-auto"
+        >
+          <div className="space-y-4 p-3 pr-4 sm:p-4 sm:pr-5">
             {step === 0 ? (
               <section className="grid gap-3 rounded-md border bg-muted/20 p-3">
                 <div className="flex items-center justify-between gap-3">
@@ -870,11 +873,11 @@ export function NovaComandaModal({
 
             {step === 1 ? (
               <section className="grid gap-3 rounded-md border bg-background p-3">
-                <h3 className="text-sm font-semibold">Servicos</h3>
+                <h3 className="text-sm font-semibold">Serviços</h3>
                 <div className="grid gap-2 md:grid-cols-[1fr_2.25rem]">
                   <Select value={serviceName} onValueChange={setServiceName}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Servico" />
+                      <SelectValue placeholder="Serviço" />
                     </SelectTrigger>
                     <SelectContent>
                       {services.map((service) => (
@@ -1025,37 +1028,51 @@ export function NovaComandaModal({
               </section>
             ) : null}
           </div>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="shrink-0 border-t p-3 sm:p-4">
-          <div className="grid w-full gap-2 sm:flex sm:justify-between">
+        <DialogFooter className="shrink-0 border-t p-2 sm:p-4">
+          <div
+            className={cn(
+              "grid w-full gap-2 sm:flex sm:justify-between",
+              step > 0 ? "grid-cols-2" : "grid-cols-2"
+            )}
+          >
             <Button
               type="button"
               variant="outline"
+              className="h-9"
               onClick={() => handleOpenChange(false)}
             >
               Cancelar
             </Button>
-            <div className="grid gap-2 sm:flex">
-              {step > 0 ? (
-                <Button type="button" variant="outline" onClick={goBack}>
-                  Voltar
-                </Button>
-              ) : null}
-              {step < lastStep ? (
-                <Button type="button" onClick={goNext}>
-                  Proximo
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  disabled={!client || !items.length}
-                  onClick={submit}
-                >
-                  {editing ? "Salvar" : "Enviar"}
-                </Button>
-              )}
-            </div>
+            {step > 0 ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9"
+                onClick={goBack}
+              >
+                Voltar
+              </Button>
+            ) : null}
+            {step < lastStep ? (
+              <Button
+                type="button"
+                className={cn("h-9", step > 0 && "col-span-2")}
+                onClick={goNext}
+              >
+                Próximo
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                className="col-span-2 h-9"
+                disabled={!client || !items.length}
+                onClick={submit}
+              >
+                {editing ? "Salvar" : "Enviar"}
+              </Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>
@@ -1284,5 +1301,3 @@ function CashRegisterCloseModal({
     </Dialog>
   )
 }
-
-

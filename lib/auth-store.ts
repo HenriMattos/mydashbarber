@@ -15,7 +15,7 @@ export function registerUser(
   companyName = "Minha Barbearia"
 ) {
   if (users.has(email)) {
-    throw new Error("Este e-mail ja possui cadastro.")
+    throw new Error("Este e-mail já possui cadastro.")
   }
 
   const user: StoredUser = {

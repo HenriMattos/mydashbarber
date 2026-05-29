@@ -39,7 +39,7 @@ export function HomeScreen({
           <Card>
             <CardContent className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
-              Carregando ultimo agendamento...
+              Carregando último agendamento...
             </CardContent>
           </Card>
         ) : latestAppointment && appointmentServiceName && appointmentProfessionalName ? (
@@ -58,7 +58,7 @@ export function HomeScreen({
           <Card>
             <CardContent className="space-y-3 py-8 text-center">
               <p className="text-sm text-muted-foreground">
-                Voce ainda nao possui agendamentos por aqui.
+                Você ainda não possui agendamentos por aqui.
               </p>
               <Button type="button" onClick={onOpenBooking}>
                 Criar meu primeiro agendamento

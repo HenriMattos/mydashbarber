@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     registerUser(email, name, password, companyName)
   } catch {
     return NextResponse.json(
-      { message: "Este e-mail ja possui cadastro." },
+      { message: "Este e-mail já possui cadastro." },
       { status: 409 }
     )
   }

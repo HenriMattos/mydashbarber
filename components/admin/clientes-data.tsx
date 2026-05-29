@@ -49,7 +49,7 @@ export const repurchaseClients = clients
       dueDate: getDueDate(client.lastVisit, interval),
       reason:
         client.returnRecommendation ||
-        `${interval} dias desde o ultimo atendimento ou ciclo de recompra do servico.`,
+        `${interval} dias desde o último atendimento ou ciclo de recompra do servico.`,
     }
   })
 
@@ -93,7 +93,7 @@ export function getClientTypeTone(
 export function getClientStatusLabel(status: ClientStatus) {
   const labels: Record<ClientStatus, string> = {
     ativo: "Ativo",
-    em_atencao: "Em atencao",
+    em_atencao: "Em atenção",
     inativo: "Inativo",
     sem_retorno: "Sem retorno",
   }
@@ -178,7 +178,7 @@ export function getClientTags(client: Client) {
   }
 
   if (client.nextAppointmentAt) {
-    tags.unshift("Proximo agendamento")
+    tags.unshift("Próximo agendamento")
   }
 
   if (client.returnRecommendation) {

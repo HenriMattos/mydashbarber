@@ -85,8 +85,8 @@ export function ClientPortalApp({ barbershopSlug }: ClientPortalAppProps) {
         const professional = mockProfessionals.find((item) => item.id === appointment.professionalId)
         return {
           appointment,
-          serviceName: service?.name ?? "Servico indisponivel",
-          professionalName: professional?.name ?? "Profissional indisponivel",
+          serviceName: service?.name ?? "Serviço indisponível",
+          professionalName: professional?.name ?? "Profissional indisponível",
         }
       })
   }, [appointments])
@@ -158,7 +158,7 @@ export function ClientPortalApp({ barbershopSlug }: ClientPortalAppProps) {
       valueOriginal: selectedService?.price ?? 0,
       valuePaid: usePlanBenefit ? 0 : selectedService?.price ?? 0,
       usedPlanBenefit: usePlanBenefit,
-      notes: usePlanBenefit ? "Beneficio reservado para este agendamento." : undefined,
+      notes: usePlanBenefit ? "Benefício reservado para este agendamento." : undefined,
       createdAt: new Date().toISOString(),
     }
 
@@ -233,7 +233,7 @@ export function ClientPortalApp({ barbershopSlug }: ClientPortalAppProps) {
         <div className="mb-4 rounded-md border border-destructive/25 bg-destructive/5 px-4 py-2 text-xs text-destructive">
           <p className="flex items-center gap-1.5">
             <TriangleAlert className="size-3.5" />
-            Este slug nao corresponde ao portal configurado. Acesse /portal/{barbershop.slug}.
+            Este slug não corresponde ao portal configurado. Acesse /portal/{barbershop.slug}.
           </p>
         </div>
       ) : null}

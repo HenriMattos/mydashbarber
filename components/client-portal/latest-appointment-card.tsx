@@ -60,7 +60,7 @@ export function LatestAppointmentCard({
         <p className="flex items-center gap-2 text-muted-foreground">
           <Scissors className="size-4" />
           {usedPlanBenefit
-            ? "Horario reservado com beneficio do plano"
+            ? "Horário reservado com benefício do plano"
             : `Valor: ${formatCurrency(value)}`}
         </p>
         <div className="grid gap-2 pt-1 sm:grid-cols-2">

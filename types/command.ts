@@ -42,9 +42,9 @@ export type Command = {
   updatedAt?: string
   openedAt?: string
   closedAt?: string
-  payment: string
+  payment?: string
   payments?: Payment[]
   items: CommandItem[]
   discount?: number
-  notes?: string
+  notes: string
 }

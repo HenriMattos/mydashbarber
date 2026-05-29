@@ -28,7 +28,7 @@ export function NotificationsCard({ value, onChange }: NotificationsCardProps) {
           }
         />
         <NotificationRow
-          label="Lembrete antes do horario"
+          label="Lembrete antes do horário"
           checked={value.appointmentReminder}
           onCheckedChange={(checked) => onChange({ ...value, appointmentReminder: checked })}
         />

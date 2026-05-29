@@ -39,7 +39,7 @@ export type Company = {
   chairs: string[]
   professionalRoles: string[]
   serviceCategories: string[]
-  operationalSettings?: CompanyOperationalSettings
+  operationalSettings: CompanyOperationalSettings
   address: {
     street: string
     number: string

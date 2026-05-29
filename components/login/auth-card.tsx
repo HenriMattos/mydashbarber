@@ -61,7 +61,7 @@ export function AuthCard() {
       const payload = (await response.json().catch(() => null)) as {
         message?: string
       } | null
-      setError(payload?.message ?? "Nao foi possivel continuar.")
+      setError(payload?.message ?? "Não foi possível continuar.")
       return
     }
 

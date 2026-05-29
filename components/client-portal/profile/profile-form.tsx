@@ -97,7 +97,7 @@ export function ProfileForm({ client, onSave }: ProfileFormProps) {
             <Field label="Rua">
               <Input value={formData.street} onChange={(event) => updateField("street", event.target.value)} />
             </Field>
-            <Field label="Numero">
+            <Field label="Número">
               <Input value={formData.number} onChange={(event) => updateField("number", event.target.value)} />
             </Field>
             <Field label="Complemento">
