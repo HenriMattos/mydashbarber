@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatCurrency } from "@/lib/client-portal/mock-data"
+import { formatCurrency } from "@/lib/client-portal/utils"
 import type { Plan } from "@/types/client-portal"
 
 interface PlanCardProps {

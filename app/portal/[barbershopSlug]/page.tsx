@@ -8,4 +8,3 @@ export default async function ClientPortalPage({
   const { barbershopSlug } = await params
   return <ClientPortalApp barbershopSlug={barbershopSlug} />
 }
-

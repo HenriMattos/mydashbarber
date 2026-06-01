@@ -11,8 +11,9 @@ import { SuccessStep } from "@/components/client-portal/booking-flow/success-ste
 import { TimeStep } from "@/components/client-portal/booking-flow/time-step"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetBody, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { formatDate } from "@/lib/client-portal/mock-data"
-import type { Appointment, BookingDraft, Professional, Service } from "@/types/client-portal"
+import { formatDate, getServicePlanDiscount } from "@/lib/client-portal/utils"
+import { usePortalTheme } from "@/lib/client-portal/use-portal-theme"
+import type { ActivePlan, Appointment, BookingDraft, Plan, Professional, Service } from "@/types/client-portal"
 
 type BookingStep = 1 | 2 | 3 | 4 | 5 | 6
 
@@ -22,6 +23,8 @@ interface BookingFlowProps {
   barbershopName: string
   services: Service[]
   professionals: Professional[]
+  plans: Plan[]
+  activePlan: ActivePlan | null
   usesPlanBenefit: boolean
   onConfirm: (draft: Required<BookingDraft>) => Promise<Appointment>
   onFinish: () => void
@@ -35,12 +38,15 @@ export function BookingFlow({
   barbershopName,
   services,
   professionals,
+  plans,
+  activePlan,
   usesPlanBenefit,
   onConfirm,
   onFinish,
 }: BookingFlowProps) {
   const [step, setStep] = React.useState<BookingStep>(1)
-  const [draft, setDraft] = React.useState<BookingDraft>({})
+  const { themeStyle } = usePortalTheme()
+  const [draft, setDraft] = React.useState<BookingDraft>({ serviceIds: [] })
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [createdAppointment, setCreatedAppointment] = React.useState<Appointment | null>(null)
@@ -49,7 +55,7 @@ export function BookingFlow({
     if (!open) {
       setTimeout(() => {
         setStep(1)
-        setDraft({})
+        setDraft({ serviceIds: [] })
         setError(null)
         setIsSubmitting(false)
         setCreatedAppointment(null)
@@ -57,7 +63,7 @@ export function BookingFlow({
     }
   }, [open])
 
-  const selectedService = services.find((service) => service.id === draft.serviceId)
+  const selectedServices = services.filter((s) => draft.serviceIds.includes(s.id))
   const selectedProfessional = professionals.find(
     (professional) => professional.id === draft.professionalId
   )
@@ -71,11 +77,11 @@ export function BookingFlow({
   }, [])
 
   const isCurrentStepValid = (() => {
-    if (step === 1) return Boolean(draft.serviceId)
+    if (step === 1) return draft.serviceIds.length > 0
     if (step === 2) return Boolean(draft.professionalId)
     if (step === 3) return Boolean(draft.date)
     if (step === 4) return Boolean(draft.time)
-    if (step === 5) return Boolean(draft.serviceId && draft.professionalId && draft.date && draft.time)
+    if (step === 5) return draft.serviceIds.length > 0 && Boolean(draft.professionalId && draft.date && draft.time)
     return true
   })()
 
@@ -91,11 +97,11 @@ export function BookingFlow({
       return
     }
 
-    if (step === 5 && draft.serviceId && draft.professionalId && draft.date && draft.time) {
+    if (step === 5 && draft.serviceIds.length > 0 && draft.professionalId && draft.date && draft.time) {
       setIsSubmitting(true)
       try {
         const appointment = await onConfirm({
-          serviceId: draft.serviceId,
+          serviceIds: draft.serviceIds,
           professionalId: draft.professionalId,
           date: draft.date,
           time: draft.time,
@@ -121,8 +127,17 @@ export function BookingFlow({
       return (
         <ServiceStep
           services={services}
-          selectedServiceId={draft.serviceId}
-          onSelect={(serviceId) => setDraft((current) => ({ ...current, serviceId }))}
+          selectedServiceIds={draft.serviceIds}
+          onToggle={(serviceId) =>
+            setDraft((current) => ({
+              ...current,
+              serviceIds: current.serviceIds.includes(serviceId)
+                ? current.serviceIds.filter((id) => id !== serviceId)
+                : [...current.serviceIds, serviceId],
+            }))
+          }
+          plans={plans}
+          activePlan={activePlan}
         />
       )
     }
@@ -157,13 +172,15 @@ export function BookingFlow({
       )
     }
 
-    if (step === 5 && selectedService && selectedProfessional && draft.date && draft.time) {
+    if (step === 5 && selectedServices.length > 0 && selectedProfessional && draft.date && draft.time) {
       return (
         <ConfirmationStep
           barbershopName={barbershopName}
-          serviceName={selectedService.name}
-          serviceValue={selectedService.price}
-          serviceDuration={selectedService.durationMinutes}
+          services={selectedServices.map((s) => ({
+            name: s.name,
+            price: s.price,
+            discountPercent: getServicePlanDiscount(s.name, plans, activePlan),
+          }))}
           professionalName={selectedProfessional.name}
           dateLabel={formatDate(draft.date)}
           time={draft.time}
@@ -172,10 +189,16 @@ export function BookingFlow({
       )
     }
 
-    if (step === 6 && createdAppointment && selectedService && selectedProfessional) {
+    if (step === 6 && createdAppointment && selectedServices.length > 0 && selectedProfessional) {
+      const firstService = selectedServices[0]
+      const extraCount = selectedServices.length - 1
+      const serviceLabel = extraCount > 0
+        ? `${firstService.name} +${extraCount}`
+        : firstService.name
+
       return (
         <SuccessStep
-          serviceName={selectedService.name}
+          serviceName={serviceLabel}
           dateLabel={formatDate(createdAppointment.date)}
           time={createdAppointment.time}
           professionalName={selectedProfessional.name}
@@ -201,7 +224,7 @@ export function BookingFlow({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="md:max-w-3xl">
+      <SheetContent className="md:max-w-3xl" style={themeStyle}>
         <SheetHeader>
           <SheetTitle>{stepTitle[step]}</SheetTitle>
           {step < 6 ? (

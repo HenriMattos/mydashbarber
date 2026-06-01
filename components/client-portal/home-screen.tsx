@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { BarbershopHero } from "@/components/client-portal/barbershop-hero"
 import { LatestAppointmentCard } from "@/components/client-portal/latest-appointment-card"
-import { formatDate } from "@/lib/client-portal/mock-data"
+import { formatDate } from "@/lib/client-portal/utils"
 import type { Appointment, Barbershop } from "@/types/client-portal"
 
 interface HomeScreenProps {

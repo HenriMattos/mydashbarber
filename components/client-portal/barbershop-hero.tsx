@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { MapPin, Phone } from "lucide-react"
+import { AtSign, Globe, MapPin, MessageCircle, Phone } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { Barbershop } from "@/types/client-portal"
@@ -58,6 +58,40 @@ export function BarbershopHero({ barbershop }: BarbershopHeroProps) {
             <Phone className="size-3.5" />
             <span>{barbershop.phone}</span>
           </p>
+          
+          {barbershop.social?.instagram && (
+            <a
+              href={`https://instagram.com/${barbershop.social.instagram.replace("@", "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border bg-background px-3 py-2 hover:bg-muted transition-colors"
+            >
+              <AtSign className="size-3.5" />
+              <span className="hidden sm:inline">Instagram</span>
+            </a>
+          )}
+          {barbershop.social?.whatsapp && (
+            <a
+              href={`https://wa.me/${barbershop.social.whatsapp.replace(/[^0-9]/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border bg-background px-3 py-2 hover:bg-muted transition-colors"
+            >
+              <MessageCircle className="size-3.5" />
+              <span className="hidden sm:inline">WhatsApp</span>
+            </a>
+          )}
+          {barbershop.social?.facebook && (
+            <a
+              href={`https://facebook.com/${barbershop.social.facebook}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border bg-background px-3 py-2 hover:bg-muted transition-colors"
+            >
+              <Globe className="size-3.5" />
+              <span className="hidden sm:inline">Facebook</span>
+            </a>
+          )}
         </div>
       </div>
     </section>

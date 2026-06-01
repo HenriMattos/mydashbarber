@@ -7,7 +7,7 @@ import { AppointmentDetailsDialog } from "@/components/client-portal/appointment
 import { AppointmentListItem } from "@/components/client-portal/appointments/appointment-list-item"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { formatCurrency, formatDate } from "@/lib/client-portal/mock-data"
+import { formatCurrency, formatDate } from "@/lib/client-portal/utils"
 import type { Appointment } from "@/types/client-portal"
 
 interface AppointmentResolvedItem {

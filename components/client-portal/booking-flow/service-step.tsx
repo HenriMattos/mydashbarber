@@ -1,38 +1,57 @@
-import type { Service } from "@/types/client-portal"
-import { formatCurrency } from "@/lib/client-portal/mock-data"
+import { Check } from "lucide-react"
+
+import type { ActivePlan, Plan, Service } from "@/types/client-portal"
+import { formatCurrency, getServicePlanDiscount } from "@/lib/client-portal/utils"
 import { cn } from "@/lib/utils"
 
 interface ServiceStepProps {
   services: Service[]
-  selectedServiceId?: string
-  onSelect: (serviceId: string) => void
+  selectedServiceIds: string[]
+  onToggle: (serviceId: string) => void
+  plans: Plan[]
+  activePlan: ActivePlan | null
 }
 
-export function ServiceStep({ services, selectedServiceId, onSelect }: ServiceStepProps) {
+export function ServiceStep({
+  services,
+  selectedServiceIds,
+  onToggle,
+  plans,
+  activePlan,
+}: ServiceStepProps) {
   return (
     <div className="space-y-3">
       {services.map((service) => {
-        const isSelected = selectedServiceId === service.id
+        const isSelected = selectedServiceIds.includes(service.id)
+        const discountPercent = getServicePlanDiscount(service.name, plans, activePlan)
+
         return (
           <button
             key={service.id}
             type="button"
-            onClick={() => onSelect(service.id)}
+            onClick={() => onToggle(service.id)}
             className={cn(
-              "w-full rounded-2xl border p-3 text-left transition-colors",
-              isSelected ? "border-primary bg-primary/10" : "bg-background hover:bg-muted/40"
+              "flex w-full flex-col rounded-2xl border p-3 text-left transition-colors",
+              isSelected
+                ? "border-primary bg-primary/10"
+                : "bg-background hover:bg-muted/40"
             )}
           >
-            <p className="font-semibold">{service.name}</p>
-            <p className="text-xs text-muted-foreground">{service.durationMinutes} min</p>
-            <p className="mt-0.5 text-sm">{formatCurrency(service.price)}</p>
-            {service.description ? (
-              <p className="mt-1 text-xs text-muted-foreground">{service.description}</p>
-            ) : null}
+            <div className="flex items-center justify-between">
+              <p className="font-semibold">{service.name}</p>
+              {isSelected ? <Check className="size-4 text-primary" /> : null}
+            </div>
+            <div className="mt-0.5 flex items-center gap-2">
+              <span className="text-sm">{formatCurrency(service.price)}</span>
+              {discountPercent !== null ? (
+                <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                  {discountPercent}% do plano
+                </span>
+              ) : null}
+            </div>
           </button>
         )
       })}
     </div>
   )
 }
-

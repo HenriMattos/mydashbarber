@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatCurrency, formatDate } from "@/lib/client-portal/mock-data"
+import { formatCurrency, formatDate } from "@/lib/client-portal/utils"
 import type { ActivePlan, Plan } from "@/types/client-portal"
 
 interface ActivePlanCardProps {

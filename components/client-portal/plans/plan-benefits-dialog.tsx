@@ -3,7 +3,7 @@
 import type { Plan } from "@/types/client-portal"
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { formatCurrency } from "@/lib/client-portal/mock-data"
+import { formatCurrency } from "@/lib/client-portal/utils"
 
 interface PlanBenefitsDialogProps {
   open: boolean

@@ -1,31 +1,48 @@
+import { database } from "@/components/admin/database"
 import type { Barbershop } from "@/types/client-portal"
 
 export const PORTAL_SETTINGS_STORAGE_KEY = "bigood.v1.clientPortal.settings"
 export const PORTAL_SETTINGS_CHANGED_EVENT = "bigood:client-portal-settings-changed"
 
+function rgbToHex(r: number, g: number, b: number) {
+  return "#" + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1).toUpperCase()
+}
+
 export const defaultPortalSettings: Barbershop = {
-  id: "shop-1",
-  slug: "barbearia-vip",
-  name: "Barbearia VIP",
-  slogan: "Cabelo, barba e cuidado no seu tempo.",
+  id: database.company.slug,
+  slug: database.company.slug,
+  name: database.company.companyName,
+  slogan: database.company.operationalSettings.welcomeMessage || "Cabelo, barba e cuidado no seu tempo.",
   description: "Experiencia premium para agendar e acompanhar seus atendimentos.",
-  bannerUrl:
-    "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=1200&q=80",
-  bannerPlacement: {
-    x: 50,
-    y: 50,
-    zoom: 1,
+  bannerUrl: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=1200&q=80",
+  bannerPlacement: { x: 50, y: 50, zoom: 1 },
+  logoUrl: database.company.logoUrl,
+  logoPlacement: { x: 50, y: 50, zoom: 1 },
+  address: `${database.company.address.street}, ${database.company.address.number}, ${database.company.address.neighborhood}, ${database.company.address.city}, ${database.company.address.state}`,
+  phone: database.company.phone,
+  primaryColor: rgbToHex(database.company.primaryColor.r, database.company.primaryColor.g, database.company.primaryColor.b),
+  social: {
+    instagram: database.company.social.instagram,
+    whatsapp: database.company.social.whatsapp,
+    facebook: database.company.social.facebook,
   },
-  logoUrl:
-    "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=300&q=80",
-  logoPlacement: {
-    x: 50,
-    y: 50,
-    zoom: 1,
-  },
-  address: "Rua Augusta, 1240, Consolacao, Sao Paulo, SP",
-  phone: "(11) 98888-2211",
-  primaryColor: "#9BE870",
+  onboardingSlides: [
+    {
+      title: "Bem-vindo",
+      description: "Agende serviços com facilidade, e aproveite um atendimento personalizado.",
+      imageUrl: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80",
+    },
+    {
+      title: "Escolha seu profissional",
+      description: "Visualize horários disponíveis e encontre o barbeiro ideal.",
+      imageUrl: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=1200&q=80",
+    },
+    {
+      title: "Acompanhe seus agendamentos",
+      description: "Gerencie horários, histórico e serviços em um único lugar.",
+      imageUrl: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1200&q=80",
+    },
+  ],
 }
 
 export function normalizePortalSlug(value: string) {
