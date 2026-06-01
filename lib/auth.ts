@@ -18,7 +18,7 @@ export type SessionPayload = AuthUser & {
 }
 
 export const DEMO_ADMIN_CREDENTIALS = {
-  email: "admin@barbeariavip.com",
+  email: "admin@bigood.com",
   password: "bigood123",
 }
 

@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     user = {
       email,
       name: "Rafael Oliveira",
-      companyName: "Barbearia VIP",
+      companyName: "Sua Barbearia",
       hasActivePlan: true,
       planKey: "pro-anual",
     }
