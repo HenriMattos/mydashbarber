@@ -36,6 +36,18 @@ export interface Barbershop {
   address: string
   phone: string
   primaryColor: string
+  social?: {
+    instagram?: string
+    whatsapp?: string
+    facebook?: string
+  }
+  onboardingSlides?: OnboardingSlide[]
+}
+
+export interface OnboardingSlide {
+  title: string
+  description: string
+  imageUrl: string
 }
 
 export interface PortalImagePlacement {
@@ -105,7 +117,7 @@ export interface ActivePlan {
 }
 
 export interface BookingDraft {
-  serviceId?: string
+  serviceIds: string[]
   professionalId?: string
   date?: string
   time?: string

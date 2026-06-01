@@ -25,9 +25,8 @@ export type CompanyOperationalSettings = {
 }
 
 export type Company = {
-  corporateName: string
-  tradeName: string
-  cnpj: string
+  companyName: string
+  cnpjCpf: string
   email: string
   timezone: string
   phone: string

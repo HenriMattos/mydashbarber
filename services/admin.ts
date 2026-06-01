@@ -1394,14 +1394,13 @@ const demoSubscriptions: Subscription[] = demoClients
 
 export function getCompany(): Company {
   return {
-    corporateName: "Barbearia VIP Tecnologia e Estilo LTDA",
-    tradeName: "Barbearia VIP",
-    cnpj: "12.345.678/0001-90",
-    email: "contato@barbeariavip.com",
+    companyName: "Bigood",
+    cnpjCpf: "12.345.678/0001-90",
+    email: "contato@bigood.com",
     timezone: "America/Sao_Paulo",
     phone: "(11) 4002-8922",
-    slug: "barbearia-vip",
-    primaryColor: { r: 145, g: 230, b: 104 },
+    slug: "bigood",
+    primaryColor: { r: 14, g: 165, b: 233 }, // Sky 600 or similar brand color
     logoUrl: "/brand/bigood-portal-icon.png?v=3",
     logoAlt: "Bigood Logo",
     iconUrl: "/brand/bigood-portal-icon.png?v=3",
@@ -1409,7 +1408,7 @@ export function getCompany(): Company {
     professionalRoles: ["Barbeiro fundador", "Barbeiro senior", "Barbeiro"],
     serviceCategories: ["Cabelo", "Barba", "Combo"],
     operationalSettings: {
-      unitName: "Unidade Augusta",
+      unitName: "Unidade Principal",
       openingDays: "Seg a Sab",
       openingStart: "09:00",
       openingEnd: "19:00",
@@ -1437,18 +1436,18 @@ export function getCompany(): Company {
       blockedDaysNote: "Domingo fechado e feriados conforme operação da unidade.",
     },
     address: {
-      street: "Rua Augusta",
-      number: "1240",
-      neighborhood: "Consolacao",
-      city: "Sao Paulo",
+      street: "Rua Exemplo",
+      number: "123",
+      neighborhood: "Centro",
+      city: "São Paulo",
       state: "SP",
-      zip: "01304-001",
-      mapsUrl: "https://maps.google.com/?q=Rua+Augusta+1240",
+      zip: "01001-000",
+      mapsUrl: "https://maps.google.com/?q=Rua+Exemplo+123",
     },
     social: {
-      instagram: "@barbeariavip",
+      instagram: "@bigood",
       whatsapp: "(11) 98888-0100",
-      facebook: "barbeariavip",
+      facebook: "bigood",
     },
   }
 }

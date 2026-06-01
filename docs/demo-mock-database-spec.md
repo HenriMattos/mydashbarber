@@ -6,7 +6,7 @@ Criar uma base mockada consistente para apresentar o Bigood com uma barbearia re
 
 ## Escopo
 
-- Uma barbearia demonstrativa com slug `barbearia-vip`.
+- Uma barbearia demonstrativa com slug `bigood`.
 - Painel admin preenchido com empresa, servicos, profissionais, planos, clientes, assinaturas, agenda, comandas, meios de pagamento e metricas.
 - Base com 100 clientes assinantes ativos.
 - Uma conta admin do barbeiro para acesso ao painel.
@@ -24,13 +24,13 @@ Criar uma base mockada consistente para apresentar o Bigood com uma barbearia re
 Admin barbeiro:
 
 - URL: `/login`
-- E-mail: `admin@barbeariavip.com`
+- E-mail: `admin@bigood.com`
 - Senha: `bigood123`
 
 Cliente assinante:
 
-- URL: `/barbearia/barbearia-vip`
-- E-mail: `cliente@barbeariavip.com`
+- URL: `/portal/bigood`
+- E-mail: `cliente@bigood.com`
 - WhatsApp: `(11) 98888-0101`
 - Senha: `cliente123`
 
