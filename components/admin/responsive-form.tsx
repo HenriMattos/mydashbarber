@@ -19,10 +19,12 @@ export function FormGrid({
 
 export function FormField({
   label,
+  error,
   className,
   children,
 }: {
   label: string
+  error?: string
   className?: string
   children: ReactNode
 }) {
@@ -30,6 +32,9 @@ export function FormField({
     <div className={cn("grid min-w-0 gap-1.5", className)}>
       <Label>{label}</Label>
       {children}
+      {error ? (
+        <p className="text-xs text-destructive">{error}</p>
+      ) : null}
     </div>
   )
 }

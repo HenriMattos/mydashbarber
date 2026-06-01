@@ -38,7 +38,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const searchRef = useRef<HTMLDivElement | null>(null)
   const mobileSearchRef = useRef<HTMLDivElement | null>(null)
   const [companyData, setCompanyData] = useState({
-    tradeName: database.company.tradeName,
+    companyName: database.company.companyName,
     logoUrl: database.company.logoUrl || "",
   })
   const searchItems = useMemo(() => buildSearchItems(), [])
@@ -61,9 +61,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     function sync() {
       setCompanyData({
-        tradeName:
+        companyName:
           window.localStorage.getItem(COMPANY_TRADE_NAME_STORAGE_KEY) ||
-          database.company.tradeName,
+          database.company.companyName,
         logoUrl:
           window.localStorage.getItem(COMPANY_LOGO_STORAGE_KEY) ||
           database.company.logoUrl ||
@@ -229,7 +229,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       }
                     }}
                     className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
-                    placeholder="Buscar cliente, servico, pagina..."
+                    placeholder="Buscar cliente, serviço, página..."
                   />
                 </label>
 
@@ -332,7 +332,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         }
                       }}
                       className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
-                      placeholder="Buscar cliente, servico, pagina..."
+                      placeholder="Buscar cliente, serviço, página..."
                     />
                   </label>
 
@@ -518,7 +518,7 @@ function MobileMoreModal({
 }: {
   open: boolean
   pathname: string
-  companyData: { tradeName: string; logoUrl: string }
+  companyData: { companyName: string; logoUrl: string }
   onClose: () => void
   onLogout: () => void
   onNavigate: () => void
@@ -538,7 +538,7 @@ function MobileMoreModal({
         if (!nextOpen) onClose()
       }}
       title="Mais opções"
-      subtitle={companyData.tradeName}
+      subtitle={companyData.companyName}
       icon={Menu01Icon}
       bodyClassName="grid gap-2"
       footer={
@@ -661,7 +661,7 @@ function MobileSearchModal({
         if (!nextOpen) onClose()
       }}
       title="Pesquisar"
-      subtitle="Buscar cliente, servico ou pagina"
+      subtitle="Buscar cliente, serviço ou página"
       icon={Search01Icon}
       contentRef={searchRef}
       bodyClassName="flex flex-col gap-3"
@@ -673,7 +673,7 @@ function MobileSearchModal({
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
             className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-muted-foreground"
-            placeholder="Buscar cliente, servico, pagina..."
+            placeholder="Buscar cliente, serviço, página..."
           />
         </label>
 
@@ -778,7 +778,7 @@ function buildSearchItems(): SearchItem[] {
     {
       id: "action:new-appointment",
       title: "Novo agendamento",
-      subtitle: "Acao rapida | Agenda",
+      subtitle: "Ação rápida | Agenda",
       href: "/agenda",
       searchBlob:
         "novo agendamento agendar agendamento criar agendamento nova reserva agenda",
@@ -788,7 +788,7 @@ function buildSearchItems(): SearchItem[] {
     {
       id: "action:new-client",
       title: "Cadastrar cliente",
-      subtitle: "Acao rapida | Clientes",
+      subtitle: "Ação rápida | Clientes",
       href: "/clientes/cadastrar",
       searchBlob: "novo cliente cadastrar cliente criar cliente",
       actionLabel: "Cadastrar",
@@ -797,7 +797,7 @@ function buildSearchItems(): SearchItem[] {
     {
       id: "action:new-professional",
       title: "Cadastrar profissional",
-      subtitle: "Acao rapida | Profissionais",
+      subtitle: "Ação rápida | Profissionais",
       href: "/profissionais/cadastrar",
       searchBlob: "novo profissional cadastrar profissional criar profissional",
       actionLabel: "Cadastrar",
@@ -806,7 +806,7 @@ function buildSearchItems(): SearchItem[] {
     {
       id: "action:open-cash",
       title: "Abrir caixa",
-      subtitle: "Acao rapida | Caixa",
+      subtitle: "Ação rápida | Caixa",
       href: "/caixa",
       searchBlob: "abrir caixa iniciar caixa novo caixa",
       actionLabel: "Abrir",
@@ -815,7 +815,7 @@ function buildSearchItems(): SearchItem[] {
     {
       id: "action:finance",
       title: "Receber pagamento",
-      subtitle: "Acao rapida | Financeiro",
+      subtitle: "Ação rápida | Financeiro",
       href: "/financeiro",
       searchBlob: "receber pagamento cobrar pagamento nova cobrança",
       actionLabel: "Receber",
@@ -869,7 +869,7 @@ function SidebarContent({
   onNavigate,
 }: {
   pathname: string
-  companyData: { tradeName: string; logoUrl: string }
+  companyData: { companyName: string; logoUrl: string }
   onPrefetch?: (href: string) => void
   onNavigate?: () => void
 }) {
@@ -891,36 +891,6 @@ function SidebarContent({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <Link href="/dashboard" className="mb-6 flex items-center gap-3">
-        {companyData.logoUrl ? (
-          <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-background">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={companyData.logoUrl}
-              alt={companyData.tradeName}
-              className="h-full w-full object-cover"
-            />
-          </div>
-        ) : (
-          <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-background">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={BIGOOD_MARK_DARK}
-              alt="Bigood"
-              className="h-full w-full object-contain"
-            />
-          </span>
-        )}
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-semibold">
-            {companyData.tradeName}
-          </span>
-          <span className="block truncate text-xs text-sidebar-foreground/60">
-            Painel Administrativo
-          </span>
-        </span>
-      </Link>
-
       <ScrollArea className="min-h-0 flex-1 pr-2">
         <nav className="flex flex-col gap-1">
           {navItems.map((item) => {

@@ -48,9 +48,6 @@ export default function CadastrarClientePage() {
           <FormField label="Email *">
             <Input type="email" placeholder="email@cliente.com" />
           </FormField>
-          <FormField label="Como conheceu *">
-            <Input placeholder="Ex.: Indicação" />
-          </FormField>
           <FormField label="Senha *">
             <Input type="password" placeholder="Senha de acesso" />
           </FormField>

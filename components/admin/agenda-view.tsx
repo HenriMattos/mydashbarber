@@ -70,16 +70,6 @@ import {
 
 type Barber = string
 type AgendaEvent = AdminAgendaEvent
-type AgendaFilter =
-  | "all"
-  | "subscribers"
-  | "walk_in"
-  | "delinquent"
-  | "attendance"
-  | "pending_command"
-  | "needs_attention"
-  | "no_show"
-  | "cancelled"
 
 type AgendaClient = {
   id: string
@@ -100,17 +90,6 @@ type NewAgendaClient = {
 const barbers: Barber[] = database.professionals
   .filter((professional) => professional.status === "Ativo")
   .map((professional) => professional.name)
-const agendaFilterOptions: { value: AgendaFilter; label: string }[] = [
-  { value: "all", label: "Todos" },
-  { value: "subscribers", label: "Assinantes" },
-  { value: "walk_in", label: "Avulsos" },
-  { value: "delinquent", label: "Inadimplentes" },
-  { value: "needs_attention", label: "Atenção" },
-  { value: "attendance", label: "Em atendimento" },
-  { value: "pending_command", label: "Comanda pendente" },
-  { value: "no_show", label: "Faltas" },
-  { value: "cancelled", label: "Cancelados" },
-]
 const initialClients: AgendaClient[] = database.clients.map((client) => ({
   id: String(client.id),
   name: client.name,
@@ -153,7 +132,6 @@ export function AgendaView() {
   const [formService, setFormService] = useState(serviceNames[0] ?? "")
   const [formAddedServices, setFormAddedServices] = useState<string[]>([])
   const [formNoPreference, setFormNoPreference] = useState(false)
-  const [agendaFilter, setAgendaFilter] = useState<AgendaFilter>("all")
 
   const selectedDate = `${selectedYear}-${selectedMonth}-${selectedDay.padStart(2, "0")}`
 
@@ -184,17 +162,7 @@ export function AgendaView() {
         .sort((a, b) => a.start.localeCompare(b.start)),
     [events, selectedBarber, selectedDate]
   )
-  const dayEvents = useMemo(
-    () =>
-      selectedDateEvents.filter((event) =>
-        matchesAgendaFilter(event, agendaFilter)
-      ),
-    [agendaFilter, selectedDateEvents]
-  )
-  const agendaSummary = useMemo(
-    () => buildAgendaSummary(selectedDateEvents),
-    [selectedDateEvents]
-  )
+  const dayEvents = selectedDateEvents
   const editingEvent = useMemo(
     () => events.find((event) => event.id === editingId) ?? null,
     [editingId, events]
@@ -433,11 +401,8 @@ export function AgendaView() {
         selectedBarber={selectedBarber}
         selectedDateObj={selectedDateObj}
         events={dayEvents}
-        agendaFilter={agendaFilter}
-        agendaSummary={agendaSummary}
         onBarberChange={setSelectedBarber}
         onDateSelect={handleDateSelect}
-        onAgendaFilterChange={setAgendaFilter}
         onPreviousDay={() =>
           shiftDate(
             -1,
@@ -512,11 +477,8 @@ function AgendaDayScreen({
   selectedBarber,
   selectedDateObj,
   events,
-  agendaFilter,
-  agendaSummary,
   onBarberChange,
   onDateSelect,
-  onAgendaFilterChange,
   onPreviousDay,
   onNextDay,
   onNewAppointment,
@@ -525,11 +487,8 @@ function AgendaDayScreen({
   selectedBarber: Barber
   selectedDateObj: Date
   events: AgendaEvent[]
-  agendaFilter: AgendaFilter
-  agendaSummary: AgendaSummary
   onBarberChange: (barber: Barber) => void
   onDateSelect: (date: Date | undefined) => void
-  onAgendaFilterChange: (filter: AgendaFilter) => void
   onPreviousDay: () => void
   onNextDay: () => void
   onNewAppointment: () => void
@@ -612,33 +571,6 @@ function AgendaDayScreen({
             <HugeiconsIcon icon={Add01Icon} size={16} />
             Novo agendamento
           </Button>
-        </div>
-
-        <div className="mt-3 flex min-w-0 flex-wrap gap-1.5 sm:gap-2">
-          {agendaFilterOptions.map((option) => (
-            <Button
-              key={option.value}
-              type="button"
-              size="sm"
-              variant={agendaFilter === option.value ? "default" : "outline"}
-              className="h-8 min-w-0 shrink px-2 text-[10px] sm:px-3 sm:text-xs"
-              onClick={() => onAgendaFilterChange(option.value)}
-            >
-              {option.label}
-              {option.value === "all" ? ` (${agendaSummary.total})` : null}
-              {option.value === "attendance" && agendaSummary.inAttendance
-                ? ` (${agendaSummary.inAttendance})`
-                : null}
-              {option.value === "pending_command" &&
-              agendaSummary.pendingCommands
-                ? ` (${agendaSummary.pendingCommands})`
-                : null}
-              {option.value === "needs_attention" &&
-              agendaSummary.needsAttention
-                ? ` (${agendaSummary.needsAttention})`
-                : null}
-            </Button>
-          ))}
         </div>
       </div>
 
@@ -1965,13 +1897,6 @@ function LegacyScheduleModal({
 
 type StatusTone = "green" | "amber" | "red" | "blue" | "neutral"
 
-type AgendaSummary = {
-  total: number
-  inAttendance: number
-  pendingCommands: number
-  needsAttention: number
-}
-
 type AgendaOperationalInfo = {
   appointmentLabel: string
   appointmentTone: StatusTone
@@ -2118,49 +2043,6 @@ function getReservableServiceId(clientName: string, detail: string) {
   return balance?.serviceId
 }
 
-function matchesAgendaFilter(event: AgendaEvent, filter: AgendaFilter) {
-  if (filter === "all") return true
-
-  const info = getAgendaOperationalInfo(event)
-
-  if (filter === "subscribers") return info.hasSubscription
-  if (filter === "walk_in") return !info.hasSubscription || event.origin === "walk_in"
-  if (filter === "delinquent") return info.isDelinquent
-  if (filter === "attendance") {
-    return (
-      event.attendanceStatus === ATTENDANCE_STATUS.CLIENT_ARRIVED ||
-      event.attendanceStatus === ATTENDANCE_STATUS.IN_PROGRESS
-    )
-  }
-  if (filter === "pending_command") return info.hasPendingCommand
-  if (filter === "needs_attention") return info.needsAttention
-  if (filter === "no_show") return event.status === APPOINTMENT_STATUS.NO_SHOW
-  if (filter === "cancelled") return event.status === APPOINTMENT_STATUS.CANCELLED
-
-  return true
-}
-
-function buildAgendaSummary(events: AgendaEvent[]): AgendaSummary {
-  return events.reduce(
-    (summary, event) => {
-      const info = getAgendaOperationalInfo(event)
-
-      return {
-        total: summary.total + 1,
-        inAttendance:
-          summary.inAttendance +
-          (event.attendanceStatus === ATTENDANCE_STATUS.CLIENT_ARRIVED ||
-          event.attendanceStatus === ATTENDANCE_STATUS.IN_PROGRESS
-            ? 1
-            : 0),
-        pendingCommands:
-          summary.pendingCommands + (info.hasPendingCommand ? 1 : 0),
-        needsAttention: summary.needsAttention + (info.needsAttention ? 1 : 0),
-      }
-    },
-    { total: 0, inAttendance: 0, pendingCommands: 0, needsAttention: 0 }
-  )
-}
 
 function getClientLabel(
   status: SubscriptionStatus | undefined,

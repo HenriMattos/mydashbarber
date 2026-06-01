@@ -16,7 +16,7 @@ import { database } from "@/components/admin/database"
 export function OnboardingGuide() {
   const hasProfessionals = database.professionals.length > 0
   const hasServices = database.services.length > 0
-  const hasCompanyData = Boolean(database.company.tradeName && database.company.tradeName !== "Minha Barbearia")
+  const hasCompanyData = Boolean(database.company.companyName && database.company.companyName !== "Minha Barbearia")
 
   const steps = [
     {

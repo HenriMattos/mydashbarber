@@ -50,6 +50,75 @@ export function formatCnpjInput(value: string) {
   return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`
 }
 
+export function formatCnpjCpfInput(value: string) {
+  const digits = onlyDigits(value, 14)
+
+  if (digits.length <= 11) return formatCpfInput(value)
+
+  return formatCnpjInput(value)
+}
+
+export function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+export function isValidPhone(value: string) {
+  const digits = onlyDigits(value, 13)
+  return digits.length >= 10
+}
+
+export function isValidCpf(value: string) {
+  const digits = onlyDigits(value, 11)
+  if (digits.length !== 11) return false
+
+  const allSame = digits.split("").every((d) => d === digits[0])
+  if (allSame) return false
+
+  let sum = 0
+  for (let i = 0; i < 9; i++) sum += Number(digits[i]) * (10 - i)
+  let remainder = (sum * 10) % 11
+  if (remainder === 10) remainder = 0
+  if (remainder !== Number(digits[9])) return false
+
+  sum = 0
+  for (let i = 0; i < 10; i++) sum += Number(digits[i]) * (11 - i)
+  remainder = (sum * 10) % 11
+  if (remainder === 10) remainder = 0
+
+  return remainder === Number(digits[10])
+}
+
+export function isValidCnpj(value: string) {
+  const digits = onlyDigits(value, 14)
+  if (digits.length !== 14) return false
+
+  const allSame = digits.split("").every((d) => d === digits[0])
+  if (allSame) return false
+
+  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  let sum = 0
+  for (let i = 0; i < 12; i++) sum += Number(digits[i]) * w1[i]
+  let remainder = sum % 11
+  if (remainder < 2) remainder = 0
+  else remainder = 11 - remainder
+  if (remainder !== Number(digits[12])) return false
+
+  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  sum = 0
+  for (let i = 0; i < 13; i++) sum += Number(digits[i]) * w2[i]
+  remainder = sum % 11
+  if (remainder < 2) remainder = 0
+  else remainder = 11 - remainder
+
+  return remainder === Number(digits[13])
+}
+
+export function isValidCnpjCpf(value: string) {
+  const digits = onlyDigits(value, 14)
+  if (digits.length <= 11) return isValidCpf(value)
+  return isValidCnpj(value)
+}
+
 export function formatCepInput(value: string) {
   const digits = onlyDigits(value, 8)
 

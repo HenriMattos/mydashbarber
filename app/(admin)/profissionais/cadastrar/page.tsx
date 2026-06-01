@@ -2,12 +2,13 @@
 "use client"
 
 import { useState, type ChangeEvent } from "react"
-import { UserAdd01Icon } from "@hugeicons/core-free-icons"
+import { Delete02Icon, PlusSignIcon, UserAdd01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Camera, X } from "lucide-react"
+import { Camera, FileText, X } from "lucide-react"
 
 import {
   formatCepInput,
+  formatCnpjCpfInput,
   formatCnpjInput,
   formatCpfInput,
   formatDateInput,
@@ -34,8 +35,8 @@ const professionalBranchOptions = ["Matriz", "Unidade principal"]
 
 export default function CadastrarProfissionalPage() {
   const [birthday, setBirthday] = useState("")
-  const [cpf, setCpf] = useState("")
-  const [cnpj, setCnpj] = useState("")
+  const [documentType, setDocumentType] = useState<"CPF" | "CNPJ">("CPF")
+  const [document, setDocument] = useState("")
   const [phone, setPhone] = useState("")
   const [pixKey, setPixKey] = useState("")
   const [cep, setCep] = useState("")
@@ -46,6 +47,9 @@ export default function CadastrarProfissionalPage() {
   const [group, setGroup] = useState(professionalGroupOptions[0])
   const [branch, setBranch] = useState(professionalBranchOptions[0])
   const [photoUrl, setPhotoUrl] = useState("")
+  const [contractName, setContractName] = useState("")
+  const [contractFileUrl, setContractFileUrl] = useState("")
+  const [contracts, setContracts] = useState<{ id: string; name: string; fileUrl: string }[]>([])
 
   function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -58,6 +62,36 @@ export default function CadastrarProfissionalPage() {
       event.target.value = ""
     }
     reader.readAsDataURL(file)
+  }
+
+  function handleContractFileUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return
+      setContractFileUrl(reader.result)
+      event.target.value = ""
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function addContract() {
+    if (!contractName || !contractFileUrl) return
+    setContracts((prev) => [
+      ...prev,
+      {
+        id: `contract-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: contractName,
+        fileUrl: contractFileUrl,
+      },
+    ])
+    setContractName("")
+    setContractFileUrl("")
+  }
+
+  function removeContract(id: string) {
+    setContracts((prev) => prev.filter((c) => c.id !== id))
   }
 
   return (
@@ -79,21 +113,22 @@ export default function CadastrarProfissionalPage() {
           <FormField label="Nome no APP *">
             <Input placeholder="Nome exibido no app" />
           </FormField>
-          <FormField label="CPF">
-            <Input
-              value={cpf}
-              inputMode="numeric"
-              placeholder="000.000.000-00"
-              onChange={(event) => setCpf(formatCpfInput(event.target.value))}
-            />
-          </FormField>
-          <FormField label="CNPJ">
-            <Input
-              value={cnpj}
-              inputMode="numeric"
-              placeholder="00.000.000/0000-00"
-              onChange={(event) => setCnpj(formatCnpjInput(event.target.value))}
-            />
+          <FormField label="CPF / CNPJ">
+            <div className="flex gap-2">
+              <Select value={documentType} onValueChange={(value) => setDocumentType(value as "CPF" | "CNPJ")}>
+                <SelectTrigger className="w-20 shrink-0"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CPF">CPF</SelectItem>
+                  <SelectItem value="CNPJ">CNPJ</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                value={document}
+                inputMode="numeric"
+                placeholder={documentType === "CPF" ? "000.000.000-00" : "00.000.000/0000-00"}
+                onChange={(event) => setDocument(formatCnpjCpfInput(event.target.value))}
+              />
+            </div>
           </FormField>
           <FormField label="Data de nascimento">
             <Input
@@ -238,10 +273,61 @@ export default function CadastrarProfissionalPage() {
           <p className="text-sm text-muted-foreground">Nenhum contato adicionado!</p>
         </section>
 
-        <section className="grid gap-2 rounded-md border bg-muted/20 p-3">
+        <section className="grid gap-3 rounded-md border bg-muted/20 p-3">
           <h3 className="text-sm font-semibold">Contratos</h3>
           <p className="text-sm text-muted-foreground">Contratos adicionados.</p>
-          <p className="text-sm text-muted-foreground">Nenhum contrato adicionado!</p>
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(10rem,1fr)_3rem]">
+            <FormField label="Nome do contrato *">
+              <Input value={contractName} onChange={(event) => setContractName(event.target.value)} placeholder="Nome do contrato" />
+            </FormField>
+            <div className="flex items-end gap-2">
+              {contractFileUrl ? (
+                <span className="truncate text-sm text-muted-foreground">{contractFileUrl.split(",")[0].slice(0, 30)}...</span>
+              ) : null}
+              <Button type="button" variant="outline" size="sm" asChild className="shrink-0">
+                <label>
+                  <FileText className="size-4" />
+                  {contractFileUrl ? "Trocar" : "Selecionar"}
+                  <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" className="sr-only" onChange={handleContractFileUpload} />
+                </label>
+              </Button>
+            </div>
+            <Button type="button" size="icon-sm" className="mt-auto w-full lg:w-8" onClick={addContract} aria-label="Adicionar contrato">
+              <HugeiconsIcon icon={PlusSignIcon} size={14} />
+            </Button>
+          </div>
+          {contracts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum contrato adicionado!</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="px-3 py-2 font-semibold">Nome</th>
+                    <th className="px-3 py-2 font-semibold">Arquivo</th>
+                    <th className="px-3 py-2 font-semibold">Opções</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contracts.map((contract) => (
+                    <tr key={contract.id} className="border-b">
+                      <td className="px-3 py-2">{contract.name}</td>
+                      <td className="px-3 py-2">
+                        <a href={contract.fileUrl} download={contract.name} className="text-blue-600 underline">
+                          Download
+                        </a>
+                      </td>
+                      <td className="px-3 py-2">
+                        <Button size="icon-sm" variant="destructive" onClick={() => removeContract(contract.id)} aria-label="Remover">
+                          <HugeiconsIcon icon={Delete02Icon} size={14} />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         <div className="flex flex-col gap-2 sm:flex-row">

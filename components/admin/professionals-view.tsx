@@ -11,10 +11,11 @@ import {
   UserAdd01Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Camera, X } from "lucide-react"
+import { Camera, FileText, X } from "lucide-react"
 
 import {
   formatCepInput,
+  formatCnpjCpfInput,
   formatCnpjInput,
   formatCpfInput,
   formatCurrencyInput,
@@ -47,7 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-type RowAction = "service" | "schedule" | "interval" | "dayOff" | "contact" | "product"
+type RowAction = "service" | "schedule" | "interval" | "dayOff" | "contact" | "product" | "contract"
 
 type ServiceRow = {
   id: string
@@ -84,14 +85,20 @@ type ProductCommissionRow = {
   commission: string
 }
 
+type ContractRow = {
+  id: string
+  name: string
+  fileUrl: string
+}
+
 type ProfessionalDraft = Pick<
   Professional,
   "email" | "phone" | "status" | "unit"
 > & {
   fullName: string
   appName: string
-  cpf: string
-  cnpj: string
+  documentType: "CPF" | "CNPJ"
+  document: string
   birthday: string
   type: string
   group: string
@@ -131,8 +138,9 @@ type ProfessionalDraft = Pick<
   minSaleValue: string
   productCommission: string
   productCommissions: ProductCommissionRow[]
-  dpoteAdditionalCommission: string
-  dpoteDifferentiatedCommission: string
+  contractName: string
+  contractFileUrl: string
+  contracts: ContractRow[]
 }
 
 type EditingService = {
@@ -221,8 +229,8 @@ export function ProfessionalsView() {
     setDraft({
       fullName: professional.name,
       appName: professional.name,
-      cpf: "703.971.302-01",
-      cnpj: "",
+      documentType: "CPF",
+      document: "703.971.302-01",
       birthday: "30/04/2000",
       email: professional.email ?? "",
       phone: professional.phone ?? "",
@@ -266,8 +274,9 @@ export function ProfessionalsView() {
       minSaleValue: "",
       productCommission: "",
       productCommissions: [],
-      dpoteAdditionalCommission: "0",
-      dpoteDifferentiatedCommission: "5",
+      contractName: "",
+      contractFileUrl: "",
+      contracts: [],
     })
   }
 
@@ -383,6 +392,32 @@ export function ProfessionalsView() {
     reader.readAsDataURL(file)
   }
 
+  function addContract() {
+    if (!draft || !draft.contractName || !draft.contractFileUrl) return
+    updateDraft("contracts", [
+      ...draft.contracts,
+      {
+        id: createId("contract"),
+        name: draft.contractName,
+        fileUrl: draft.contractFileUrl,
+      },
+    ])
+    updateDraft("contractName", "")
+    updateDraft("contractFileUrl", "")
+  }
+
+  function handleContractFileUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return
+      updateDraft("contractFileUrl", reader.result)
+      event.target.value = ""
+    }
+    reader.readAsDataURL(file)
+  }
+
   function addProductCommission() {
     if (!draft || !draft.productCategory) return
     updateDraft("productCommissions", [
@@ -401,7 +436,7 @@ export function ProfessionalsView() {
 
     const fieldByType: Record<RowAction, keyof Pick<
       ProfessionalDraft,
-      "services" | "schedules" | "intervals" | "dayOffs" | "contacts" | "productCommissions"
+      "services" | "schedules" | "intervals" | "dayOffs" | "contacts" | "productCommissions" | "contracts"
     >> = {
       service: "services",
       schedule: "schedules",
@@ -409,6 +444,7 @@ export function ProfessionalsView() {
       dayOff: "dayOffs",
       contact: "contacts",
       product: "productCommissions",
+      contract: "contracts",
     }
     const field = fieldByType[type]
     const nextRows = (draft[field] as Array<{ id: string }>).filter(
@@ -633,11 +669,22 @@ export function ProfessionalsView() {
                   <EditField label="Nome no APP *">
                     <Input value={draft.appName} onChange={(event) => updateDraft("appName", event.target.value)} />
                   </EditField>
-                  <EditField label="CPF">
-                    <Input value={draft.cpf} inputMode="numeric" onChange={(event) => updateDraft("cpf", formatCpfInput(event.target.value))} />
-                  </EditField>
-                  <EditField label="CNPJ">
-                    <Input value={draft.cnpj} inputMode="numeric" onChange={(event) => updateDraft("cnpj", formatCnpjInput(event.target.value))} />
+                  <EditField label="CPF / CNPJ">
+                    <div className="flex gap-2">
+                      <Select value={draft.documentType} onValueChange={(value) => updateDraft("documentType", value as "CPF" | "CNPJ")}>
+                        <SelectTrigger className="w-20 shrink-0"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CPF">CPF</SelectItem>
+                          <SelectItem value="CNPJ">CNPJ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={draft.document}
+                        inputMode="numeric"
+                        placeholder={draft.documentType === "CPF" ? "000.000.000-00" : "00.000.000/0000-00"}
+                        onChange={(event) => updateDraft("document", formatCnpjCpfInput(event.target.value))}
+                      />
+                    </div>
                   </EditField>
                   <EditField label="Data de nascimento">
                     <Input value={draft.birthday} inputMode="numeric" placeholder="dd/mm/aaaa" onChange={(event) => updateDraft("birthday", formatDateInput(event.target.value))} />
@@ -771,11 +818,36 @@ export function ProfessionalsView() {
               </FormSection>
 
               <FormSection title="Contratos" description="Contratos adicionados.">
-                <Button size="sm" variant="outline" className="w-full sm:w-fit">
-                  <HugeiconsIcon icon={PlusSignIcon} size={14} />
-                  Adicionar Contrato
-                </Button>
-                <EmptyLine>Nenhum contrato adicionado!</EmptyLine>
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(10rem,1fr)_3rem]">
+                  <EditField label="Nome do contrato *">
+                    <Input value={draft.contractName} onChange={(event) => updateDraft("contractName", event.target.value)} />
+                  </EditField>
+                  <div className="flex items-end gap-2">
+                    {draft.contractFileUrl ? (
+                      <span className="truncate text-sm text-muted-foreground">{draft.contractFileUrl.split(",")[0].slice(0, 30)}...</span>
+                    ) : null}
+                    <Button type="button" variant="outline" size="sm" asChild className="shrink-0">
+                      <label>
+                        <FileText className="size-4" />
+                        {draft.contractFileUrl ? "Trocar" : "Selecionar"}
+                        <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" className="sr-only" onChange={handleContractFileUpload} />
+                      </label>
+                    </Button>
+                  </div>
+                  <AddButton onClick={addContract} label="Adicionar contrato" />
+                </div>
+                {draft.contracts.length === 0 ? (
+                  <EmptyLine>Nenhum contrato adicionado!</EmptyLine>
+                ) : (
+                  <DataTable
+                    columns={["Nome", "Arquivo", "Opções"]}
+                    rows={draft.contracts.map((contract) => [
+                      contract.name,
+                      <a key={contract.id} href={contract.fileUrl} download={contract.name} className="text-blue-600 underline text-sm">Download</a>,
+                      <DeleteAction key={contract.id} onDelete={() => removeRow("contract", contract.id)} />,
+                    ])}
+                  />
+                )}
               </FormSection>
 
               <FormSection title="Permissões" description="Escolha as permissões do Profissional">
@@ -887,17 +959,13 @@ export function ProfessionalsView() {
               <FormSection title="Folgas" description="Folgas adicionadas.">
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_10rem_3rem]">
                   <EditField label="Data inicial *">
-                    <Input value={draft.dayOffStart} inputMode="numeric" placeholder="dd/mm/aaaa" onChange={(event) => updateDraft("dayOffStart", formatDateInput(event.target.value))} />
+                    <Input type="date" value={draft.dayOffStart} onChange={(event) => updateDraft("dayOffStart", event.target.value)} />
                   </EditField>
                   <EditField label="Data final *">
-                    <Input value={draft.dayOffEnd} inputMode="numeric" placeholder="dd/mm/aaaa" onChange={(event) => updateDraft("dayOffEnd", formatDateInput(event.target.value))} />
+                    <Input type="date" value={draft.dayOffEnd} onChange={(event) => updateDraft("dayOffEnd", event.target.value)} />
                   </EditField>
                   <CheckField label="Férias?" checked={draft.vacation} onCheckedChange={(checked) => updateDraft("vacation", checked)} />
                   <AddButton onClick={addDayOff} label="Adicionar folga" />
-                </div>
-                <div className="grid gap-2">
-                  <Button size="sm" variant="outline">Folgas passadas</Button>
-                  <Button size="sm" variant="outline">Folgas futuras</Button>
                 </div>
                 {draft.dayOffs.length > 0 ? (
                   <DataTable
@@ -964,16 +1032,6 @@ export function ProfessionalsView() {
                 )}
               </FormSection>
 
-              <FormSection title="Opções Dpote" description="Disponíveis apenas para assinantes do módulo dpote.">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <EditField label="Comissão Adicional (%)">
-                    <Input value={draft.dpoteAdditionalCommission} inputMode="numeric" onChange={(event) => updateDraft("dpoteAdditionalCommission", formatNumberInput(event.target.value))} />
-                  </EditField>
-                  <EditField label="Comissão Diferenciada (%)">
-                    <Input value={draft.dpoteDifferentiatedCommission} inputMode="numeric" onChange={(event) => updateDraft("dpoteDifferentiatedCommission", formatNumberInput(event.target.value))} />
-                  </EditField>
-                </div>
-              </FormSection>
             </DialogBody>
           ) : null}
 

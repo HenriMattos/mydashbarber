@@ -44,7 +44,6 @@ type Branch = {
   number: string
   complement: string
   hidden: boolean
-  paymentsEnabled: boolean
 }
 
 const initialBranches: Branch[] = [
@@ -62,7 +61,6 @@ const initialBranches: Branch[] = [
     number: "81",
     complement: "",
     hidden: false,
-    paymentsEnabled: true,
   },
 ]
 
@@ -373,13 +371,7 @@ export function CompanyBranchesView() {
                     checked={draft.hidden}
                     onCheckedChange={(checked) => updateDraft("hidden", checked)}
                   />
-                  <CheckField
-                    label="Filial pagamentos"
-                    checked={draft.paymentsEnabled}
-                    onCheckedChange={(checked) =>
-                      updateDraft("paymentsEnabled", checked)
-                    }
-                  />
+
                 </div>
               </FormSection>
 
