@@ -117,8 +117,8 @@ export function RegisterDrawer({ open, onOpenChange, onSwitchToLogin, onSuccess 
           </SheetDescription>
         </SheetHeader>
 
-        <SheetBody className="space-y-4">
-          <form id="register-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+        <SheetBody className="space-y-6">
+          <form id="register-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-2">
             <div className="space-y-1">
               <Label htmlFor="reg-fullName">Nome completo</Label>
               <Input
@@ -126,6 +126,7 @@ export function RegisterDrawer({ open, onOpenChange, onSwitchToLogin, onSuccess 
                 placeholder="Seu nome completo"
                 aria-invalid={!!errors.fullName}
                 {...register("fullName")}
+                className="h-11 rounded-xl"
               />
               {errors.fullName && (
                 <p className="text-xs text-destructive">{errors.fullName.message}</p>
@@ -140,6 +141,7 @@ export function RegisterDrawer({ open, onOpenChange, onSwitchToLogin, onSuccess 
                 placeholder="seu@email.com"
                 aria-invalid={!!errors.email}
                 {...register("email")}
+                className="h-11 rounded-xl"
               />
               {errors.email && (
                 <p className="text-xs text-destructive">{errors.email.message}</p>
@@ -155,6 +157,7 @@ export function RegisterDrawer({ open, onOpenChange, onSwitchToLogin, onSuccess 
                 placeholder="11988880000"
                 aria-invalid={!!errors.phone}
                 {...register("phone")}
+                className="h-11 rounded-xl"
               />
               {errors.phone && (
                 <p className="text-xs text-destructive">{errors.phone.message}</p>
@@ -168,6 +171,7 @@ export function RegisterDrawer({ open, onOpenChange, onSwitchToLogin, onSuccess 
                 placeholder="Crie uma senha"
                 aria-invalid={!!errors.password}
                 {...register("password")}
+                className="h-11 rounded-xl"
               />
               {errors.password && (
                 <p className="text-xs text-destructive">{errors.password.message}</p>
@@ -182,6 +186,7 @@ export function RegisterDrawer({ open, onOpenChange, onSwitchToLogin, onSuccess 
                 placeholder="Repita a senha"
                 aria-invalid={!!errors.confirmPassword}
                 {...register("confirmPassword")}
+                className="h-11 rounded-xl"
               />
               {errors.confirmPassword && (
                 <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
@@ -189,10 +194,10 @@ export function RegisterDrawer({ open, onOpenChange, onSwitchToLogin, onSuccess 
             </div>
           </form>
 
-          <div className="relative my-4">
+          <div className="relative my-8">
             <Separator />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="bg-background px-3 text-2xs text-muted-foreground uppercase">
+              <span className="bg-background px-3 text-2xs text-muted-foreground uppercase font-bold tracking-widest">
                 ou continue com
               </span>
             </div>

@@ -9,6 +9,7 @@ export * from "./cash-register"
 export * from "./admin"
 export * from "./company"
 export * from "./landing"
+export * from "./service"
 export type {
   FinancialType,
   FinancialMovement,

@@ -15,13 +15,13 @@ export function NotificationsCard({ value, onChange }: NotificationsCardProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <BellRing className="size-4" />
-          Notificacoes
+          Notificações
         </CardTitle>
-        <CardDescription>Escolha quais atualizacoes deseja receber.</CardDescription>
+        <CardDescription>Escolha quais atualizações deseja receber.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         <NotificationRow
-          label="Confirmacao de agendamento"
+          label="Confirmação de agendamento"
           checked={value.appointmentConfirmation}
           onCheckedChange={(checked) =>
             onChange({ ...value, appointmentConfirmation: checked })
@@ -33,12 +33,12 @@ export function NotificationsCard({ value, onChange }: NotificationsCardProps) {
           onCheckedChange={(checked) => onChange({ ...value, appointmentReminder: checked })}
         />
         <NotificationRow
-          label="Promocoes e novidades"
+          label="Promoções e novidades"
           checked={value.offersAndNews}
           onCheckedChange={(checked) => onChange({ ...value, offersAndNews: checked })}
         />
         <NotificationRow
-          label="Atualizacoes de plano"
+          label="Atualizações de plano"
           checked={value.planUpdates}
           onCheckedChange={(checked) => onChange({ ...value, planUpdates: checked })}
         />

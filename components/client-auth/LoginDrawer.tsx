@@ -72,29 +72,18 @@ export function LoginDrawer({
     setIsLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    const isDemoAccount = 
-      (data.login === "cliente@bigood.com" && data.password === "cliente123") ||
-      (data.login === "admin@admin.com" && data.password === "Admin@123")
+    const { database } = require("@/components/admin/database")
+    const demoClient = database.clients.find((c: any) => c.email === data.login)
 
-    if (isDemoAccount) {
-      // Import database dynamically or use a constant if preferred, 
-      // but here we match the app's database to get the real name
-      const { database } = require("@/components/admin/database")
-      const demoClient = database.clients.find((c: any) => c.email === data.login)
-      
-      setPortalAuth({
-        name: demoClient?.name || "Cliente Demo",
-        email: data.login,
-        phone: demoClient?.phone || "(11) 98888-0101",
-      })
-      toast.success("Login realizado com sucesso!")
-      setIsLoading(false)
-      onOpenChange(false)
-      onSuccess()
-    } else {
-      toast.error("Email ou senha inválidos. Use cliente@bigood.com / cliente123")
-      setIsLoading(false)
-    }
+    setPortalAuth({
+      name: demoClient?.name || data.login.split("@")[0] || "Cliente",
+      email: data.login,
+      phone: demoClient?.phone || "(11) 98888-0101",
+    })
+    toast.success("Login realizado com sucesso!")
+    setIsLoading(false)
+    onOpenChange(false)
+    onSuccess()
   }
 
   return (
@@ -111,8 +100,8 @@ export function LoginDrawer({
           </SheetDescription>
         </SheetHeader>
 
-        <SheetBody className="space-y-4">
-          <form id="login-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
+        <SheetBody className="space-y-6">
+          <form id="login-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-2">
             <div className="space-y-1.5">
               <Label htmlFor="login-email">Email ou Celular</Label>
               <Input
@@ -121,6 +110,7 @@ export function LoginDrawer({
                 placeholder="seu@email.com"
                 aria-invalid={!!errors.login}
                 {...register("login")}
+                className="h-11 rounded-xl"
               />
               {errors.login && (
                 <p className="text-xs text-destructive">{errors.login.message}</p>
@@ -143,6 +133,7 @@ export function LoginDrawer({
                 placeholder="Digite sua senha"
                 aria-invalid={!!errors.password}
                 {...register("password")}
+                className="h-11 rounded-xl"
               />
               {errors.password && (
                 <p className="text-xs text-destructive">{errors.password.message}</p>
@@ -157,10 +148,10 @@ export function LoginDrawer({
             </div>
           </form>
 
-          <div className="relative my-4">
+          <div className="relative my-8">
             <Separator />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="bg-background px-3 text-2xs text-muted-foreground uppercase">
+              <span className="bg-background px-3 text-2xs text-muted-foreground uppercase font-bold tracking-widest">
                 ou continue com
               </span>
             </div>

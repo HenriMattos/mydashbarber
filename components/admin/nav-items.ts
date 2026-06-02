@@ -10,6 +10,7 @@ import {
   UserMultipleIcon,
   Wallet02Icon,
   CashierIcon,
+  AddSquareIcon,
 } from "@hugeicons/core-free-icons"
 
 export const navItems = [
@@ -87,6 +88,18 @@ export const navItems = [
     href: "/servicos",
     icon: ScissorIcon,
     description: "Catalogo, precos e duracao",
+    children: [
+      {
+        title: "Listar serviços",
+        icon: ScissorIcon,
+        href: "/servicos",
+      },
+      {
+        title: "Cadastrar serviço",
+        icon: AddSquareIcon,
+        href: "/servicos/cadastrar",
+      },
+    ],
   },
   {
     title: "Empresa",

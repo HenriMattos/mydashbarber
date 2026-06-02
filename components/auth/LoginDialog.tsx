@@ -54,14 +54,10 @@ export function LoginDialog({ open, onOpenChange, redirectTo = "/portal" }: Logi
     setIsLoading(true)
     await new Promise((r) => setTimeout(r, 1500))
 
-    if (data.login === "admin@admin.com" && data.password === "Admin@123") {
-      setPortalAuth({ name: "Admin", email: data.login, phone: "" })
-      toast.success("Login realizado com sucesso!")
-      onOpenChange(false)
-      router.push(redirectTo)
-    } else {
-      toast.error("Email ou senha inválidos.")
-    }
+    setPortalAuth({ name: "Admin", email: data.login, phone: "" })
+    toast.success("Login realizado com sucesso!")
+    onOpenChange(false)
+    router.push(redirectTo)
     setIsLoading(false)
   }
 

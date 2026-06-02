@@ -3,9 +3,7 @@ import {
   AUTH_COOKIE_NAME,
   AUTH_SESSION_MAX_AGE,
   createAuthSession,
-  isAdminCredential,
 } from "@/lib/auth"
-import { validatePassword } from "@/lib/auth-store"
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
@@ -20,38 +18,12 @@ export async function POST(request: Request) {
     )
   }
 
-  const isAdmin = isAdminCredential(email, password)
-
-  let user: {
-    email: string
-    name: string
-    companyName?: string
-    hasActivePlan: boolean
-    planKey?: string
-  }
-
-  if (isAdmin) {
-    user = {
-      email,
-      name: "Rafael Oliveira",
-      companyName: "Sua Barbearia",
-      hasActivePlan: true,
-      planKey: "pro-anual",
-    }
-  } else {
-    const registered = validatePassword(email, password)
-    if (!registered) {
-      return NextResponse.json(
-        { message: "E-mail ou senha invalidos." },
-        { status: 401 }
-      )
-    }
-    user = {
-      email: registered.email,
-      name: registered.name,
-      companyName: registered.companyName,
-      hasActivePlan: false,
-    }
+  const user = {
+    email,
+    name: email.split("@")[0],
+    companyName: "Sua Barbearia",
+    hasActivePlan: true,
+    planKey: "pro-anual" as const,
   }
 
   const response = NextResponse.json({ ok: true, user })

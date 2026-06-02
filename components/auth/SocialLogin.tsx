@@ -7,7 +7,7 @@ export function SocialLogin() {
     <Button
       type="button"
       variant="outline"
-      className="w-full"
+      className="w-full h-12 rounded-xl border-border bg-background font-semibold shadow-sm hover:bg-muted active:scale-[0.98] transition-all"
     >
       <svg className="mr-2 size-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
         <path
